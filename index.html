@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>뚠카롱 길드 관리 시스템 (v7.2)</title>
+    <title>뚠카롱 길드 관리 시스템 (v7.3)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -54,7 +54,8 @@
     <div id="loadingOverlay">
         <div class="text-center">
             <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-pink-500 border-opacity-20 border-t-pink-500 mb-8 mx-auto"></div>
-            <p class="text-pink-600 font-bold text-xl tracking-tight">서버 동기화 중...</p>
+            <p class="text-pink-600 font-bold text-xl tracking-tight">클라우드 서버와 데이터 동기화 중...</p>
+            <p class="text-gray-400 text-xs mt-4 uppercase tracking-widest font-bold">Processing Data Sync</p>
             <button id="forceEnterBtn" onclick="hideOverlay()" class="hidden mt-8 text-[10px] text-gray-400 underline uppercase tracking-widest font-bold hover:text-pink-500 transition-colors">서버 응답 지연 - 강제 입장하기</button>
         </div>
     </div>
@@ -214,8 +215,8 @@
                 <input type="text" id="deleteReason" class="w-full border border-gray-100 bg-gray-50 rounded-xl p-3 text-xs font-bold outline-none shadow-inner" placeholder="사유를 입력하세요 (이력용)">
             </div>
             <div class="grid grid-cols-2 gap-4">
-                <button onclick="closeModal('deleteModal')" class="py-4 bg-gray-50 rounded-2xl font-bold text-xs text-gray-500 hover:bg-gray-100 transition-all">취소</button>
-                <button onclick="confirmDelete()" class="py-4 bg-red-500 text-white rounded-2xl font-bold text-xs shadow-xl hover:bg-red-600 transition-all">삭제 확정</button>
+                <button onclick="closeModal('deleteModal')" class="py-4 bg-gray-50 rounded-2xl font-bold text-xs text-gray-500 uppercase tracking-widest hover:bg-gray-100 transition-all">Cancel</button>
+                <button onclick="confirmDelete()" class="py-4 bg-red-500 text-white rounded-2xl font-bold text-xs uppercase shadow-xl hover:bg-red-600 transition-all">Delete</button>
             </div>
         </div>
     </div>
@@ -261,7 +262,7 @@
             history: [],
             guildRanks: {},
             filters: { guild: 'all', search: '', sortField: 'name', sortOrder: 'asc', page: 1 },
-            itemsPerPage: 15,
+            itemsPerPage: 17,
             deleteType: 'leave',
             tempSettingsRankGuild: '뚠카롱',
             parsedBulkData: [],
@@ -476,10 +477,12 @@
             
             // 닉네임 유니코드 및 텍스트 기준 오름차순/내림차순 정렬
             filtered.sort((a, b) => { 
-                const vA = a[appState.filters.sortField] || ''; 
-                const vB = b[appState.filters.sortField] || ''; 
-                const r = vA.toString().localeCompare(vB.toString(), 'ko'); 
-                return appState.filters.sortOrder === 'asc' ? r : -r; 
+                const vA = (a[appState.filters.sortField] || '').toString(); 
+                const vB = (b[appState.filters.sortField] || '').toString(); 
+                
+                if (vA < vB) return appState.filters.sortOrder === 'asc' ? -1 : 1;
+                if (vA > vB) return appState.filters.sortOrder === 'asc' ? 1 : -1;
+                return 0;
             });
 
             const countLabel = appState.filters.guild === 'all' ? '전체 인원' : appState.filters.guild + ' 인원';
