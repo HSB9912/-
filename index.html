@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>뚠카롱 길드 관리 시스템 (v7.4)</title>
+    <title>뚠카롱 길드 관리 시스템 (v7.4.1)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -111,7 +111,7 @@
         <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shrink-0 z-10 shadow-sm">
             <div class="flex items-center gap-4">
                 <button id="openSidebar" class="p-2 lg:hidden rounded-lg hover:bg-gray-100 text-gray-600"><i class="fas fa-bars text-xl"></i></button>
-                <h2 id="pageTitle" class="text-xl font-bold text-gray-800 tracking-tight">길드 현황판</h2>
+                <h2 id="pageTitle" class="text-xl font-bold text-gray-800 tracking-tight">대시보드</h2>
             </div>
             <div class="flex items-center gap-4">
                 <div class="px-4 py-1.5 bg-pink-50 text-pink-600 rounded-full text-xs font-bold border border-pink-100 shadow-sm">
@@ -275,7 +275,7 @@
             sheetUrl: localStorage.getItem('macaron_sheet_url') || DEFAULT_SHEET_URL
         };
 
-        const savedRanks = localStorage.getItem('macaron_ranks_v19');
+        const savedRanks = localStorage.getItem('macaron_ranks_v20');
         if (savedRanks) {
             appState.guildRanks = JSON.parse(savedRanks);
         } else {
@@ -573,13 +573,13 @@
             };
 
             let html = `<div class="overflow-x-auto shadow-inner"><table class="w-full text-left min-w-[900px] text-xs whitespace-nowrap"><thead class="bg-gray-50 text-[10px] font-bold text-gray-500 border-b border-gray-100"><tr>
-                <th class="p-8 text-center w-16">No.</th>
-                <th class="p-8 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('name')">닉네임 ${getSortIcon('name')}</th>
-                <th class="p-8">구분</th>
-                <th class="p-8 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('guild')">소속 ${getSortIcon('guild')}</th>
-                <th class="p-8 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('role')">직위 ${getSortIcon('role')}</th>
-                <th class="p-8 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('class')">직업 ${getSortIcon('class')}</th>
-                <th class="p-8 text-right">관리</th>
+                <th class="p-4 text-center w-16">No.</th>
+                <th class="p-4 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('name')">닉네임 ${getSortIcon('name')}</th>
+                <th class="p-4">구분</th>
+                <th class="p-4 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('guild')">소속 ${getSortIcon('guild')}</th>
+                <th class="p-4 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('role')">직위 ${getSortIcon('role')}</th>
+                <th class="p-4 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('class')">직업 ${getSortIcon('class')}</th>
+                <th class="p-4 text-right">관리</th>
             </tr></thead><tbody class="divide-y divide-gray-50 text-gray-600 font-bold">`;
             
             if (filtered.length === 0) html += `<tr><td colspan="7" class="p-20 text-center text-gray-300 font-bold">검색된 길드원이 없습니다.</td></tr>`;
@@ -605,13 +605,13 @@
                 }
                 
                 html += `<tr class="hover:bg-pink-50/20 transition-all group">
-                    <td class="p-8 text-center text-gray-400 font-black text-[11px]">${index + 1}</td>
-                    <td class="p-8 leading-none"><div class="flex items-center gap-4 leading-none">${iconHtml}<span class="text-sm font-bold text-gray-800 tracking-tight leading-none">${m.name}</span></div></td>
-                    <td class="p-8 leading-none">${m.isMain ? '<span class="text-[9px] font-bold bg-pink-50 text-pink-500 px-4 py-1.5 rounded-full border border-pink-100 shadow-sm">본캐</span>' : `<span class="text-[9px] font-bold text-gray-400">부캐 / ${m.mainCharName || '-'}</span>`}</td>
-                    <td class="p-8 font-bold text-gray-500 leading-none">${m.guild}</td>
-                    <td class="p-8 leading-none"><span class="bg-gray-100 text-gray-500 px-4 py-1.5 rounded-xl font-bold text-[10px] shadow-sm">${m.role}</span></td>
-                    <td class="p-8 font-bold text-gray-400 leading-none">${m.class || '-'}</td>
-                    <td class="p-8 text-right opacity-0 group-hover:opacity-100 transition-opacity leading-none"><div class="flex justify-end gap-2"><button onclick="openEditModal('${m.id}')" class="w-10 h-10 rounded-xl bg-white border border-gray-100 text-blue-500 hover:bg-blue-50 shadow-sm transition-all flex items-center justify-center"><i class="fas fa-edit"></i></button><button onclick="openDeleteModal('${m.id}')" class="w-10 h-10 rounded-xl bg-white border border-gray-100 text-red-500 hover:bg-red-50 shadow-sm transition-all flex items-center justify-center"><i class="fas fa-trash-alt"></i></button></div></td>
+                    <td class="p-3 text-center text-gray-400 font-black text-[11px]">${index + 1}</td>
+                    <td class="p-3 leading-none"><div class="flex items-center gap-4 leading-none">${iconHtml}<span class="text-sm font-bold text-gray-800 tracking-tight leading-none">${m.name}</span></div></td>
+                    <td class="p-3 leading-none">${m.isMain ? '<span class="text-[9px] font-bold bg-pink-50 text-pink-500 px-4 py-1.5 rounded-full border border-pink-100 shadow-sm">본캐</span>' : `<span class="text-[9px] font-bold text-gray-400">부캐 / ${m.mainCharName || '-'}</span>`}</td>
+                    <td class="p-3 font-bold text-gray-500 leading-none">${m.guild}</td>
+                    <td class="p-3 leading-none"><span class="bg-gray-100 text-gray-500 px-4 py-1.5 rounded-xl font-bold text-[10px] shadow-sm">${m.role}</span></td>
+                    <td class="p-3 font-bold text-gray-400 leading-none">${m.class || '-'}</td>
+                    <td class="p-3 text-right opacity-0 group-hover:opacity-100 transition-opacity leading-none"><div class="flex justify-end gap-2"><button onclick="openEditModal('${m.id}')" class="w-8 h-8 rounded-xl bg-white border border-gray-100 text-blue-500 hover:bg-blue-50 shadow-sm transition-all flex items-center justify-center"><i class="fas fa-edit text-xs"></i></button><button onclick="openDeleteModal('${m.id}')" class="w-8 h-8 rounded-xl bg-white border border-gray-100 text-red-500 hover:bg-red-50 shadow-sm transition-all flex items-center justify-center"><i class="fas fa-trash-alt text-xs"></i></button></div></td>
                 </tr>`;
 
                 if ((index + 1) % 17 === 0 && index !== filtered.length - 1) {
@@ -749,9 +749,9 @@
         }
 
         function changeRankGuild(v) { appState.tempSettingsRankGuild = v; router('settings'); }
-        function updateRankVal(i, v) { appState.guildRanks[appState.tempSettingsRankGuild][i] = v; localStorage.setItem('macaron_ranks_v19', JSON.stringify(appState.guildRanks)); }
-        function addRank() { appState.guildRanks[appState.tempSettingsRankGuild].push("새 직위"); localStorage.setItem('macaron_ranks_v19', JSON.stringify(appState.guildRanks)); router('settings'); }
-        function removeRank(i) { appState.guildRanks[appState.tempSettingsRankGuild].splice(i, 1); localStorage.setItem('macaron_ranks_v19', JSON.stringify(appState.guildRanks)); router('settings'); }
+        function updateRankVal(i, v) { appState.guildRanks[appState.tempSettingsRankGuild][i] = v; localStorage.setItem('macaron_ranks_v18', JSON.stringify(appState.guildRanks)); }
+        function addRank() { appState.guildRanks[appState.tempSettingsRankGuild].push("새 직위"); localStorage.setItem('macaron_ranks_v18', JSON.stringify(appState.guildRanks)); router('settings'); }
+        function removeRank(i) { appState.guildRanks[appState.tempSettingsRankGuild].splice(i, 1); localStorage.setItem('macaron_ranks_v18', JSON.stringify(appState.guildRanks)); router('settings'); }
         
         function executeFactoryReset() { openModal('resetModal'); }
         async function confirmReset() { if(await sendAction('reset', {})) closeModal('resetModal'); }
