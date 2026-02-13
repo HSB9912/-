@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>뚠카롱 길드 관리 시스템 (v7.3)</title>
+    <title>뚠카롱 길드 관리 시스템 (v7.4)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -11,9 +11,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; }
         
-        .chart-container { position: relative; width: 100%; max-width: 600px; margin: auto; height: 300px; }
-        @media (min-width: 768px) { .chart-container { height: 350px; } }
-
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #fbcfe8; border-radius: 4px; }
@@ -46,6 +43,14 @@
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 달력 스타일 */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; text-align: center; font-size: 0.8rem; }
+        .calendar-day { padding: 0.5rem; border-radius: 1rem; position: relative; transition: all 0.2s; }
+        .calendar-day:hover { background-color: #f9fafb; }
+        .calendar-day.today { background-color: #ec4899; color: white; box-shadow: 0 4px 6px -1px rgba(236, 72, 153, 0.4); }
+        .calendar-day.thursday { color: #db2777; background-color: #fdf2f8; border: 1px solid #fbcfe8; }
+        .calendar-head { font-size: 0.75rem; font-weight: 800; color: #9ca3af; text-transform: uppercase; padding-bottom: 0.5rem; }
     </style>
 </head>
 <body class="bg-gray-50 text-slate-800 h-screen overflow-hidden flex font-medium">
@@ -106,7 +111,7 @@
         <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shrink-0 z-10 shadow-sm">
             <div class="flex items-center gap-4">
                 <button id="openSidebar" class="p-2 lg:hidden rounded-lg hover:bg-gray-100 text-gray-600"><i class="fas fa-bars text-xl"></i></button>
-                <h2 id="pageTitle" class="text-xl font-bold text-gray-800 tracking-tight">대시보드</h2>
+                <h2 id="pageTitle" class="text-xl font-bold text-gray-800 tracking-tight">길드 현황판</h2>
             </div>
             <div class="flex items-center gap-4">
                 <div class="px-4 py-1.5 bg-pink-50 text-pink-600 rounded-full text-xs font-bold border border-pink-100 shadow-sm">
@@ -215,8 +220,8 @@
                 <input type="text" id="deleteReason" class="w-full border border-gray-100 bg-gray-50 rounded-xl p-3 text-xs font-bold outline-none shadow-inner" placeholder="사유를 입력하세요 (이력용)">
             </div>
             <div class="grid grid-cols-2 gap-4">
-                <button onclick="closeModal('deleteModal')" class="py-4 bg-gray-50 rounded-2xl font-bold text-xs text-gray-500 uppercase tracking-widest hover:bg-gray-100 transition-all">Cancel</button>
-                <button onclick="confirmDelete()" class="py-4 bg-red-500 text-white rounded-2xl font-bold text-xs uppercase shadow-xl hover:bg-red-600 transition-all">Delete</button>
+                <button onclick="closeModal('deleteModal')" class="py-4 bg-gray-50 rounded-2xl font-bold text-xs text-gray-500 hover:bg-gray-100 transition-all">취소</button>
+                <button onclick="confirmDelete()" class="py-4 bg-red-500 text-white rounded-2xl font-bold text-xs shadow-xl hover:bg-red-600 transition-all">삭제 확정</button>
             </div>
         </div>
     </div>
@@ -237,6 +242,7 @@
     <script>
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwRi3BSBpU3QO2gTS7lcGdnLtohNwLNLlaammBPMAIWVzigmz6o6TGjVtvaerO2akfZ/exec";
         const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/1pu_PIJ03omYU00jAmJ5FSvyjs_sqLxAU90_xjfY_yjQ/edit?gid=260394678#gid=260394678";
+        const GUILD_START_DATE = new Date('2020-03-17');
         
         const baseRanks = ['마카롱', '다쿠아즈'];
         const initialGuildRanks = {
@@ -262,7 +268,6 @@
             history: [],
             guildRanks: {},
             filters: { guild: 'all', search: '', sortField: 'name', sortOrder: 'asc', page: 1 },
-            itemsPerPage: 17,
             deleteType: 'leave',
             tempSettingsRankGuild: '뚠카롱',
             parsedBulkData: [],
@@ -270,7 +275,7 @@
             sheetUrl: localStorage.getItem('macaron_sheet_url') || DEFAULT_SHEET_URL
         };
 
-        const savedRanks = localStorage.getItem('macaron_ranks_v18');
+        const savedRanks = localStorage.getItem('macaron_ranks_v19');
         if (savedRanks) {
             appState.guildRanks = JSON.parse(savedRanks);
         } else {
@@ -408,13 +413,79 @@
             else if (tab === 'settings') renderSettings(content);
         }
 
+        function getAnniversaryInfo() {
+            const now = new Date();
+            const diff = now - GUILD_START_DATE;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const years = Math.floor(days / 365);
+            const remainingDays = days % 365;
+            return { totalDays: days, years: years, remainingDays: remainingDays };
+        }
+
+        function renderCalendar() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const today = now.getDate();
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+            
+            const monthNames = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+            
+            let html = `
+                <div class="mb-4 flex justify-between items-end">
+                    <h4 class="text-xl font-bold text-gray-800">${monthNames[month]} <span class="text-gray-400 text-sm">${year}</span></h4>
+                </div>
+                <div class="calendar-grid">
+                    <div class="calendar-head text-red-400">일</div>
+                    <div class="calendar-head">월</div>
+                    <div class="calendar-head">화</div>
+                    <div class="calendar-head">수</div>
+                    <div class="calendar-head text-pink-500">목</div>
+                    <div class="calendar-head">금</div>
+                    <div class="calendar-head text-blue-400">토</div>
+            `;
+
+            for(let i=0; i<firstDay; i++) html += `<div></div>`;
+            
+            for(let d=1; d<=lastDate; d++) {
+                const date = new Date(year, month, d);
+                const dayOfWeek = date.getDay();
+                let classes = "calendar-day text-gray-600";
+                let content = d;
+                
+                if (dayOfWeek === 4) {
+                    classes += " thursday"; // 목요일 강조
+                    content = `<span class="relative z-10">${d}</span><i class="fas fa-sync-alt absolute top-0.5 right-1 text-[8px] text-pink-300 opacity-50"></i>`;
+                }
+                if (d === today) classes += " today";
+                
+                html += `<div class="${classes}">${content}</div>`;
+            }
+            html += `</div>`;
+            return html;
+        }
+
         function renderDashboard(container) {
+            const anniv = getAnniversaryInfo();
             const wrap = document.createElement('div');
             wrap.className = "grid grid-cols-1 xl:grid-cols-2 gap-10 fade-in";
             wrap.innerHTML = `
-                <div class="bg-white p-12 rounded-[2.5rem] shadow-sm border border-gray-100">
-                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-8">길드별 인원 분포도</h3>
-                    <div class="chart-container"><canvas id="guildBarChart"></canvas></div>
+                <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100 flex flex-col justify-between">
+                     <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl">📅</span>
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest">Guild Calendar</h3>
+                                <p class="text-[10px] text-pink-400 font-bold">목요일은 주간 초기화!</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                             <div class="text-2xl font-black text-gray-800 tracking-tight">D+${anniv.totalDays}</div>
+                             <div class="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-lg inline-block">생성된 지 ${anniv.years}년 ${anniv.remainingDays}일 지남</div>
+                        </div>
+                     </div>
+                     ${renderCalendar()}
                 </div>
                 <div class="bg-white p-12 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col justify-center text-center">
                     <div class="w-16 h-16 bg-pink-100 text-pink-500 rounded-3xl flex items-center justify-center text-2xl mx-auto mb-6 shadow-sm"><i class="fas fa-sync-alt"></i></div>
@@ -442,11 +513,6 @@
                     </div>`;
             });
             container.appendChild(grid);
-
-            const ctx = document.getElementById('guildBarChart')?.getContext('2d');
-            if (ctx) {
-                new Chart(ctx, { type: 'bar', data: { labels: appState.guilds.map(g => g.name), datasets: [{ data: appState.guilds.map(g => appState.members.filter(m => m.guild === g.name).length), backgroundColor: '#f472b6', borderRadius: 10, barThickness: 30 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { weight: 'bold', size: 10 } } }, x: { grid: { display: false }, ticks: { font: { weight: 'bold', size: 10 } } } } } });
-            }
         }
 
         function renderMembers(container) {
@@ -463,7 +529,7 @@
                                 <button onclick="openAddModal()" class="shrink-0 flex-1 md:flex-none px-10 py-3.5 bg-pink-500 text-white rounded-2xl text-xs font-bold shadow-xl hover:bg-pink-600 transition-all"><i class="fas fa-plus mr-2"></i> 멤버 추가</button>
                             </div>
                         </div>
-                        <div class="relative"><i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i><input type="text" oninput="handleSearch(this.value)" value="${appState.filters.search}" class="w-full pl-16 pr-8 py-4 bg-gray-50 border border-gray-100 rounded-[2rem] outline-none focus:ring-4 focus:ring-pink-50 font-bold text-sm shadow-inner" placeholder="닉네임 검색"></div>
+                        <div class="relative"><i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i><input type="text" oninput="handleSearch(this.value)" value="${appState.filters.search}" class="w-full pl-16 pr-8 py-4 bg-gray-50 border border-gray-100 rounded-[2rem] outline-none focus:ring-4 focus:ring-pink-50 font-bold text-sm shadow-inner" placeholder="닉네임, 직업, 직위, 구분(본캐/부캐) 검색"></div>
                     </div>
                     <div id="memberTableContainer" class="bg-white rounded-b-[3rem] border border-gray-100 overflow-hidden shadow-sm"></div>
                 </div>`;
@@ -473,7 +539,15 @@
         function updateMemberTable() {
             const container = document.getElementById('memberTableContainer');
             if(!container) return;
-            const filtered = appState.members.filter(m => (appState.filters.guild === 'all' || m.guild === appState.filters.guild) && ( (m.name || '').toLowerCase().includes(appState.filters.search.toLowerCase()) || (m.mainCharName && m.mainCharName.toLowerCase().includes(appState.filters.search.toLowerCase())) ));
+            const term = appState.filters.search.toLowerCase();
+            const filtered = appState.members.filter(m => {
+                const gMatch = appState.filters.guild === 'all' || m.guild === appState.filters.guild;
+                const sMatch = (m.name || '').toLowerCase().includes(term) || 
+                               (m.role || '').toLowerCase().includes(term) || 
+                               (m.class || '').toLowerCase().includes(term) || 
+                               (m.isMain ? '본캐' : '부캐').includes(term);
+                return gMatch && sMatch;
+            });
             
             // 닉네임 유니코드 및 텍스트 기준 오름차순/내림차순 정렬
             filtered.sort((a, b) => { 
@@ -511,16 +585,12 @@
             if (filtered.length === 0) html += `<tr><td colspan="7" class="p-20 text-center text-gray-300 font-bold">검색된 길드원이 없습니다.</td></tr>`;
             
             filtered.forEach((m, index) => {
-                // 직위에 따른 아이콘(왕관) 또는 동그라미 표시 로직
                 let iconHtml = '';
                 if (m.role === '마카롱') {
-                    // 마카롱: 파란색 왕관
                     iconHtml = '<i class="fas fa-crown text-blue-500 text-sm shadow-sm" style="text-shadow: 0 0 8px rgba(59,130,246,0.6);"></i>';
                 } else if (m.role === '다쿠아즈') {
-                    // 다쿠아즈: 핑크색 왕관
                     iconHtml = '<i class="fas fa-crown text-pink-500 text-sm shadow-sm" style="text-shadow: 0 0 8px rgba(236,72,153,0.6);"></i>';
                 } else {
-                    // 일반 직위: 색상 동그라미
                     let dotClass = 'bg-gray-200';
                     if (m.isMain) {
                         if (['크라운', '파르페', '티라미슈', '크로칸슈'].includes(m.role)) {
@@ -544,7 +614,6 @@
                     <td class="p-8 text-right opacity-0 group-hover:opacity-100 transition-opacity leading-none"><div class="flex justify-end gap-2"><button onclick="openEditModal('${m.id}')" class="w-10 h-10 rounded-xl bg-white border border-gray-100 text-blue-500 hover:bg-blue-50 shadow-sm transition-all flex items-center justify-center"><i class="fas fa-edit"></i></button><button onclick="openDeleteModal('${m.id}')" class="w-10 h-10 rounded-xl bg-white border border-gray-100 text-red-500 hover:bg-red-50 shadow-sm transition-all flex items-center justify-center"><i class="fas fa-trash-alt"></i></button></div></td>
                 </tr>`;
 
-                // 17명 마다 점선 구분선 추가 (마지막 항목 제외)
                 if ((index + 1) % 17 === 0 && index !== filtered.length - 1) {
                     html += `<tr><td colspan="7" class="p-0 border-b-[3px] border-dashed border-pink-300"></td></tr>`;
                 }
@@ -560,7 +629,10 @@
         }
 
         function renderHistory(container) {
-            container.innerHTML = `<div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden fade-in font-bold"><div class="p-8 border-b border-gray-50 flex items-center justify-between shadow-sm"><h3 class="text-sm font-bold text-gray-800"><i class="fas fa-history mr-2 text-pink-500"></i> 길드 활동 운영 이력</h3><span class="text-[10px] text-gray-400 font-bold">누적 기록: ${appState.history.length} 건</span></div><div class="overflow-x-auto shadow-inner"><table class="w-full text-left text-xs whitespace-nowrap font-bold"><thead class="bg-gray-50 text-[10px] font-bold text-gray-500 border-b border-gray-100"><tr><th class="p-6">시간</th><th class="p-6 w-32">활동 분류</th><th class="p-8">대상 닉네임</th><th class="p-6">활동 상세 내용</th></tr></thead><tbody class="divide-y divide-gray-50 text-gray-600 font-bold">${appState.history.length === 0 ? `<tr><td colspan="4" class="p-20 text-center text-gray-300 font-bold">기록된 이력이 없습니다.</td></tr>` : appState.history.map(log => `<tr class="hover:bg-gray-50/50 transition-colors"><td class="p-6 font-mono text-gray-400 font-bold text-[10px] tracking-tighter">${log.date}</td><td class="p-6"><span class="px-3 py-1.5 rounded-lg text-[9px] font-bold ${log.category === '추방' ? 'bg-red-50 text-red-500 border border-red-100 shadow-sm' : log.category === '가입' ? 'bg-green-50 text-green-500 border border-green-100 shadow-sm' : 'bg-gray-50 text-gray-500 border border-gray-100'}">${log.category}</span></td><td class="p-8 font-bold text-gray-800">${log.name}</td><td class="p-8 font-medium text-gray-500 font-bold text-[11px]">${log.content}</td></tr>`).join('')}</tbody></table></div></div>`;
+            container.innerHTML = `<div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden fade-in font-bold"><div class="p-8 border-b border-gray-50 flex items-center justify-between shadow-sm"><h3 class="text-sm font-bold text-gray-800"><i class="fas fa-history mr-2 text-pink-500"></i> 길드 활동 운영 이력</h3><span class="text-[10px] text-gray-400 font-bold">누적 기록: ${appState.history.length} 건</span></div><div class="overflow-x-auto shadow-inner"><table class="w-full text-left text-xs whitespace-nowrap font-bold"><thead class="bg-gray-50 text-[10px] font-bold text-gray-500 border-b border-gray-100"><tr><th class="p-6">시간</th><th class="p-6 w-32">활동 분류</th><th class="p-8">대상 닉네임</th><th class="p-6">활동 상세 내용</th></tr></thead><tbody class="divide-y divide-gray-50 text-gray-600 font-bold">${appState.history.length === 0 ? `<tr><td colspan="4" class="p-20 text-center text-gray-300 font-bold">기록된 이력이 없습니다.</td></tr>` : appState.history.map(log => {
+                const badge = log.category === '추방' ? 'bg-red-50 text-red-500 border border-red-100' : (log.category === '탈퇴' || log.category === '자진탈퇴' ? 'bg-gray-100 text-gray-500 border border-gray-200' : 'bg-green-50 text-green-500 border border-green-100');
+                return `<tr class="hover:bg-gray-50/50 transition-colors"><td class="p-6 font-mono text-gray-400 font-bold text-[10px] tracking-tighter">${log.date}</td><td class="p-6"><span class="px-3 py-1.5 rounded-lg text-[9px] font-bold ${badge} shadow-sm">${log.category}</span></td><td class="p-8 font-bold text-gray-800">${log.name}</td><td class="p-8 font-medium text-gray-500 font-bold text-[11px]">${log.content}</td></tr>`;
+            }).join('')}</tbody></table></div></div>`;
         }
 
         function renderSettings(container) {
@@ -577,15 +649,14 @@
                     <div class="bg-white p-12 rounded-[2.5rem] border border-gray-100 shadow-sm">
                         <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-12 pb-10 border-b border-gray-100">
                             <div>
-                                <h3 class="text-xl font-bold text-gray-800 text-pink-500 tracking-tight">길드 직위 체계 커스텀</h3>
-                                <p class="text-[10px] text-gray-400 font-bold mt-2">길드별로 고유한 직위를 설정하세요.</p>
+                                <h3 class="text-xl font-bold text-gray-800 text-pink-500 tracking-tight">길드 직위 체계 (읽기 전용)</h3>
+                                <p class="text-[10px] text-gray-400 font-bold mt-2">길드별 직위 목록입니다.</p>
                             </div>
                             <select onchange="changeRankGuild(this.value)" class="bg-gray-50 border border-gray-100 rounded-2xl px-8 py-5 text-xs font-bold outline-none cursor-pointer hover:bg-gray-100 shadow-sm transition-all">${appState.guilds.map(g => `<option value="${g.name}" ${g.name === appState.tempSettingsRankGuild ? 'selected' : ''}>${g.name}</option>`).join('')}</select>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
-                            ${(appState.guildRanks[appState.tempSettingsRankGuild] || []).map((r, i) => `<div class="flex items-center gap-4 bg-gray-50 border border-gray-100 p-5 rounded-3xl group transition-all hover:bg-white hover:border-pink-200 shadow-sm"><span class="w-8 text-center text-[10px] font-bold text-gray-400 group-hover:text-pink-400">${i+1}</span><input type="text" value="${r}" onchange="updateRankVal(${i}, this.value)" class="flex-1 bg-transparent border-none text-sm font-bold text-gray-700 outline-none shadow-inner p-2 rounded-xl"> <button onclick="removeRank(${i})" class="text-gray-300 hover:text-red-500 transition-colors p-2"><i class="fas fa-times-circle"></i></button></div>`).join('')}
+                            ${(appState.guildRanks[appState.tempSettingsRankGuild] || []).map((r, i) => `<div class="flex items-center gap-4 bg-gray-50 border border-gray-100 p-5 rounded-3xl group hover:bg-white hover:border-pink-200 shadow-sm"><span class="w-8 text-center text-[10px] font-bold text-gray-400 group-hover:text-pink-400">${i+1}</span><div class="flex-1 text-sm font-bold text-gray-700">${r}</div></div>`).join('')}
                         </div>
-                        <button onclick="addRank()" class="w-full py-6 border-2 border-dashed border-gray-200 rounded-3xl text-gray-400 hover:text-pink-500 hover:border-pink-300 transition-all text-xs font-bold"><i class="fas fa-plus mr-3"></i> 새로운 직위 추가하기</button>
                     </div>
                     <div class="bg-white p-12 rounded-[2.5rem] border border-red-100 shadow-sm mt-10">
                         <div class="text-center">
@@ -678,9 +749,9 @@
         }
 
         function changeRankGuild(v) { appState.tempSettingsRankGuild = v; router('settings'); }
-        function updateRankVal(i, v) { appState.guildRanks[appState.tempSettingsRankGuild][i] = v; localStorage.setItem('macaron_ranks_v18', JSON.stringify(appState.guildRanks)); }
-        function addRank() { appState.guildRanks[appState.tempSettingsRankGuild].push("새 직위"); localStorage.setItem('macaron_ranks_v18', JSON.stringify(appState.guildRanks)); router('settings'); }
-        function removeRank(i) { appState.guildRanks[appState.tempSettingsRankGuild].splice(i, 1); localStorage.setItem('macaron_ranks_v18', JSON.stringify(appState.guildRanks)); router('settings'); }
+        function updateRankVal(i, v) { appState.guildRanks[appState.tempSettingsRankGuild][i] = v; localStorage.setItem('macaron_ranks_v19', JSON.stringify(appState.guildRanks)); }
+        function addRank() { appState.guildRanks[appState.tempSettingsRankGuild].push("새 직위"); localStorage.setItem('macaron_ranks_v19', JSON.stringify(appState.guildRanks)); router('settings'); }
+        function removeRank(i) { appState.guildRanks[appState.tempSettingsRankGuild].splice(i, 1); localStorage.setItem('macaron_ranks_v19', JSON.stringify(appState.guildRanks)); router('settings'); }
         
         function executeFactoryReset() { openModal('resetModal'); }
         async function confirmReset() { if(await sendAction('reset', {})) closeModal('resetModal'); }
@@ -702,4 +773,3 @@
     </script>
 </body>
 </html>
-
