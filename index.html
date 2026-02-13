@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>뚠카롱 길드 관리 시스템 (v7.4.1)</title>
+    <title>뚠카롱 길드 관리 시스템 (v7.6)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; }
+        
+        .chart-container { position: relative; width: 100%; height: 250px; }
         
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -152,7 +154,10 @@
                 </div>
                 <div class="space-y-1">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">직업</label>
-                    <input type="text" id="inputClass" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 text-sm font-bold outline-none shadow-inner" placeholder="직업명">
+                    <select id="inputClass" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 text-sm font-bold outline-none shadow-inner cursor-pointer">
+                        <option value="">직업을 선택하세요</option>
+                        <!-- Jobs will be populated here -->
+                    </select>
                 </div>
                 <div class="flex items-center gap-3 py-1">
                     <input type="checkbox" id="inputIsMain" class="w-5 h-5 text-pink-500 rounded focus:ring-pink-50 shadow-sm cursor-pointer" checked onchange="toggleMainCharInput()">
@@ -161,10 +166,6 @@
                 <div id="mainCharInputGroup" class="hidden animate-fade-in space-y-1">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">본캐 닉네임</label>
                     <input type="text" id="inputMainCharName" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 text-sm font-bold outline-none shadow-inner" placeholder="본캐릭명 입력">
-                </div>
-                <div class="space-y-1">
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">가입 날짜</label>
-                    <input type="date" id="inputJoinDate" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 text-sm font-bold outline-none cursor-pointer">
                 </div>
                 <button type="submit" id="btnSubmitMember" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-black transition-all shadow-xl mt-2">데이터베이스에 저장</button>
             </form>
@@ -244,14 +245,25 @@
         const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/1pu_PIJ03omYU00jAmJ5FSvyjs_sqLxAU90_xjfY_yjQ/edit?gid=260394678#gid=260394678";
         const GUILD_START_DATE = new Date('2020-03-17');
         
+        const MAPLE_JOBS = [
+            "히어로", "다크나이트", "팔라딘", "불독", "썬콜", "비숍", "보우마스터", "신궁", "패스파인더",
+            "나이트로드", "섀도어", "듀얼블레이드", "캡틴", "바이퍼", "캐논마스터",
+            "미하일", "소울마스터", "플레임위자드", "윈드브레이커", "나이트워커", "스트라이커",
+            "아란", "에반", "루미너스", "메르세데스", "팬텀", "은월",
+            "데몬 슬레이어", "데몬 어벤져", "블래스터", "배틀메이지", "와일드헌터", "메카닉", "제논",
+            "카이저", "카인", "카데나", "엔젤릭버스터",
+            "라라", "호영", "아델", "일리움", "아크", "칼리",
+            "제로", "키네시스", "렌"
+        ];
+
         const baseRanks = ['마카롱', '다쿠아즈'];
         const initialGuildRanks = {
-            '뚠카롱': [...baseRanks, '크라운', '파르페', '티라미슈', '크로칸슈', '롤케이크', '팬케이크', '와플', '스콘', '반죽'],
-            '뚱카롱': [...baseRanks, '뚠케이크', '뚠브레드', '수플레', '뚠스콘'],
-            '밤카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너'],
-            '별카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너'],
-            '달카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너'],
-            '꿀카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너']
+            '뚠카롱': [...baseRanks, '크라운', '파르페', '티라미슈', '크로칸슈', '롤케이크', '팬케이크', '와플', '스콘', '반죽(휴면)'],
+            '뚱카롱': [...baseRanks, '뚠케이크', '뚠브레드', '수플레', '뚠스콘', '반죽(휴면)'],
+            '밤카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽(휴면)'],
+            '별카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽(휴면)'],
+            '달카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽(휴면)'],
+            '꿀카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽(휴면)']
         };
         
         const appState = {
@@ -275,7 +287,7 @@
             sheetUrl: localStorage.getItem('macaron_sheet_url') || DEFAULT_SHEET_URL
         };
 
-        const savedRanks = localStorage.getItem('macaron_ranks_v20');
+        const savedRanks = localStorage.getItem('macaron_ranks_v22');
         if (savedRanks) {
             appState.guildRanks = JSON.parse(savedRanks);
         } else {
@@ -331,7 +343,7 @@
                 
                 const json = await response.json();
                 if (json.status === "success") {
-                    appState.members = json.data.members || [];
+                    appState.members = json.data.members ? json.data.members.filter(m => m.name && m.name.trim() !== "") : [];
                     appState.history = json.data.history || [];
                     
                     const countEl = document.getElementById('totalMembersCount');
@@ -487,32 +499,48 @@
                      </div>
                      ${renderCalendar()}
                 </div>
-                <div class="bg-white p-12 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col justify-center text-center">
-                    <div class="w-16 h-16 bg-pink-100 text-pink-500 rounded-3xl flex items-center justify-center text-2xl mx-auto mb-6 shadow-sm"><i class="fas fa-sync-alt"></i></div>
-                    <h3 class="text-xl font-bold text-gray-800 tracking-tight leading-none mb-3">클라우드 데이터 동기화</h3>
-                    <p class="text-xs text-gray-400 font-bold uppercase tracking-widest opacity-60">닉네임 기반 고유 관리 시스템</p>
+                <div class="bg-white p-12 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">직업 분포도 (Job Distribution)</h3>
+                        <div class="chart-container"><canvas id="jobChart"></canvas></div>
+                    </div>
                 </div>
             `;
             container.appendChild(wrap);
-
-            const grid = document.createElement('div');
-            grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-10 fade-in";
-            appState.guilds.forEach(g => {
-                const count = appState.members.filter(m => m.guild === g.name).length;
-                const pct = Math.min((count / g.max) * 100, 100);
-                grid.innerHTML += `
-                    <div class="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group cursor-pointer" onclick="filterByGuild('${g.name}')">
-                        <div class="flex justify-between items-start mb-8">
-                            <span class="font-bold text-lg text-gray-800 group-hover:text-pink-500 transition-colors">${g.name}</span>
-                            <span class="text-[10px] bg-gray-50 text-gray-500 px-3 py-1.5 rounded-xl font-bold">${g.type}</span>
-                        </div>
-                        <div class="flex justify-between text-[10px] mb-2 text-gray-400 font-bold">
-                            <span>인원</span><span class="text-gray-800 font-bold">${count} / ${g.max}</span>
-                        </div>
-                        <div class="w-full bg-gray-50 rounded-full h-1.5 overflow-hidden shadow-inner"><div class="h-full bg-pink-500 rounded-full transition-all duration-1000 shadow-sm" style="width:${pct}%; background-color:${g.color}"></div></div>
-                    </div>`;
+            
+            // 직업 분포 데이터 계산
+            const jobCounts = {};
+            appState.members.forEach(m => {
+                const job = m.class || '미설정';
+                jobCounts[job] = (jobCounts[job] || 0) + 1;
             });
-            container.appendChild(grid);
+            const sortedJobs = Object.entries(jobCounts).sort((a,b) => b[1] - a[1]);
+            const topJobs = sortedJobs.slice(0, 5);
+            const otherCount = sortedJobs.slice(5).reduce((acc, curr) => acc + curr[1], 0);
+            
+            const labels = topJobs.map(j => j[0]);
+            const data = topJobs.map(j => j[1]);
+            if(otherCount > 0) { labels.push('기타'); data.push(otherCount); }
+
+            const ctx = document.getElementById('jobChart')?.getContext('2d');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{ 
+                            data: data, 
+                            backgroundColor: ['#ec4899', '#f472b6', '#fb7185', '#fda4af', '#fecdd3', '#e5e7eb'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        plugins: { legend: { position: 'right', labels: { font: { family: "'Noto Sans KR', sans-serif", size: 10, weight: 'bold' }, boxWidth: 10 } } } 
+                    }
+                });
+            }
         }
 
         function renderMembers(container) {
@@ -529,7 +557,7 @@
                                 <button onclick="openAddModal()" class="shrink-0 flex-1 md:flex-none px-10 py-3.5 bg-pink-500 text-white rounded-2xl text-xs font-bold shadow-xl hover:bg-pink-600 transition-all"><i class="fas fa-plus mr-2"></i> 멤버 추가</button>
                             </div>
                         </div>
-                        <div class="relative"><i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i><input type="text" oninput="handleSearch(this.value)" value="${appState.filters.search}" class="w-full pl-16 pr-8 py-4 bg-gray-50 border border-gray-100 rounded-[2rem] outline-none focus:ring-4 focus:ring-pink-50 font-bold text-sm shadow-inner" placeholder="닉네임, 직업, 직위, 구분(본캐/부캐) 검색"></div>
+                        <div class="relative"><i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i><input type="text" oninput="handleSearch(this.value)" value="${appState.filters.search}" class="w-full pl-16 pr-8 py-4 bg-gray-50 border border-gray-100 rounded-[2rem] outline-none focus:ring-4 focus:ring-pink-50 font-bold text-sm shadow-inner" placeholder="닉네임, 직업, 직위, 본캐닉 검색"></div>
                     </div>
                     <div id="memberTableContainer" class="bg-white rounded-b-[3rem] border border-gray-100 overflow-hidden shadow-sm"></div>
                 </div>`;
@@ -542,18 +570,17 @@
             const term = appState.filters.search.toLowerCase();
             const filtered = appState.members.filter(m => {
                 const gMatch = appState.filters.guild === 'all' || m.guild === appState.filters.guild;
+                const owner = m.isMain ? m.name : (m.mainCharName || '');
                 const sMatch = (m.name || '').toLowerCase().includes(term) || 
                                (m.role || '').toLowerCase().includes(term) || 
                                (m.class || '').toLowerCase().includes(term) || 
-                               (m.isMain ? '본캐' : '부캐').includes(term);
+                               owner.toLowerCase().includes(term);
                 return gMatch && sMatch;
             });
             
-            // 닉네임 유니코드 및 텍스트 기준 오름차순/내림차순 정렬
             filtered.sort((a, b) => { 
                 const vA = (a[appState.filters.sortField] || '').toString(); 
                 const vB = (b[appState.filters.sortField] || '').toString(); 
-                
                 if (vA < vB) return appState.filters.sortOrder === 'asc' ? -1 : 1;
                 if (vA > vB) return appState.filters.sortOrder === 'asc' ? 1 : -1;
                 return 0;
@@ -566,7 +593,6 @@
             const countEl = document.getElementById('totalMembersCount');
             if(countEl) countEl.innerText = filtered.length;
 
-            // 헤더 클릭 정렬 표시용 아이콘 헬퍼
             const getSortIcon = (f) => {
                 if (appState.filters.sortField !== f) return '<i class="fas fa-sort ml-1 opacity-30 text-[9px]"></i>';
                 return appState.filters.sortOrder === 'asc' ? '<i class="fas fa-sort-up ml-1 text-pink-500 text-[10px]"></i>' : '<i class="fas fa-sort-down ml-1 text-pink-500 text-[10px]"></i>';
@@ -575,7 +601,7 @@
             let html = `<div class="overflow-x-auto shadow-inner"><table class="w-full text-left min-w-[900px] text-xs whitespace-nowrap"><thead class="bg-gray-50 text-[10px] font-bold text-gray-500 border-b border-gray-100"><tr>
                 <th class="p-4 text-center w-16">No.</th>
                 <th class="p-4 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('name')">닉네임 ${getSortIcon('name')}</th>
-                <th class="p-4">구분</th>
+                <th class="p-4">본캐닉</th>
                 <th class="p-4 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('guild')">소속 ${getSortIcon('guild')}</th>
                 <th class="p-4 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('role')">직위 ${getSortIcon('role')}</th>
                 <th class="p-4 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('class')">직업 ${getSortIcon('class')}</th>
@@ -584,6 +610,8 @@
             
             if (filtered.length === 0) html += `<tr><td colspan="7" class="p-20 text-center text-gray-300 font-bold">검색된 길드원이 없습니다.</td></tr>`;
             
+            const exemptionRanks = ['크라운', '파르페', '티라미슈', '크로칸슈'];
+
             filtered.forEach((m, index) => {
                 let iconHtml = '';
                 if (m.role === '마카롱') {
@@ -593,7 +621,7 @@
                 } else {
                     let dotClass = 'bg-gray-200';
                     if (m.isMain) {
-                        if (['크라운', '파르페', '티라미슈', '크로칸슈'].includes(m.role)) {
+                        if (exemptionRanks.includes(m.role)) {
                             dotClass = 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]';
                         } else if (['팬케이크', '롤케이크'].includes(m.role)) {
                             dotClass = 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]';
@@ -604,12 +632,19 @@
                     iconHtml = `<div class="w-2.5 h-2.5 rounded-full ${dotClass}"></div>`;
                 }
                 
+                let roleText = m.role;
+                if(exemptionRanks.includes(m.role)) {
+                    roleText += ' <span class="text-[8px] text-blue-400 font-normal">(부캐면제직위)</span>';
+                }
+
+                let ownerName = m.isMain ? m.name : (m.mainCharName || '-');
+
                 html += `<tr class="hover:bg-pink-50/20 transition-all group">
                     <td class="p-3 text-center text-gray-400 font-black text-[11px]">${index + 1}</td>
                     <td class="p-3 leading-none"><div class="flex items-center gap-4 leading-none">${iconHtml}<span class="text-sm font-bold text-gray-800 tracking-tight leading-none">${m.name}</span></div></td>
-                    <td class="p-3 leading-none">${m.isMain ? '<span class="text-[9px] font-bold bg-pink-50 text-pink-500 px-4 py-1.5 rounded-full border border-pink-100 shadow-sm">본캐</span>' : `<span class="text-[9px] font-bold text-gray-400">부캐 / ${m.mainCharName || '-'}</span>`}</td>
+                    <td class="p-3 leading-none"><span class="text-[10px] font-bold text-gray-600">${ownerName}</span></td>
                     <td class="p-3 font-bold text-gray-500 leading-none">${m.guild}</td>
-                    <td class="p-3 leading-none"><span class="bg-gray-100 text-gray-500 px-4 py-1.5 rounded-xl font-bold text-[10px] shadow-sm">${m.role}</span></td>
+                    <td class="p-3 leading-none"><span class="bg-gray-100 text-gray-500 px-4 py-1.5 rounded-xl font-bold text-[10px] shadow-sm">${roleText}</span></td>
                     <td class="p-3 font-bold text-gray-400 leading-none">${m.class || '-'}</td>
                     <td class="p-3 text-right opacity-0 group-hover:opacity-100 transition-opacity leading-none"><div class="flex justify-end gap-2"><button onclick="openEditModal('${m.id}')" class="w-8 h-8 rounded-xl bg-white border border-gray-100 text-blue-500 hover:bg-blue-50 shadow-sm transition-all flex items-center justify-center"><i class="fas fa-edit text-xs"></i></button><button onclick="openDeleteModal('${m.id}')" class="w-8 h-8 rounded-xl bg-white border border-gray-100 text-red-500 hover:bg-red-50 shadow-sm transition-all flex items-center justify-center"><i class="fas fa-trash-alt text-xs"></i></button></div></td>
                 </tr>`;
@@ -691,24 +726,72 @@
         function openAddModal() {
             document.getElementById('modalTitle').innerText = '멤버 정보 신규 등록'; document.getElementById('memberForm').reset();
             document.getElementById('editMemberId').value = ''; document.getElementById('inputName').disabled = false;
-            const gSel = document.getElementById('inputGuild'); if(gSel) { gSel.innerHTML = appState.guilds.map(g => `<option value="${g.name}">${g.name}</option>`).join(''); onGuildSelectChange(appState.guilds[0].name); }
-            document.getElementById('inputJoinDate').value = new Date().toISOString().split('T')[0]; toggleMainCharInput(); openModal('memberModal');
+            
+            const gSel = document.getElementById('inputGuild'); 
+            if(gSel) { 
+                gSel.innerHTML = appState.guilds.map(g => `<option value="${g.name}">${g.name}</option>`).join(''); 
+                onGuildSelectChange(appState.guilds[0].name); 
+            }
+            
+            const jobSel = document.getElementById('inputClass');
+            if(jobSel) {
+                jobSel.innerHTML = `<option value="">직업을 선택하세요</option>` + MAPLE_JOBS.map(job => `<option value="${job}">${job}</option>`).join('');
+            }
+            
+            toggleMainCharInput(); 
+            openModal('memberModal');
         }
 
         function openEditModal(id) {
             const m = appState.members.find(x => x.id == id); if(!m) return;
             document.getElementById('modalTitle').innerText = '멤버 정보 수정하기'; document.getElementById('editMemberId').value = m.id;
             document.getElementById('inputName').value = m.name; document.getElementById('inputName').disabled = true; 
-            document.getElementById('inputClass').value = m.class || '';
-            const gSel = document.getElementById('inputGuild'); if(gSel) { gSel.innerHTML = appState.guilds.map(g => `<option value="${g.name}" ${g.name === m.guild ? 'selected' : ''}>${g.name}</option>`).join(''); onGuildSelectChange(m.guild); }
-            document.getElementById('inputRole').value = m.role; document.getElementById('inputIsMain').checked = m.isMain;
-            document.getElementById('inputMainCharName').value = m.mainCharName || ''; document.getElementById('inputJoinDate').value = (m.joinDate || "").split('T')[0];
-            toggleMainCharInput(); openModal('memberModal');
+            
+            const jobSel = document.getElementById('inputClass');
+            if(jobSel) {
+                jobSel.innerHTML = `<option value="">직업을 선택하세요</option>` + MAPLE_JOBS.map(job => `<option value="${job}">${job}</option>`).join('');
+                jobSel.value = m.class || '';
+            }
+
+            const gSel = document.getElementById('inputGuild'); 
+            if(gSel) { 
+                gSel.innerHTML = appState.guilds.map(g => `<option value="${g.name}" ${g.name === m.guild ? 'selected' : ''}>${g.name}</option>`).join(''); 
+                onGuildSelectChange(m.guild); 
+            }
+            
+            // 직위 선택 로직 (비동기로 options이 채워진 후 값 설정 필요)
+            setTimeout(() => {
+                const rSel = document.getElementById('inputRole');
+                if(rSel) rSel.value = m.role;
+            }, 50);
+
+            document.getElementById('inputIsMain').checked = m.isMain;
+            document.getElementById('inputMainCharName').value = m.mainCharName || ''; 
+            toggleMainCharInput(); 
+            openModal('memberModal');
         }
 
         document.getElementById('memberForm').onsubmit = async (e) => {
-            e.preventDefault(); const oldId = document.getElementById('editMemberId').value, name = document.getElementById('inputName').value.trim();
-            const payload = { id: oldId || name, name: name, guild: document.getElementById('inputGuild').value, role: document.getElementById('inputRole').value, class: document.getElementById('inputClass').value.trim() || '-', isMain: document.getElementById('inputIsMain').checked, mainCharName: document.getElementById('inputMainCharName').value.trim(), joinDate: document.getElementById('inputJoinDate').value };
+            e.preventDefault(); 
+            const oldId = document.getElementById('editMemberId').value;
+            const name = document.getElementById('inputName').value.trim();
+            
+            if(!name) {
+                showMsg('닉네임을 입력해주세요.', 'error');
+                return;
+            }
+
+            const payload = { 
+                id: oldId || name, 
+                name: name, 
+                guild: document.getElementById('inputGuild').value, 
+                role: document.getElementById('inputRole').value, 
+                class: document.getElementById('inputClass').value, 
+                isMain: document.getElementById('inputIsMain').checked, 
+                mainCharName: document.getElementById('inputMainCharName').value.trim(), 
+                joinDate: '' // 삭제됨
+            };
+            
             if (await sendAction(oldId ? 'update' : 'add', payload, 'btnSubmitMember')) closeModal('memberModal');
         };
 
@@ -749,9 +832,9 @@
         }
 
         function changeRankGuild(v) { appState.tempSettingsRankGuild = v; router('settings'); }
-        function updateRankVal(i, v) { appState.guildRanks[appState.tempSettingsRankGuild][i] = v; localStorage.setItem('macaron_ranks_v18', JSON.stringify(appState.guildRanks)); }
-        function addRank() { appState.guildRanks[appState.tempSettingsRankGuild].push("새 직위"); localStorage.setItem('macaron_ranks_v18', JSON.stringify(appState.guildRanks)); router('settings'); }
-        function removeRank(i) { appState.guildRanks[appState.tempSettingsRankGuild].splice(i, 1); localStorage.setItem('macaron_ranks_v18', JSON.stringify(appState.guildRanks)); router('settings'); }
+        function updateRankVal(i, v) { appState.guildRanks[appState.tempSettingsRankGuild][i] = v; localStorage.setItem('macaron_ranks_v22', JSON.stringify(appState.guildRanks)); } // 버전 v22으로 통일
+        function addRank() { appState.guildRanks[appState.tempSettingsRankGuild].push("새 직위"); localStorage.setItem('macaron_ranks_v22', JSON.stringify(appState.guildRanks)); router('settings'); }
+        function removeRank(i) { appState.guildRanks[appState.tempSettingsRankGuild].splice(i, 1); localStorage.setItem('macaron_ranks_v22', JSON.stringify(appState.guildRanks)); router('settings'); }
         
         function executeFactoryReset() { openModal('resetModal'); }
         async function confirmReset() { if(await sendAction('reset', {})) closeModal('resetModal'); }
