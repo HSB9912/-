@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>뚠카롱 길드 관리 시스템 (v7.7)</title>
+    <title>뚠카롱 길드 관리 시스템 (v7.9.1)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -258,12 +258,12 @@
 
         const baseRanks = ['마카롱', '다쿠아즈'];
         const initialGuildRanks = {
-            '뚠카롱': [...baseRanks, '크라운', '파르페', '티라미슈', '크로칸슈', '롤케이크', '팬케이크', '와플', '스콘', '반죽(휴면)'],
-            '뚱카롱': [...baseRanks, '뚠케이크', '뚠브레드', '수플레', '뚠스콘', '반죽(휴면)'],
-            '밤카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽(휴면)'],
-            '별카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽(휴면)'],
-            '달카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽(휴면)'],
-            '꿀카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽(휴면)']
+            '뚠카롱': [...baseRanks, '크라운', '파르페', '티라미슈', '크로칸슈', '롤케이크', '팬케이크', '와플', '스콘', '반죽', '반죽(휴면)'],
+            '뚱카롱': [...baseRanks, '뚠케이크', '뚠브레드', '수플레', '뚠스콘', '반죽', '반죽(휴면)'],
+            '밤카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽', '반죽(휴면)'],
+            '별카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽', '반죽(휴면)'],
+            '달카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽', '반죽(휴면)'],
+            '꿀카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽', '반죽(휴면)']
         };
         
         const appState = {
@@ -296,7 +296,6 @@
             });
         }
         
-        // 차트 인스턴스를 전역으로 관리 (파괴 및 재생성을 위해)
         let jobChartInstance = null;
 
         function showMsg(text, type = 'info') {
@@ -481,36 +480,30 @@
             return html;
         }
 
-        // 직업 차트 업데이트 함수 (전역 접근 가능)
         window.updateJobChart = function(targetGuild) {
             const ctx = document.getElementById('jobChart');
             if(!ctx) return;
             
-            // 데이터 필터링
             let targetMembers = appState.members;
             if(targetGuild !== 'all') {
                 targetMembers = appState.members.filter(m => m.guild === targetGuild);
             }
 
-            // 직업 카운트
             const jobCounts = {};
             targetMembers.forEach(m => {
                 const job = (m.class && m.class.trim()) ? m.class : '미설정';
                 jobCounts[job] = (jobCounts[job] || 0) + 1;
             });
             
-            // 정렬
             const sortedJobs = Object.entries(jobCounts).sort((a,b) => b[1] - a[1]);
             const labels = sortedJobs.map(j => j[0]);
             const data = sortedJobs.map(j => j[1]);
 
-            // 차트 높이 재설정 (항목당 높이 확보)
             const minHeight = 300;
             const dynamicHeight = Math.max(minHeight, labels.length * 25);
             const chartContainer = ctx.parentElement;
             chartContainer.style.height = dynamicHeight + 'px';
 
-            // 기존 차트 파괴 후 재생성
             if(jobChartInstance) jobChartInstance.destroy();
             
             jobChartInstance = new Chart(ctx, {
@@ -568,7 +561,6 @@
             const anniv = getAnniversaryInfo();
             const wrap = document.createElement('div');
             
-            // 1. 상단 (달력 + 직업차트)
             const topSection = document.createElement('div');
             topSection.className = "grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8 fade-in";
             topSection.innerHTML = `
@@ -605,7 +597,6 @@
                 </div>
             `;
             
-            // 2. 하단 (길드별 인원 카드) - 부활시킨 부분
             const bottomSection = document.createElement('div');
             bottomSection.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 fade-in";
             
@@ -639,7 +630,6 @@
             container.appendChild(topSection);
             container.appendChild(bottomSection);
 
-            // 차트 초기화 (DOM에 추가된 후 실행)
             setTimeout(() => window.updateJobChart('all'), 0);
         }
 
@@ -667,6 +657,11 @@
         function updateMemberTable() {
             const container = document.getElementById('memberTableContainer');
             if(!container) return;
+            
+            // 본캐 정보 매핑 생성
+            const memberMap = new Map();
+            appState.members.forEach(m => memberMap.set(m.name, m));
+
             const term = appState.filters.search.toLowerCase();
             const filtered = appState.members.filter(m => {
                 const gMatch = appState.filters.guild === 'all' || m.guild === appState.filters.guild;
@@ -701,7 +696,7 @@
             let html = `<div class="overflow-x-auto shadow-inner"><table class="w-full text-left min-w-[900px] text-xs whitespace-nowrap"><thead class="bg-gray-50 text-[10px] font-bold text-gray-500 border-b border-gray-100"><tr>
                 <th class="p-4 text-center w-16">No.</th>
                 <th class="p-4 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('name')">닉네임 ${getSortIcon('name')}</th>
-                <th class="p-4">본캐닉</th>
+                <th class="p-4">본캐 정보</th>
                 <th class="p-4 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('guild')">소속 ${getSortIcon('guild')}</th>
                 <th class="p-4 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('role')">직위 ${getSortIcon('role')}</th>
                 <th class="p-4 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('class')">직업 ${getSortIcon('class')}</th>
@@ -734,15 +729,45 @@
                 
                 let roleText = m.role;
                 if(exemptionRanks.includes(m.role)) {
-                    roleText += ' <span class="text-[8px] text-blue-400 font-normal">(부캐면제직위)</span>';
+                    roleText += ' <span class="text-[8px] text-blue-400 font-normal">(아인슈페너)</span>';
                 }
 
-                let ownerName = m.isMain ? m.name : (m.mainCharName || '-');
+                // 본캐 정보 로직 (이름 + 직위) - 수정된 부분
+                let ownerName = '-';
+                let ownerRankHtml = ''; // 본캐 직위 표시용
+
+                if (m.isMain) {
+                    ownerName = m.name;
+                    // 본캐인 경우 자기 자신의 직위 표시 (특별 직위 체크)
+                    let rText = m.role;
+                    if (exemptionRanks.includes(m.role)) {
+                        rText += ' <span class="text-[8px] text-blue-400 font-normal">(아인슈페너)</span>';
+                    }
+                    ownerRankHtml = rText;
+                } else {
+                    ownerName = m.mainCharName || '-';
+                    const mainMem = memberMap.get(ownerName);
+                    if (mainMem) {
+                        // 연결된 본캐가 있으면 그 본캐의 직위 표시 (특별 직위 체크)
+                        let rText = mainMem.role;
+                        if (exemptionRanks.includes(mainMem.role)) {
+                            rText += ' <span class="text-[8px] text-blue-400 font-normal">(아인슈페너)</span>';
+                        }
+                        ownerRankHtml = rText;
+                    } else {
+                        ownerRankHtml = '<span class="text-gray-300">정보없음</span>';
+                    }
+                }
 
                 html += `<tr class="hover:bg-pink-50/20 transition-all group">
                     <td class="p-3 text-center text-gray-400 font-black text-[11px]">${index + 1}</td>
                     <td class="p-3 leading-none"><div class="flex items-center gap-4 leading-none">${iconHtml}<span class="text-sm font-bold text-gray-800 tracking-tight leading-none">${m.name}</span></div></td>
-                    <td class="p-3 leading-none"><span class="text-[10px] font-bold text-gray-600">${ownerName}</span></td>
+                    <td class="p-3 leading-none">
+                        <div class="flex flex-col gap-0.5">
+                            <span class="text-[10px] font-bold text-gray-700">${ownerName}</span>
+                            <span class="text-[9px] text-gray-400 font-medium">${ownerRankHtml}</span>
+                        </div>
+                    </td>
                     <td class="p-3 font-bold text-gray-500 leading-none">${m.guild}</td>
                     <td class="p-3 leading-none"><span class="bg-gray-100 text-gray-500 px-4 py-1.5 rounded-xl font-bold text-[10px] shadow-sm">${roleText}</span></td>
                     <td class="p-3 font-bold text-gray-400 leading-none">${m.class || '-'}</td>
@@ -764,7 +789,7 @@
         }
 
         function renderHistory(container) {
-            container.innerHTML = `<div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden fade-in font-bold"><div class="p-8 border-b border-gray-50 flex items-center justify-between shadow-sm"><h3 class="text-sm font-bold text-gray-800"><i class="fas fa-history mr-2 text-pink-500"></i> 길드 활동 운영 이력</h3><span class="text-[10px] text-gray-400 font-bold">누적 기록: ${appState.history.length} 건</span></div><div class="overflow-x-auto shadow-inner"><table class="w-full text-left text-xs whitespace-nowrap font-bold"><thead class="bg-gray-50 text-[10px] font-bold text-gray-500 border-b border-gray-100"><tr><th class="p-6">시간</th><th class="p-6 w-32">활동 분류</th><th class="p-8">대상 닉네임</th><th class="p-6">활동 상세 내용</th></tr></thead><tbody class="divide-y divide-gray-50 text-gray-600 font-bold">${appState.history.length === 0 ? `<tr><td colspan="4" class="p-20 text-center text-gray-300 font-bold">기록된 이력이 없습니다.</td></tr>` : appState.history.map(log => {
+            container.innerHTML = `<div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden fade-in font-bold"><div class="p-8 border-b border-gray-50 flex items-center justify-between shadow-sm"><h3 class="text-sm font-bold text-gray-800"><i class="fas fa-history mr-2 text-pink-500"></i> 길드 활동 운영 이력</h3><span class="text-[10px] text-gray-400 font-bold">누적 기록: ${appState.history.length} 건</span></div><div class="overflow-x-auto shadow-inner"><table class="w-full text-left text-xs whitespace-nowrap font-bold"><thead class="bg-gray-50 text-[10px] font-bold text-gray-500 border-b border-gray-100"><tr><th class="p-6">시간</th><th class="p-6 w-32">활동 분류</th><th class="p-8">대상 닉네임</th><th class="p-6">활동 상세 내용</th></tr></thead><tbody class="divide-y divide-gray-50 text-gray-600 font-bold">${appState.history.length ===0 ? `<tr><td colspan="4" class="p-20 text-center text-gray-300 font-bold">기록된 이력이 없습니다.</td></tr>` : appState.history.map(log => {
                 const badge = log.category === '추방' ? 'bg-red-50 text-red-500 border border-red-100' : (log.category === '탈퇴' || log.category === '자진탈퇴' ? 'bg-gray-100 text-gray-500 border border-gray-200' : 'bg-green-50 text-green-500 border border-green-100');
                 return `<tr class="hover:bg-gray-50/50 transition-colors"><td class="p-6 font-mono text-gray-400 font-bold text-[10px] tracking-tighter">${log.date}</td><td class="p-6"><span class="px-3 py-1.5 rounded-lg text-[9px] font-bold ${badge} shadow-sm">${log.category}</span></td><td class="p-8 font-bold text-gray-800">${log.name}</td><td class="p-8 font-medium text-gray-500 font-bold text-[11px]">${log.content}</td></tr>`;
             }).join('')}</tbody></table></div></div>`;
