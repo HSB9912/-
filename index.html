@@ -114,7 +114,7 @@
     
     <div id="deleteModal" class="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm hidden fade-in font-bold"><div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 text-center border border-gray-50"><div class="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-5 shadow-inner"><i class="fas fa-user-minus"></i></div><p class="text-gray-800 font-bold text-lg mb-6 leading-tight">'<span id="deleteTargetName" class="text-red-500"></span>' 제거 확정</p><div class="space-y-4 text-left mb-8"><div class="flex gap-2"><button onclick="setDeleteType('leave')" id="btnLeave" class="flex-1 py-3 rounded-xl font-bold text-xs bg-gray-800 text-white shadow-sm transition-all">자진탈퇴</button><button onclick="setDeleteType('kick')" id="btnKick" class="flex-1 py-3 rounded-xl font-bold text-xs bg-gray-100 text-gray-400 transition-all">추방</button></div><input type="text" id="deleteReason" class="w-full border border-gray-100 bg-gray-50 rounded-xl p-3 text-xs font-bold outline-none shadow-inner" placeholder="사유를 입력하세요 (이력용)"></div><div class="grid grid-cols-2 gap-4"><button onclick="closeModal('deleteModal')" class="py-4 bg-gray-50 rounded-2xl font-bold text-xs text-gray-500 hover:bg-gray-100 transition-all">취소</button><button onclick="confirmDelete()" class="py-4 bg-red-500 text-white rounded-2xl font-bold text-xs shadow-xl hover:bg-red-600 transition-all">삭제 확정</button></div></div></div>
 
-    <!-- Event Detail Modal -->
+    <!-- Event Detail Modal (이미지 디자인 100% 반영) -->
     <div id="eventDetailModal" class="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm hidden fade-in font-bold">
         <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 border border-gray-50 relative">
             <div class="flex justify-between items-center mb-10">
@@ -179,8 +179,8 @@
             analysisGuild: '뚠카롱',
             isBatchMode: false, pendingUpdates: {},
             calendarView: { year: new Date().getFullYear(), month: new Date().getMonth() },
-            scriptUrl: localStorage.getItem('macaron_script_url') || APPS_SCRIPT_URL,
-            sheetUrl: localStorage.getItem('macaron_sheet_url') || DEFAULT_SHEET_URL,
+            scriptUrl: APPS_SCRIPT_URL, // 로컬 캐시 무시하고 강제 동기화
+            sheetUrl: DEFAULT_SHEET_URL,
             guildRanks: initialGuildRanks,
             currentSuroInputs: {},
             currentSelectedDate: null
@@ -259,7 +259,9 @@
         async function fetchMembers() {
             showLoading(true);
             try {
-                const response = await fetch(appState.scriptUrl, { method: 'GET', mode: 'cors', cache: 'no-cache' });
+                // localStorage에 저장된 주소가 있다면 그것을 사용하되, 아니면 기본 상수를 사용함
+                const targetUrl = localStorage.getItem('macaron_script_url') || appState.scriptUrl;
+                const response = await fetch(targetUrl, { method: 'GET', mode: 'cors', cache: 'no-cache' });
                 const json = await response.json();
                 if (json.status === "success") {
                     appState.members = (json.data.members || []).filter(m => m.name && m.name.trim() !== "");
@@ -274,15 +276,28 @@
                     updateAnniversaryLabel();
                     router(appState.activeTab);
                 }
-            } catch (e) { console.error(e); showMsg("서버 연결 실패.", "error"); }
+            } catch (e) { 
+                console.error(e); 
+                showMsg("서버 연결 실패. 설정에서 URL을 확인하세요.", "error"); 
+            }
             showLoading(false);
         }
         async function sendAction(action, data) {
             showMsg("데이터 처리 중...", "info");
             try {
-                const response = await fetch(appState.scriptUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, data }), redirect: 'follow' });
+                const targetUrl = localStorage.getItem('macaron_script_url') || appState.scriptUrl;
+                const response = await fetch(targetUrl, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                    body: JSON.stringify({ action, data }), 
+                    redirect: 'follow' 
+                });
                 const res = await response.json();
-                if (res.status === "success") { showMsg("완료되었습니다.", "success"); await fetchMembers(); return true; }
+                if (res.status === "success") { 
+                    showMsg("완료되었습니다.", "success"); 
+                    await fetchMembers(); 
+                    return true; 
+                }
                 else { showMsg(res.message || "오류 발생", "error"); return false; }
             } catch (e) { console.error(e); showMsg("서버 전송 실패", "error"); return false; }
         }
@@ -459,7 +474,7 @@
             return html + `</div>`; 
         }
 
-        // --- ANALYSIS (UPDATED WITH IMAGE MOCKUP CONCEPT) ---
+        // --- ANALYSIS (이미지 구상 반영) ---
         function renderAnalysis(container, gName) {
             appState.analysisGuild = gName;
             const targets = appState.members.filter(m => m.guild === gName);
@@ -477,7 +492,7 @@
                 return { ...m, avg: Number(avg), recentScores: scores };
             });
 
-            // 정렬 로직
+            // 정렬 로직 (평균 점수 기준 기본 정렬)
             processedList.sort((a, b) => {
                 const f = appState.analysisFilters.sortField;
                 const o = appState.analysisFilters.sortOrder;
@@ -499,25 +514,27 @@
                     ${appState.guilds.map(g => `<button onclick="renderAnalysis(document.getElementById('contentArea'), '${g.name}')" class="px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${g.name === gName ? 'bg-pink-500 text-white shadow-lg' : 'bg-white text-gray-500 border border-gray-100'}">${g.name}</button>`).join('')}
                 </div>
 
-                <!-- Stat Cards (Mockup: Overall 현황 / 알림 / 관심) -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
+                <!-- 중요 알림 및 요약 카드 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0 font-bold">
                     <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col justify-center items-center">
                         <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">전체 총점</p>
                         <h4 class="text-3xl font-black text-gray-800 tracking-tighter">${total.toLocaleString()}</h4>
                     </div>
-                    <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col justify-center items-center">
-                        <p class="text-[10px] text-red-400 font-bold uppercase tracking-widest mb-1">🚨 미참여자 (0점)</p>
-                        <h4 class="text-3xl font-black text-red-500 tracking-tighter">${zeroPointMembers.length}명</h4>
+                    <div class="bg-red-50 p-6 rounded-[2rem] border border-red-100 shadow-sm flex flex-col justify-center items-center">
+                        <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest mb-1">🚨 중요 알림 (미참여)</p>
+                        <div class="text-center">
+                            <h4 class="text-3xl font-black text-red-600 tracking-tighter">${zeroPointMembers.length}명</h4>
+                        </div>
                     </div>
                     <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col justify-center items-center">
-                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">분석 주차</p>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">최근 데이터 주차</p>
                         <h4 class="text-sm font-bold text-gray-700">${currentHeader ? currentHeader.split(' ')[0] : '데이터 없음'}</h4>
                     </div>
                 </div>
 
-                <!-- Main Content Row -->
+                <!-- 메인 데이터 행 -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
-                    <!-- Chart Section -->
+                    <!-- 그래프 섹션 -->
                     <div class="lg:col-span-1 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col overflow-hidden">
                         <h3 class="text-xs font-bold text-gray-400 mb-6 uppercase tracking-widest">주간 총점 추이</h3>
                         <div class="flex-1 min-h-[200px]">
@@ -525,33 +542,32 @@
                         </div>
                     </div>
 
-                    <!-- Interactive Data Table (Mockup 반영) -->
+                    <!-- 인터랙티브 데이터 테이블 -->
                     <div class="lg:col-span-2 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
                         <div class="p-6 border-b border-gray-50 flex justify-between items-center shrink-0">
-                            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">인터랙티브 데이터 테이블</h3>
-                            <span class="text-[10px] text-gray-400">최근 5주 기록</span>
+                            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">인터랙티브 데이터 테이블 (최근 5주)</h3>
                         </div>
-                        <div class="flex-1 overflow-auto">
+                        <div class="flex-1 overflow-auto no-scrollbar">
                             <table class="w-full text-left text-xs whitespace-nowrap">
                                 <thead class="bg-gray-50 font-bold text-[10px] text-gray-500 uppercase sticky top-0 z-10 border-b border-gray-100">
                                     <tr>
                                         <th class="p-4 w-12 text-center">RANK</th>
-                                        <th class="p-4 sortable" onclick="setAnalysisSort('name')">닉네임${sortIcon('name')}</th>
-                                        <th class="p-4 text-center sortable bg-pink-50/50" onclick="setAnalysisSort('avg')">5주 평균${sortIcon('avg')}</th>
+                                        <th class="p-4 sortable" onclick="setAnalysisSort('name')">캐릭터명${sortIcon('name')}</th>
+                                        <th class="p-4 text-center sortable bg-pink-50/50" onclick="setAnalysisSort('avg')">평균${sortIcon('avg')}</th>
                                         ${recentHeaders.map(h => `<th class="p-4 text-right font-medium">${h.split('~')[0].trim()}</th>`).join('')}
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-gray-50">
+                                <tbody class="divide-y divide-gray-50 font-bold">
                                     ${processedList.map((m, i) => {
                                         return `
                                         <tr class="hover:bg-gray-50 transition-colors h-12">
-                                            <td class="p-4 text-center font-bold text-gray-300">${i + 1}</td>
-                                            <td class="p-4 font-bold text-gray-800 flex items-center leading-none">
+                                            <td class="p-4 text-center text-gray-300">${i + 1}</td>
+                                            <td class="p-4 text-gray-800 flex items-center leading-none">
                                                 ${getNicknameIcon(m.role)}${m.name}
                                             </td>
-                                            <td class="p-4 text-center font-black text-pink-500 bg-pink-50/20">${m.avg.toLocaleString()}</td>
+                                            <td class="p-4 text-center text-pink-500 bg-pink-50/20">${m.avg.toLocaleString()}</td>
                                             ${m.recentScores.map(s => `
-                                                <td class="p-4 text-right font-mono score-cell ${s === 0 ? 'score-zero' : 'text-gray-500'}">
+                                                <td class="p-4 text-right font-mono score-cell ${s === 0 ? 'score-zero' : 'text-gray-400'}">
                                                     ${s > 0 ? s.toLocaleString() : '0'}
                                                 </td>
                                             `).join('')}
@@ -564,7 +580,7 @@
                 </div>
             </div>`;
 
-            // 차트 렌더링
+            // 그래프 그리기
             const ctx = document.getElementById('analysisChart');
             if(!ctx) return;
             if(analysisChartInstance) analysisChartInstance.destroy();
@@ -602,7 +618,7 @@
             renderAnalysis(document.getElementById('contentArea'), appState.analysisGuild); 
         }
 
-        // --- OTHER UTILS (UNCHANGED) ---
+        // --- OTHER UTILS ---
         function updateJobChart(target) {
             const ctx = document.getElementById('jobChart'); if(!ctx) return;
             const targets = target === 'all' ? appState.members : appState.members.filter(m => m.guild === target);
