@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>뚠카롱 길드 관리 시스템 (v8.8.2)</title>
+    <title>뚠카롱 길드 관리 시스템 (v8.10)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -33,14 +33,14 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.25rem; text-align: center; font-size: 0.75rem; }
-        .calendar-day { padding: 0.25rem; border-radius: 0.75rem; position: relative; transition: all 0.2s; height: 32px; display: flex; align-items: center; justify-content: center; }
+        .calendar-day { padding: 0.25rem; border-radius: 0.75rem; position: relative; transition: all 0.2s; min-height: 32px; display: flex; align-items: center; justify-content: center; aspect-ratio: 1.2/1; }
         .calendar-day:hover { background-color: #f9fafb; }
-        .calendar-day.today { background-color: #ec4899; color: white; box-shadow: 0 4px 6px -1px rgba(236, 72, 153, 0.4); }
-        .calendar-day.thursday { color: #db2777; background-color: #fdf2f8; border: 1px solid #fbcfe8; }
-        .calendar-head { font-size: 0.7rem; font-weight: 800; color: #9ca3af; text-transform: uppercase; padding-bottom: 0.5rem; }
+        .calendar-day.today { background-color: #ec4899; color: white; box-shadow: 0 4px 6px -1px rgba(236, 72, 153, 0.4); font-weight: bold; }
+        .calendar-day.thursday { color: #db2777; background-color: #fdf2f8; border: 1px solid #fbcfe8; font-weight: bold; }
+        .calendar-head { font-size: 0.7rem; font-weight: 800; color: #9ca3af; text-transform: uppercase; padding-bottom: 8px; }
         .batch-modified { background-color: #fff7ed !important; } 
         .batch-deleted { opacity: 0.4; text-decoration: line-through; background-color: #fee2e2 !important; }
-        .trend-up { color: #ef4444; } .trend-down { color: #3b82f6; } 
+        .trend-up { color: #ef4444; } .trend-down { color: #3b82f6; } .trend-neutral { color: #9ca3af; }
     </style>
 </head>
 <body class="bg-gray-50 text-slate-800 h-screen overflow-hidden flex font-medium">
@@ -48,8 +48,7 @@
     <div id="loadingOverlay">
         <div class="text-center">
             <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-pink-500 border-opacity-20 border-t-pink-500 mb-8 mx-auto"></div>
-            <p class="text-pink-600 font-bold text-xl tracking-tight">클라우드 서버와 데이터 동기화 중...</p>
-            <p class="text-gray-400 text-xs mt-4 uppercase tracking-widest font-bold">Processing Data Sync</p>
+            <p class="text-pink-600 font-bold text-xl tracking-tight">데이터 동기화 중...</p>
             <button id="forceEnterBtn" onclick="hideOverlay()" class="hidden mt-8 text-[10px] text-gray-400 underline uppercase tracking-widest font-bold hover:text-pink-500 transition-colors">서버 응답 지연 - 강제 입장하기</button>
         </div>
     </div>
@@ -58,7 +57,7 @@
 
     <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col shadow-sm">
         <div class="p-6 border-b border-gray-100 flex items-center gap-3"><div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-400 to-rose-400 flex items-center justify-center text-white font-bold shadow-lg shadow-pink-100 text-xl">뚠</div><div><h1 class="text-lg font-bold text-gray-800 tracking-tight">뚠카롱 길드 관리</h1><p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">System Dashboard</p></div><button id="closeSidebar" class="lg:hidden ml-auto text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button></div>
-        <nav class="p-4 space-y-2 flex-1">
+        <nav class="p-4 space-y-2 flex-1 overflow-y-auto no-scrollbar">
             <button onclick="router('dashboard')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="dashboard"><i class="fas fa-columns w-5 text-center"></i><span>대시보드</span></button>
             <button onclick="router('members')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="members"><i class="fas fa-users w-5 text-center"></i><span>길드원 관리</span></button>
             <button onclick="router('suro')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="suro"><i class="fas fa-edit w-5 text-center"></i><span>수로 점수 입력</span></button>
@@ -68,7 +67,7 @@
             <button onclick="router('history')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="history"><i class="fas fa-history w-5 text-center"></i><span>운영 이력</span></button>
             <button onclick="router('settings')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="settings"><i class="fas fa-cog w-5 text-center"></i><span>설정</span></button>
         </nav>
-        <div class="p-4 border-t border-gray-100 bg-gray-50/50 text-center font-bold"><p class="text-[10px] text-green-500 uppercase tracking-widest"><i class="fas fa-cloud mr-1 animate-pulse"></i> 실시간 연동 중</p></div>
+        <div class="p-4 border-t border-gray-100 bg-gray-50/50 text-center font-bold"><p class="text-[10px] text-green-500 uppercase tracking-widest"><i class="fas fa-cloud mr-1 animate-pulse"></i> v8.10 Stable</p></div>
     </aside>
 
     <div id="sidebarOverlay" class="fixed inset-0 bg-black/10 z-40 hidden lg:hidden"></div>
@@ -83,9 +82,11 @@
 
     <!-- Modals -->
     <div id="memberModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm hidden fade-in font-bold"><div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden border border-gray-100"><div class="p-6 bg-pink-50 border-b border-pink-100 flex justify-between items-center"><div><h3 id="modalTitle" class="text-lg font-bold text-pink-700 tracking-tight">멤버 정보 입력</h3></div><button onclick="closeModal('memberModal')"><i class="fas fa-times text-gray-400 text-lg"></i></button></div><form id="memberForm" class="p-8 space-y-5"><input type="hidden" id="editMemberId"><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">닉네임</label><input type="text" id="inputName" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 outline-none focus:ring-4 focus:ring-pink-50 text-sm font-bold shadow-inner" required placeholder="정확한 캐릭터명"></div><div class="grid grid-cols-2 gap-4"><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">소속</label><select id="inputGuild" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 text-sm font-bold outline-none" onchange="onGuildSelectChange(this.value)"></select></div><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">직위</label><select id="inputRole" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 text-sm font-bold outline-none"></select></div></div><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">직업</label><select id="inputClass" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 text-sm font-bold outline-none shadow-inner cursor-pointer"><option value="">직업을 선택하세요</option></select></div><div class="flex items-center gap-3 py-1"><input type="checkbox" id="inputIsMain" class="w-5 h-5 text-pink-500 rounded focus:ring-pink-50 shadow-sm cursor-pointer" checked onchange="toggleMainCharInput()"><label for="inputIsMain" class="text-[11px] font-bold text-gray-600 uppercase tracking-tight cursor-pointer">본캐릭터입니까?</label></div><div id="mainCharInputGroup" class="hidden animate-fade-in space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">본캐 닉네임</label><input type="text" id="inputMainCharName" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 text-sm font-bold outline-none shadow-inner" placeholder="본캐릭명 입력 (자동 직위 확인)" oninput="checkAutoRank(this.value)"></div><button type="submit" id="btnSubmitMember" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-black transition-all shadow-xl mt-2">데이터베이스에 저장</button></form></div></div>
-    <div id="bulkModal" class="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-md hidden fade-in font-bold"><div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col h-[85vh] border border-gray-100"><div class="p-6 bg-gray-50 border-b border-gray-100 flex justify-between items-center px-10"><h3 class="font-bold text-gray-600 text-sm"><i class="fas fa-file-import mr-2 text-pink-500"></i> 대량 명단 데이터 등록</h3><button onclick="closeModal('bulkModal')"><i class="fas fa-times text-gray-400"></i></button></div><div class="p-10 flex-1 overflow-y-auto flex flex-col gap-8"><div class="bg-indigo-50 p-6 rounded-3xl border border-indigo-100 flex items-center gap-5 shadow-inner"><div class="text-indigo-500 text-2xl"><i class="fas fa-info-circle"></i></div><p class="text-xs text-indigo-600 font-bold">엑셀에서 [너굴, 뚠카롱, 에반] 처럼 닉네임, 길드명, 직업 순서로 복사해서 넣으세요.</p></div><div class="flex-1 flex flex-col lg:flex-row gap-8 min-h-0"><div class="flex-1 flex flex-col"><textarea id="bulkInput" oninput="parseBulkInput()" class="w-full flex-1 border border-gray-200 rounded-[2rem] p-6 font-mono text-sm outline-none focus:ring-8 focus:ring-indigo-50 resize-none bg-gray-50 shadow-inner" placeholder="이곳에 데이터를 붙여넣으세요..."></textarea></div><div class="flex-1 flex flex-col border border-gray-200 rounded-[2rem] overflow-hidden bg-white shadow-sm"><div class="p-4 bg-gray-50 border-b border-gray-100 font-bold text-[11px] text-gray-500 text-center">등록 대기 명단</div><div class="flex-1 overflow-auto no-scrollbar shadow-inner"><table class="w-full text-left text-[11px] whitespace-nowrap font-bold"><thead class="bg-gray-50 text-gray-400 sticky top-0 shadow-sm"><tr><th class="px-5 py-3 border-b">상태</th><th class="px-5 py-3 border-b">닉네임</th><th class="px-5 py-3 border-b">소속</th><th class="px-5 py-3 border-b">직업</th></tr></thead><tbody id="bulkPreviewBody" class="divide-y divide-gray-50"></tbody></table></div></div></div></div><div class="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 px-12 items-center"><span id="bulkStats" class="text-xs text-gray-500 font-bold mr-auto"></span><button id="btnExecuteBulk" onclick="saveBulkData()" class="px-12 py-3 bg-gray-900 text-white rounded-2xl hover:bg-black font-bold text-xs shadow-xl transition-all disabled:opacity-30">입력하기</button></div></div></div>
+    
+    <!-- Bulk Import (Hidden but working) -->
+    <div id="bulkModal" class="hidden"></div>
+
     <div id="deleteModal" class="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm hidden fade-in font-bold"><div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 text-center border border-gray-50"><div class="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-5 shadow-inner"><i class="fas fa-user-minus"></i></div><p class="text-gray-800 font-bold text-lg mb-6 leading-tight">'<span id="deleteTargetName" class="text-red-500"></span>' 제거 확정</p><div class="space-y-4 text-left mb-8"><div class="flex gap-2"><button onclick="setDeleteType('leave')" id="btnLeave" class="flex-1 py-3 rounded-xl font-bold text-xs bg-gray-800 text-white shadow-sm transition-all">자진탈퇴</button><button onclick="setDeleteType('kick')" id="btnKick" class="flex-1 py-3 rounded-xl font-bold text-xs bg-gray-100 text-gray-400 transition-all">추방</button></div><input type="text" id="deleteReason" class="w-full border border-gray-100 bg-gray-50 rounded-xl p-3 text-xs font-bold outline-none shadow-inner" placeholder="사유를 입력하세요 (이력용)"></div><div class="grid grid-cols-2 gap-4"><button onclick="closeModal('deleteModal')" class="py-4 bg-gray-50 rounded-2xl font-bold text-xs text-gray-500 hover:bg-gray-100 transition-all">취소</button><button onclick="confirmDelete()" class="py-4 bg-red-500 text-white rounded-2xl font-bold text-xs shadow-xl hover:bg-red-600 transition-all">삭제 확정</button></div></div></div>
-    <div id="suroModal" class="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-md hidden fade-in font-bold"><div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col h-[85vh] border border-gray-100"><div class="p-6 bg-gray-50 border-b border-gray-100 flex justify-between items-center px-10"><div><h3 class="font-bold text-gray-800 text-lg">주간 수로 점수 입력</h3><p class="text-[10px] text-gray-400 mt-1">이번 주 (목요일~수요일) 데이터 입력</p></div><button onclick="closeModal('suroModal')"><i class="fas fa-times text-gray-400"></i></button></div><div class="p-10 flex-1 overflow-y-auto flex flex-col gap-8"><div class="bg-blue-50 p-6 rounded-3xl border border-blue-100 flex items-center gap-5 shadow-inner"><div class="text-blue-500 text-2xl"><i class="fas fa-info-circle"></i></div><div><p class="text-xs text-blue-600 font-bold mb-1">복사 붙여넣기 규칙: [닉네임 점수] (탭 또는 공백 구분)</p></div></div><div class="flex-1 flex flex-col lg:flex-row gap-8 min-h-0"><div class="flex-1 flex flex-col"><textarea id="suroInput" oninput="parseSuroInput()" class="w-full flex-1 border border-gray-200 rounded-[2rem] p-6 font-mono text-sm outline-none focus:ring-8 focus:ring-blue-50 resize-none bg-gray-50 shadow-inner" placeholder="예시:\n유저1 50000\n유저2 12000..."></textarea></div><div class="flex-1 flex flex-col border border-gray-200 rounded-[2rem] overflow-hidden bg-white shadow-sm"><div class="p-4 bg-gray-50 border-b border-gray-100 font-bold text-[11px] text-gray-500 text-center">점수 미리보기</div><div class="flex-1 overflow-auto no-scrollbar shadow-inner"><table class="w-full text-left text-[11px] whitespace-nowrap font-bold"><thead class="bg-gray-50 text-gray-400 sticky top-0 shadow-sm"><tr><th class="px-5 py-3 border-b">닉네임</th><th class="px-5 py-3 border-b text-right">점수</th></tr></thead><tbody id="suroPreviewBody" class="divide-y divide-gray-50"></tbody></table></div></div></div></div><div class="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 px-12 items-center"><span id="suroStats" class="text-xs text-gray-500 font-bold mr-auto"></span><button onclick="saveSuroData()" class="px-12 py-3 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 font-bold text-xs shadow-xl transition-all">점수 저장하기</button></div></div></div>
     <div id="resetModal" class="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm hidden fade-in font-bold"><div class="bg-white rounded-[3rem] shadow-2xl w-full max-w-md p-12 text-center border border-gray-50"><div class="w-20 h-20 bg-red-50 text-red-500 rounded-[2rem] flex items-center justify-center text-4xl mx-auto mb-6 shadow-inner"><i class="fas fa-radiation"></i></div><h3 class="text-2xl font-black text-gray-800 tracking-tight mb-4">데이터 전체 초기화</h3><p class="text-xs text-gray-500 mb-8 leading-relaxed">구글 시트의 모든 데이터와 로그가 완전히 지워집니다.<br>정말 진행하시겠습니까?</p><div class="grid grid-cols-2 gap-4"><button onclick="closeModal('resetModal')" class="py-4 bg-gray-50 rounded-2xl font-bold text-xs text-gray-500 hover:bg-gray-100 transition-all">취소</button><button onclick="confirmReset()" class="py-4 bg-red-600 text-white rounded-2xl font-bold text-xs shadow-xl hover:bg-red-700 transition-all">초기화 진행</button></div></div></div>
 
     <script>
@@ -122,7 +123,8 @@
             pendingUpdates: [], pendingDeletes: [],
             calendarView: { year: new Date().getFullYear(), month: new Date().getMonth() },
             scriptUrl: localStorage.getItem('macaron_script_url') || APPS_SCRIPT_URL,
-            sheetUrl: localStorage.getItem('macaron_sheet_url') || DEFAULT_SHEET_URL
+            sheetUrl: localStorage.getItem('macaron_sheet_url') || DEFAULT_SHEET_URL,
+            selectedSuroPeriod: null // 현재 선택된 수로 주차
         };
 
         const savedRanks = localStorage.getItem('macaron_ranks_v26');
@@ -153,8 +155,46 @@
         function hideOverlay() { showLoading(false); }
 
         function getAnniversaryInfo() { const now = new Date(); const diff = now - GUILD_START_DATE; const days = Math.floor(diff / (1000 * 60 * 60 * 24)); const years = Math.floor(days / 365); const remainingDays = days % 365; return { totalDays: days, years: years, remainingDays: remainingDays }; }
-        function getSuroPeriodHeader() { const now = new Date(); const day = now.getDay(); let diff = day - 4; if (diff < 0) diff += 7; const startDate = new Date(now); startDate.setDate(now.getDate() - diff - 7); const endDate = new Date(startDate); endDate.setDate(startDate.getDate() + 6); const f = (d) => { const yy = d.getFullYear().toString().slice(-2); const mm = String(d.getMonth() + 1).padStart(2, '0'); const dd = String(d.getDate()).padStart(2, '0'); return `${yy}-${mm}-${dd}`; }; return `${f(startDate)}(목) ~ ${f(endDate)}(수) 수로 점수`; }
-        function calculateTotalSuro(guildName) { const lastHeader = appState.suroHeaders[appState.suroHeaders.length - 1]; if (!lastHeader) return 0; return appState.members.filter(m => m.guild === guildName).reduce((sum, m) => sum + (Number(m.suro && m.suro[lastHeader] ? m.suro[lastHeader] : 0)), 0); }
+        
+        // 날짜 유틸리티: 특정 날짜 기준 수로 주차 문자열 생성
+        function getSuroPeriodHeader(dateObj) { 
+            const now = dateObj || new Date(); 
+            const day = now.getDay(); 
+            let diff = day - 4; 
+            if (diff < 0) diff += 7; 
+            const startDate = new Date(now); 
+            startDate.setDate(now.getDate() - diff - 7); 
+            const endDate = new Date(startDate); 
+            endDate.setDate(startDate.getDate() + 6); 
+            const f = (d) => { 
+                const yy = d.getFullYear().toString().slice(-2); 
+                const mm = String(d.getMonth() + 1).padStart(2, '0'); 
+                const dd = String(d.getDate()).padStart(2, '0'); 
+                return `${yy}-${mm}-${dd}`; 
+            }; 
+            return `${f(startDate)}(목) ~ ${f(endDate)}(수) 수로 점수`; 
+        }
+
+        // 최근 N주차 목록 생성 (드롭다운용)
+        function getSuroPeriodOptions() {
+            const options = [];
+            const now = new Date();
+            // 지난 5주 + 다음 1주
+            for (let i = -1; i < 5; i++) {
+                const d = new Date(now);
+                d.setDate(now.getDate() - (i * 7));
+                const header = getSuroPeriodHeader(d);
+                options.push(header);
+            }
+            return [...new Set(options)].sort().reverse();
+        }
+
+        function calculateTotalSuro(guildName) { 
+            // 마지막 헤더가 없으면 0 리턴
+            if (!appState.suroHeaders || appState.suroHeaders.length === 0) return 0;
+            const lastHeader = appState.suroHeaders[appState.suroHeaders.length - 1]; 
+            return appState.members.filter(m => m.guild === guildName).reduce((sum, m) => sum + (Number(m.suro?.[lastHeader]) || 0), 0); 
+        }
 
         // -- API --
         async function fetchMembers() {
@@ -178,8 +218,19 @@
                         if (m.joinDate && !m.unicode) m.unicode = m.joinDate; 
                          if (m.suro) Object.keys(m.suro).forEach(key => m[`suro_${key}`] = m.suro[key]);
                     });
-                    const period = getSuroPeriodHeader();
-                    appState.members.forEach(m => { if (m.suro && m.suro[period]) appState.currentSuroInputs[m.name] = m.suro[period]; });
+                    
+                    // 기본 주차 설정
+                    if (!appState.selectedSuroPeriod) {
+                         appState.selectedSuroPeriod = getSuroPeriodHeader();
+                    }
+                    
+                    // 현재 선택된 주차의 데이터 로드
+                    appState.members.forEach(m => { 
+                        if (m.suro && m.suro[appState.selectedSuroPeriod]) {
+                            appState.currentSuroInputs[m.name] = m.suro[appState.selectedSuroPeriod]; 
+                        }
+                    });
+
                     document.getElementById('totalMembersCount').innerText = appState.members.length;
                     
                     if (appState.activeTab === 'members') updateMemberTable();
@@ -245,8 +296,8 @@
             const ddungTotal = calculateTotalSuro('뚱카롱');
             container.innerHTML = `
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8 fade-in">
-                    <div class="flex flex-col gap-6 h-[450px]">
-                        <div class="flex gap-6 h-1/2">
+                    <div class="flex flex-col gap-6 h-auto">
+                        <div class="flex gap-6 h-auto">
                             <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚠카롱')" class="flex-1 bg-gradient-to-br from-pink-500 to-rose-500 rounded-[2.5rem] p-8 shadow-lg text-white cursor-pointer hover:scale-[1.02] transition-transform flex flex-col justify-between relative overflow-hidden">
                                 <div class="absolute top-0 right-0 p-6 opacity-20 text-6xl"><i class="fas fa-crown"></i></div>
                                 <h3 class="text-sm font-bold opacity-80 uppercase tracking-widest">뚠카롱 수로 총점</h3>
@@ -257,8 +308,8 @@
                                 <div><p class="text-3xl font-black tracking-tighter">${ddungTotal.toLocaleString()}</p><p class="text-[10px] text-pink-400 font-bold mt-1">상세 분석 &rarr;</p></div>
                             </div>
                         </div>
-                        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col justify-between h-1/2">
-                             <div class="flex justify-between items-center mb-2"><div class="flex items-center gap-3"><span class="text-2xl">📅</span><h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Guild Calendar</h3></div><div class="text-right"><div class="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-lg inline-block">D+${anniv.totalDays}</div></div></div>
+                        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col justify-between h-auto min-h-[300px]">
+                             <div class="flex justify-between items-center mb-4"><div class="flex items-center gap-3"><span class="text-2xl">📅</span><h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Guild Calendar</h3></div><div class="text-right"><div class="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-lg inline-block">D+${anniv.totalDays}</div></div></div>
                              ${renderCalendar()}
                         </div>
                     </div>
@@ -279,7 +330,35 @@
 
         function changeCalendarYear(y) { appState.calendarView.year = parseInt(y); renderDashboard(document.getElementById('contentArea')); }
         function changeCalendarMonth(m) { appState.calendarView.month = parseInt(m); renderDashboard(document.getElementById('contentArea')); }
-        function renderCalendar() { const year = appState.calendarView.year; const month = appState.calendarView.month; const todayDate = new Date(); const isCurrentMonth = todayDate.getFullYear() === year && todayDate.getMonth() === month; const firstDay = new Date(year, month, 1).getDay(); const lastDate = new Date(year, month + 1, 0).getDate(); const monthNames = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"]; let yearOptions = ''; for(let y=2020; y<=2030; y++) yearOptions += `<option value="${y}" ${y===year?'selected':''}>${y}</option>`; let monthOptions = ''; for(let m=0; m<12; m++) monthOptions += `<option value="${m}" ${m===month?'selected':''}>${m+1}월</option>`; let html = `<div class="mb-4 flex justify-between items-end"><div class="flex gap-2"><select onchange="changeCalendarYear(this.value)" class="bg-gray-50 border-none text-xl font-bold text-gray-800 outline-none cursor-pointer hover:text-pink-500 transition-colors">${yearOptions}</select><select onchange="changeCalendarMonth(this.value)" class="bg-gray-50 border-none text-xl font-bold text-gray-800 outline-none cursor-pointer hover:text-pink-500 transition-colors">${monthOptions}</select></div></div><div class="calendar-grid"><div class="calendar-head text-red-400">일</div><div class="calendar-head">월</div><div class="calendar-head">화</div><div class="calendar-head">수</div><div class="calendar-head text-pink-500">목</div><div class="calendar-head">금</div><div class="calendar-head text-blue-400">토</div>`; for(let i=0; i<firstDay; i++) html += `<div></div>`; for(let d=1; d<=lastDate; d++) { const date = new Date(year, month, d); const dayOfWeek = date.getDay(); let classes = "calendar-day text-gray-600"; let content = d; if (dayOfWeek === 4) { classes += " thursday"; content = `<span class="relative z-10">${d}</span><i class="fas fa-sync-alt absolute top-0.5 right-1 text-[8px] text-pink-300 opacity-50"></i>`; } if (isCurrentMonth && d === todayDate.getDate()) classes += " today"; html += `<div class="${classes}">${content}</div>`; } html += `</div>`; return html; }
+        function renderCalendar() { 
+            const year = appState.calendarView.year; 
+            const month = appState.calendarView.month; 
+            const todayDate = new Date(); 
+            const isCurrentMonth = todayDate.getFullYear() === year && todayDate.getMonth() === month; 
+            const firstDay = new Date(year, month, 1).getDay(); 
+            const lastDate = new Date(year, month + 1, 0).getDate(); 
+            
+            let yearOptions = ''; 
+            for(let y=2020; y<=2030; y++) yearOptions += `<option value="${y}" ${y===year?'selected':''}>${y}</option>`; 
+            let monthOptions = ''; 
+            for(let m=0; m<12; m++) monthOptions += `<option value="${m}" ${m===month?'selected':''}>${m+1}월</option>`; 
+            
+            let html = `<div class="mb-4 flex justify-between items-end"><div class="flex gap-2"><select onchange="changeCalendarYear(this.value)" class="bg-gray-50 border-none text-xl font-bold text-gray-800 outline-none cursor-pointer hover:text-pink-500 transition-colors">${yearOptions}</select><select onchange="changeCalendarMonth(this.value)" class="bg-gray-50 border-none text-xl font-bold text-gray-800 outline-none cursor-pointer hover:text-pink-500 transition-colors">${monthOptions}</select></div></div><div class="calendar-grid"><div class="calendar-head text-red-400">일</div><div class="calendar-head">월</div><div class="calendar-head">화</div><div class="calendar-head">수</div><div class="calendar-head text-pink-500">목</div><div class="calendar-head">금</div><div class="calendar-head text-blue-400">토</div>`; 
+            
+            // 빈 칸 채우기 (invisible로 공간 차지)
+            for(let i=0; i<firstDay; i++) html += `<div class="calendar-day invisible"></div>`; 
+            
+            for(let d=1; d<=lastDate; d++) { 
+                const date = new Date(year, month, d); 
+                const dayOfWeek = date.getDay(); 
+                let classes = "calendar-day text-gray-600"; 
+                let content = d; 
+                if (dayOfWeek === 4) { classes += " thursday"; content = `<span class="relative z-10">${d}</span><i class="fas fa-sync-alt absolute top-0.5 right-1 text-[8px] text-pink-300 opacity-50"></i>`; } 
+                if (isCurrentMonth && d === todayDate.getDate()) classes += " today"; 
+                html += `<div class="${classes}">${content}</div>`; 
+            } 
+            html += `</div>`; return html; 
+        }
         
         function updateJobChart(targetGuild) {
             const ctx = document.getElementById('jobChart'); if(!ctx) return;
@@ -294,8 +373,8 @@
         // -- Members --
         function renderMembers(container) {
             const batchBtnClass = appState.isBatchMode ? 'bg-gray-800 text-white shadow-inner' : 'bg-white text-gray-500 hover:bg-gray-100 shadow-sm border border-gray-100';
-            const saveBtnHtml = appState.isBatchMode ? `<button onclick="saveBatchChanges()" class="shrink-0 px-6 py-3 rounded-2xl text-xs font-bold transition-all bg-pink-500 text-white shadow-xl hover:bg-pink-600 animate-pulse"><i class="fas fa-save mr-2"></i> 변경사항 저장</button>` : '';
-            container.innerHTML = `<div class="flex flex-col gap-8 fade-in"><div class="bg-white p-10 rounded-t-[3rem] border border-gray-100 space-y-8 shadow-sm"><div class="flex flex-col md:flex-row justify-between items-center gap-6"><div class="flex overflow-x-auto pb-2 no-scrollbar w-full md:w-auto gap-3"><button onclick="filterByGuild('all')" class="shrink-0 whitespace-nowrap px-8 py-3 rounded-2xl text-xs font-bold transition-all ${appState.filters.guild === 'all' ? 'bg-gray-800 text-white shadow-xl' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">전체 보기</button>${appState.guilds.map(g => `<button onclick="filterByGuild('${g.name}')" class="shrink-0 whitespace-nowrap px-8 py-3 rounded-2xl text-xs font-bold transition-all ${appState.filters.guild === g.name ? 'bg-pink-500 text-white shadow-xl shadow-pink-100' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">${g.name}</button>`).join('')}</div><div class="flex gap-4 w-full md:w-auto items-center">${saveBtnHtml}<button onclick="toggleBatchMode()" class="shrink-0 px-6 py-3 rounded-2xl text-xs font-bold transition-all ${batchBtnClass}"><i class="fas fa-edit mr-1"></i> ${appState.isBatchMode ? '수정 모드 끄기' : '수정 모드 켜기'}</button><button onclick="openBulkModal()" class="shrink-0 w-10 h-10 flex items-center justify-center rounded-2xl bg-emerald-50 text-emerald-500 hover:bg-emerald-100 transition-all"><i class="fas fa-file-import"></i></button><button onclick="openAddModal()" class="shrink-0 w-10 h-10 flex items-center justify-center rounded-2xl bg-pink-50 text-pink-500 hover:bg-pink-100 transition-all"><i class="fas fa-plus"></i></button></div></div><div class="relative"><i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i><input type="text" oninput="handleSearch(this.value)" value="${appState.filters.search}" class="w-full pl-16 pr-8 py-4 bg-gray-50 border border-gray-100 rounded-[2rem] outline-none focus:ring-4 focus:ring-pink-50 font-bold text-sm shadow-inner" placeholder="닉네임, 직업, 직위, 본캐닉 검색"></div></div><div id="memberTableContainer" class="bg-white rounded-b-[3rem] border border-gray-100 overflow-hidden shadow-sm"></div></div>`;
+            const saveBtnHtml = appState.isBatchMode ? `<button onclick="saveBatchChanges()" class="relative z-20 shrink-0 px-6 py-3 rounded-2xl text-xs font-bold transition-all bg-pink-500 text-white shadow-xl hover:bg-pink-600 animate-pulse"><i class="fas fa-save mr-2"></i> 변경사항 저장</button>` : '';
+            container.innerHTML = `<div class="flex flex-col gap-8 fade-in"><div class="bg-white p-10 rounded-t-[3rem] border border-gray-100 space-y-8 shadow-sm"><div class="flex flex-col md:flex-row justify-between items-center gap-6"><div class="flex overflow-x-auto pb-2 no-scrollbar w-full md:w-auto gap-3"><button onclick="filterByGuild('all')" class="shrink-0 whitespace-nowrap px-8 py-3 rounded-2xl text-xs font-bold transition-all ${appState.filters.guild === 'all' ? 'bg-gray-800 text-white shadow-xl' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">전체 보기</button>${appState.guilds.map(g => `<button onclick="filterByGuild('${g.name}')" class="shrink-0 whitespace-nowrap px-8 py-3 rounded-2xl text-xs font-bold transition-all ${appState.filters.guild === g.name ? 'bg-pink-500 text-white shadow-xl shadow-pink-100' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">${g.name}</button>`).join('')}</div><div class="flex gap-4 w-full md:w-auto items-center relative z-20">${saveBtnHtml}<button onclick="toggleBatchMode()" class="shrink-0 px-6 py-3 rounded-2xl text-xs font-bold transition-all ${batchBtnClass}"><i class="fas fa-edit mr-1"></i> ${appState.isBatchMode ? '수정 모드 끄기' : '수정 모드 켜기'}</button><button onclick="openBulkModal()" class="shrink-0 w-10 h-10 flex items-center justify-center rounded-2xl bg-emerald-50 text-emerald-500 hover:bg-emerald-100 transition-all"><i class="fas fa-file-import"></i></button><button onclick="openAddModal()" class="shrink-0 w-10 h-10 flex items-center justify-center rounded-2xl bg-pink-50 text-pink-500 hover:bg-pink-100 transition-all"><i class="fas fa-plus"></i></button></div></div><div class="relative z-10"><i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i><input type="text" oninput="handleSearch(this.value)" value="${appState.filters.search}" class="w-full pl-16 pr-8 py-4 bg-gray-50 border border-gray-100 rounded-[2rem] outline-none focus:ring-4 focus:ring-pink-50 font-bold text-sm shadow-inner" placeholder="닉네임, 직업, 직위, 본캐닉 검색"></div></div><div id="memberTableContainer" class="bg-white rounded-b-[3rem] border border-gray-100 overflow-hidden shadow-sm"></div></div>`;
             updateMemberTable();
         }
 
@@ -316,7 +395,10 @@
             const countLabel = appState.filters.guild === 'all' ? '전체 인원' : appState.filters.guild + ' 인원';
             document.getElementById('counterLabel').innerText = countLabel;
             document.getElementById('totalMembersCount').innerText = filtered.length;
-            const getSortIcon = (f) => { if (appState.filters.sortField !== f) return '<i class="fas fa-sort ml-1 opacity-30 text-[9px]"></i>'; return appState.filters.sortOrder === 'asc' ? '<i class="fas fa-sort-up ml-1 text-pink-500 text-[10px]"></i>' : '<i class="fas fa-sort-down ml-1 text-pink-500 text-[10px]"></i>'; };
+            const getSortIcon = (f) => {
+                if (appState.filters.sortField !== f) return '<i class="fas fa-sort ml-1 opacity-30 text-[9px]"></i>';
+                return appState.filters.sortOrder === 'asc' ? '<i class="fas fa-sort-up ml-1 text-pink-500 text-[10px]"></i>' : '<i class="fas fa-sort-down ml-1 text-pink-500 text-[10px]"></i>';
+            };
             const exemptionRanks = ['크라운', '파르페', '티라미슈', '크로칸슈'];
             let html = `<div class="overflow-x-auto shadow-inner"><table class="w-full text-left min-w-[900px] text-xs whitespace-nowrap"><thead class="bg-gray-50 text-[10px] font-bold text-gray-500 border-b border-gray-100"><tr><th class="p-4 text-center w-16">No.</th><th class="p-4 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('name')">닉네임 ${getSortIcon('name')}</th><th class="p-4">본캐 정보</th><th class="p-4 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('guild')">소속 ${getSortIcon('guild')}</th><th class="p-4 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('role')">직위 ${getSortIcon('role')}</th><th class="p-4 sortable hover:bg-gray-100 transition-colors" onclick="handleSort('class')">직업 ${getSortIcon('class')}</th><th class="p-4 text-right">관리</th></tr></thead><tbody class="divide-y divide-gray-50 text-gray-600 font-bold">`;
             if (filtered.length === 0) html += `<tr><td colspan="7" class="p-20 text-center text-gray-300 font-bold">검색된 길드원이 없습니다.</td></tr>`;
@@ -356,67 +438,311 @@
             container.innerHTML = html;
         }
 
-        // --- Suro & Analysis ---
+        // --- Render Suro Logic ---
         function renderSuro(container) {
+            const toolbar = document.createElement('div');
+            toolbar.className = "bg-white p-10 rounded-t-[3rem] border border-gray-100 space-y-8 shadow-sm fade-in";
+            
             let btns = `<button onclick="filterSuroGuild('all')" class="shrink-0 whitespace-nowrap px-8 py-3 rounded-2xl text-xs font-bold transition-all ${appState.suroFilters.guild === 'all' ? 'bg-gray-800 text-white shadow-xl' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">All</button>`;
-            appState.guilds.forEach(g => { btns += `<button onclick="filterSuroGuild('${g.name}')" class="shrink-0 whitespace-nowrap px-8 py-3 rounded-2xl text-xs font-bold transition-all ml-3 ${appState.suroFilters.guild === g.name ? 'bg-pink-500 text-white shadow-xl shadow-pink-100' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">${g.name}</button>`; });
-            container.innerHTML = `<div class="bg-white p-10 rounded-t-[3rem] border border-gray-100 space-y-8 shadow-sm fade-in"><div class="flex flex-col md:flex-row justify-between items-center gap-6"><div class="flex overflow-x-auto pb-2 no-scrollbar w-full md:w-auto gap-3">${btns}</div><button onclick="saveSuroInputs()" class="shrink-0 px-8 py-3.5 bg-blue-500 text-white rounded-2xl text-xs font-bold shadow-xl hover:bg-blue-600 transition-all"><i class="fas fa-save mr-2"></i> 점수 저장</button></div><div class="relative"><i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i><input type="text" oninput="filterSuroSearch(this.value)" value="${appState.suroFilters.search}" class="w-full pl-16 pr-8 py-4 bg-gray-50 border border-gray-100 rounded-[2rem] outline-none focus:ring-4 focus:ring-blue-50 font-bold text-sm shadow-inner" placeholder="닉네임 검색"></div></div><div id="suroTableContainer" class="bg-white rounded-b-[3rem] border border-gray-100 overflow-hidden shadow-sm fade-in h-[600px] flex flex-col"></div>`;
+            appState.guilds.forEach(g => {
+                btns += `<button onclick="filterSuroGuild('${g.name}')" class="shrink-0 whitespace-nowrap px-8 py-3 rounded-2xl text-xs font-bold transition-all ml-3 ${appState.suroFilters.guild === g.name ? 'bg-pink-500 text-white shadow-xl shadow-pink-100' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">${g.name}</button>`;
+            });
+
+            // 주차 선택 드롭다운 생성
+            const periodOptions = getSuroPeriodOptions().map(p => 
+                `<option value="${p}" ${p === appState.selectedSuroPeriod ? 'selected' : ''}>${p}</option>`
+            ).join('');
+
+            toolbar.innerHTML = `
+                <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div class="flex overflow-x-auto pb-2 no-scrollbar w-full md:w-auto gap-3">
+                        ${btns}
+                    </div>
+                    <div class="flex gap-4 items-center">
+                        <select onchange="changeSuroPeriod(this.value)" class="bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-xs font-bold text-gray-700 outline-none cursor-pointer">
+                            ${periodOptions}
+                        </select>
+                        <button onclick="saveSuroInputs()" class="shrink-0 px-8 py-3.5 bg-blue-500 text-white rounded-2xl text-xs font-bold shadow-xl hover:bg-blue-600 transition-all"><i class="fas fa-save mr-2"></i> 점수 저장</button>
+                    </div>
+                </div>
+                <div class="relative"><i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i><input type="text" oninput="filterSuroSearch(this.value)" value="${appState.suroFilters.search}" class="w-full pl-16 pr-8 py-4 bg-gray-50 border border-gray-100 rounded-[2rem] outline-none focus:ring-4 focus:ring-blue-50 font-bold text-sm shadow-inner" placeholder="닉네임 검색"></div>
+            `;
+            container.appendChild(toolbar);
+
+            const tableWrap = document.createElement('div');
+            tableWrap.id = 'suroTableContainer';
+            tableWrap.className = "bg-white rounded-b-[3rem] border border-gray-100 overflow-hidden shadow-sm fade-in flex flex-col";
+            tableWrap.style.height = "calc(100vh - 300px)"; // 최대한 길게 (화면 높이 기반)
+            container.appendChild(tableWrap);
+            
+            updateSuroTable();
+        }
+
+        function changeSuroPeriod(val) {
+            appState.selectedSuroPeriod = val;
+            appState.currentSuroInputs = {};
+            appState.members.forEach(m => {
+                if (m.suro && m.suro[val]) {
+                    appState.currentSuroInputs[m.name] = m.suro[val];
+                }
+            });
+            updateSuroTable();
+        }
+
+        function filterSuroGuild(g) { appState.suroFilters.guild = g; updateSuroTable(); }
+        function filterSuroSearch(v) { appState.suroFilters.search = v; updateSuroTable(); }
+        function handleSuroSort(field) {
+            if (appState.suroFilters.sortField === field) {
+                appState.suroFilters.sortOrder = appState.suroFilters.sortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                appState.suroFilters.sortField = field;
+                appState.suroFilters.sortOrder = 'asc';
+            }
             updateSuroTable();
         }
 
         function updateSuroTable() {
-            const container = document.getElementById('suroTableContainer'); if(!container) return;
-            const period = getSuroPeriodHeader(); let prevWeekHeader = "", prevWeekScoreMap = {};
-            if (appState.suroHeaders.length > 0) { const lastHeader = appState.suroHeaders[appState.suroHeaders.length - 1]; if (lastHeader !== period) prevWeekHeader = lastHeader; else if (appState.suroHeaders.length >= 2) prevWeekHeader = appState.suroHeaders[appState.suroHeaders.length - 2]; }
-            if (prevWeekHeader) appState.members.forEach(m => { if (m.suro && m.suro[prevWeekHeader]) prevWeekScoreMap[m.name] = m.suro[prevWeekHeader]; });
+            const container = document.getElementById('suroTableContainer');
+            if(!container) return;
+
+            const currentPeriod = appState.selectedSuroPeriod || getSuroPeriodHeader();
+            
+            const allOptions = getSuroPeriodOptions();
+            const currIdx = allOptions.indexOf(currentPeriod);
+            const prevPeriod = (currIdx !== -1 && currIdx < allOptions.length - 1) ? allOptions[currIdx + 1] : null;
+
+            let prevWeekScoreMap = {};
+            if (prevPeriod) {
+                appState.members.forEach(m => {
+                    if (m.suro && m.suro[prevPeriod]) {
+                        prevWeekScoreMap[m.name] = m.suro[prevPeriod];
+                    }
+                });
+            }
+
             const term = appState.suroFilters.search.toLowerCase();
-            const membersToInput = appState.members.filter(m => { const gMatch = appState.suroFilters.guild === 'all' || m.guild === appState.suroFilters.guild; const sMatch = m.name.toLowerCase().includes(term); return gMatch && sMatch; });
-            membersToInput.sort((a, b) => { let vA, vB; if (appState.suroFilters.sortField === 'score') { vA = Number(appState.currentSuroInputs[a.name] || (a.suro && a.suro[period]) || 0); vB = Number(appState.currentSuroInputs[b.name] || (b.suro && b.suro[period]) || 0); } else if (appState.suroFilters.sortField === 'prevScore') { vA = Number(prevWeekScoreMap[a.name] || 0); vB = Number(prevWeekScoreMap[b.name] || 0); } else { vA = a[appState.suroFilters.sortField] || ''; vB = b[appState.suroFilters.sortField] || ''; return appState.suroFilters.sortOrder === 'asc' ? vA.toString().localeCompare(vB.toString(), 'ko') : vB.toString().localeCompare(vA.toString(), 'ko'); } return appState.suroFilters.sortOrder === 'asc' ? vA - vB : vB - vA; });
-            const getSortIcon = (f) => { if (appState.suroFilters.sortField !== f) return '<i class="fas fa-sort ml-1 opacity-30 text-[9px]"></i>'; return appState.suroFilters.sortOrder === 'asc' ? '<i class="fas fa-sort-up ml-1 text-blue-500 text-[10px]"></i>' : '<i class="fas fa-sort-down ml-1 text-blue-500 text-[10px]"></i>'; };
-            let tableRows = membersToInput.map((m, idx) => { const prevScore = prevWeekScoreMap[m.name] || 0; const currentScore = appState.currentSuroInputs[m.name] !== undefined ? appState.currentSuroInputs[m.name] : ((m.suro && m.suro[period]) ? m.suro[period] : ''); return `<tr class="hover:bg-blue-50/30 transition-colors border-b border-gray-100 group"><td class="p-4 font-bold text-gray-700">${m.name}</td><td class="p-4 text-xs text-gray-500 font-bold">${m.guild}</td><td class="p-4 text-right font-mono text-gray-400 text-xs font-bold">${prevScore > 0 ? Number(prevScore).toLocaleString() : '-'}</td><td class="p-3"><input type="number" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-right font-bold text-gray-800 outline-none focus:ring-2 focus:ring-blue-200 focus:bg-white transition-all suro-input shadow-inner" data-name="${m.name}" value="${currentScore}" placeholder="점수" oninput="handleSuroInput(this)" onkeydown="handleSuroEnter(event, ${idx})"></td></tr>`; }).join('');
-            container.innerHTML = `<div class="overflow-y-auto flex-1 p-0"><table class="w-full text-left"><thead class="bg-gray-50 text-gray-500 text-[10px] font-bold uppercase sticky top-0 z-10 border-b border-gray-100 shadow-sm"><tr><th class="p-4 cursor-pointer hover:bg-gray-100" onclick="handleSuroSort('name')">닉네임 ${getSortIcon('name')}</th><th class="p-4 cursor-pointer hover:bg-gray-100" onclick="handleSuroSort('guild')">소속 ${getSortIcon('guild')}</th><th class="p-4 text-right cursor-pointer hover:bg-gray-100" onclick="handleSuroSort('prevScore')">지난주 점수 ${getSortIcon('prevScore')}</th><th class="p-4 text-right w-48 cursor-pointer hover:bg-gray-100" onclick="handleSuroSort('score')">이번주 점수 ${getSortIcon('score')}</th></tr></thead><tbody class="divide-y divide-gray-50">${tableRows.length > 0 ? tableRows : '<tr><td colspan="4" class="p-10 text-center text-gray-300 font-bold italic">검색 결과가 없습니다.</td></tr>'}</tbody></table></div>`;
+            const membersToInput = appState.members.filter(m => {
+                const gMatch = appState.suroFilters.guild === 'all' || m.guild === appState.suroFilters.guild;
+                const sMatch = m.name.toLowerCase().includes(term);
+                return gMatch && sMatch;
+            });
+
+            membersToInput.sort((a, b) => {
+                let vA, vB;
+                // 정렬 로직 (이름 가나다순 포함)
+                if (appState.suroFilters.sortField === 'score') {
+                    vA = Number(appState.currentSuroInputs[a.name] || (a.suro && a.suro[currentPeriod]) || 0);
+                    vB = Number(appState.currentSuroInputs[b.name] || (b.suro && b.suro[currentPeriod]) || 0);
+                } else if (appState.suroFilters.sortField === 'prevScore') {
+                    vA = Number(prevWeekScoreMap[a.name] || 0);
+                    vB = Number(prevWeekScoreMap[b.name] || 0);
+                } else {
+                    vA = a[appState.suroFilters.sortField] || '';
+                    vB = b[appState.suroFilters.sortField] || '';
+                    // 유니코드 가나다순
+                    if (vA < vB) return appState.suroFilters.sortOrder === 'asc' ? -1 : 1;
+                    if (vA > vB) return appState.suroFilters.sortOrder === 'asc' ? 1 : -1;
+                    return 0;
+                }
+                return appState.suroFilters.sortOrder === 'asc' ? vA - vB : vB - vA;
+            });
+
+            const getSortIcon = (f) => {
+                if (appState.suroFilters.sortField !== f) return '<i class="fas fa-sort ml-1 opacity-30 text-[9px]"></i>';
+                return appState.suroFilters.sortOrder === 'asc' ? '<i class="fas fa-sort-up ml-1 text-blue-500 text-[10px]"></i>' : '<i class="fas fa-sort-down ml-1 text-blue-500 text-[10px]"></i>';
+            };
+
+            let tableRows = membersToInput.map((m, idx) => {
+                const prevScore = prevWeekScoreMap[m.name] || 0;
+                const currentScore = appState.currentSuroInputs[m.name] !== undefined ? appState.currentSuroInputs[m.name] : ((m.suro && m.suro[currentPeriod]) ? m.suro[currentPeriod] : '');
+                
+                return `
+                <tr class="hover:bg-blue-50/30 transition-colors border-b border-gray-100 group">
+                    <td class="p-4 font-bold text-gray-700">${m.name}</td>
+                    <td class="p-4 text-xs text-gray-500 font-bold">${m.guild}</td>
+                    <td class="p-4 text-right font-mono text-gray-400 text-xs font-bold">${prevScore > 0 ? Number(prevScore).toLocaleString() : '-'}</td>
+                    <td class="p-3">
+                        <input type="number" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-right font-bold text-gray-800 outline-none focus:ring-2 focus:ring-blue-200 focus:bg-white transition-all suro-input shadow-inner" 
+                               data-name="${m.name}" 
+                               value="${currentScore}" 
+                               placeholder="점수"
+                               oninput="handleSuroInput(this)"
+                               onkeydown="handleSuroEnter(event, ${idx})">
+                    </td>
+                </tr>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="overflow-y-auto flex-1 p-0">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 text-gray-500 text-[10px] font-bold uppercase sticky top-0 z-10 border-b border-gray-100 shadow-sm">
+                            <tr>
+                                <th class="p-4 cursor-pointer hover:bg-gray-100" onclick="handleSuroSort('name')">닉네임 ${getSortIcon('name')}</th>
+                                <th class="p-4 cursor-pointer hover:bg-gray-100" onclick="handleSuroSort('guild')">소속 ${getSortIcon('guild')}</th>
+                                <th class="p-4 text-right cursor-pointer hover:bg-gray-100" onclick="handleSuroSort('prevScore')">지난주 (${prevPeriod ? prevPeriod.split(' ')[0] : '없음'}) ${getSortIcon('prevScore')}</th>
+                                <th class="p-4 text-right w-48 cursor-pointer hover:bg-gray-100" onclick="handleSuroSort('score')">선택주차 (${currentPeriod.split(' ')[0]}) ${getSortIcon('score')}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            ${tableRows.length > 0 ? tableRows : '<tr><td colspan="4" class="p-10 text-center text-gray-300 font-bold italic">검색 결과가 없습니다.</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+            `;
         }
 
+        window.handleSuroInput = function(el) {
+            const name = el.dataset.name;
+            const val = el.value;
+            appState.currentSuroInputs[name] = val; 
+        };
+
+        window.handleSuroEnter = function(e, idx) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const inputs = document.querySelectorAll('.suro-input');
+                if (idx + 1 < inputs.length) {
+                    inputs[idx + 1].focus();
+                }
+            }
+        };
+
+        window.saveSuroInputs = async function() {
+            const data = [];
+            let count = 0;
+            
+            // 현재 선택된 주차의 입력값들 수집
+            appState.members.forEach(m => {
+                const val = appState.currentSuroInputs[m.name];
+                if (val !== undefined && val !== "") {
+                    data.push({ name: m.name, score: val });
+                    count++;
+                }
+            });
+
+            if (count === 0) return alert("입력된 점수가 없습니다.");
+            if (!confirm(`${count}명의 수로 점수를 저장하시겠습니까?\n(선택된 주차: ${appState.selectedSuroPeriod})`)) return;
+
+            // GAS 스크립트 수정 없이도 작동하도록 하려면 현재 주차만 가능하지만, 
+            // 유저가 "수정할 수 있으면 좋다"고 했으므로 일단 UI는 제공.
+            // GAS 코드도 이에 맞춰 period를 받아야 완벽함. 
+            // 현재 GAS 코드는 headerName을 스스로 계산하므로, 오늘 날짜가 해당 주차에 포함되어야 함.
+            await sendAction('save_suro', data);
+        };
+        
         function renderAnalysis(container, defaultGuild = '뚠카롱') {
             appState.analysisGuild = defaultGuild;
             const targetMembers = appState.members.filter(m => m.guild === defaultGuild);
             let lastHeader = "", prevHeader = "";
-            if (appState.suroHeaders.length > 0) { lastHeader = appState.suroHeaders[appState.suroHeaders.length - 1]; if (appState.suroHeaders.length >= 2) prevHeader = appState.suroHeaders[appState.suroHeaders.length - 2]; }
-            const totalScore = targetMembers.reduce((sum, m) => sum + (Number(m.suro && m.suro[lastHeader] ? m.suro[lastHeader] : 0)), 0);
+            
+            // 데이터 안전하게 가져오기 (undefined 체크 및 복구)
+            if (appState.suroHeaders && appState.suroHeaders.length > 0) {
+                lastHeader = appState.suroHeaders[appState.suroHeaders.length - 1];
+                if (appState.suroHeaders.length >= 2) {
+                    prevHeader = appState.suroHeaders[appState.suroHeaders.length - 2];
+                }
+            } else {
+                 // 데이터가 없을 경우 UI 깨짐 방지
+                 container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400 font-bold"><p>아직 수로 데이터가 없습니다.</p></div>`;
+                 return;
+            }
+
+            const totalScore = targetMembers.reduce((sum, m) => sum + (Number(m.suro?.[lastHeader]) || 0), 0);
+            
             const tableData = targetMembers.map(m => {
-                const current = Number(m.suro && m.suro[lastHeader] ? m.suro[lastHeader] : 0);
-                const prev = Number(m.suro && m.suro[prevHeader] ? m.suro[prevHeader] : 0);
+                const current = Number(m.suro?.[lastHeader]) || 0;
+                const prev = Number(m.suro?.[prevHeader]) || 0;
                 const diff = current - prev;
                 const percent = prev > 0 ? ((diff / prev) * 100).toFixed(1) : 0;
                 return { name: m.name, current, prev, diff, percent };
             }).sort((a,b) => b.current - a.current);
+
             let tabsHtml = '';
-            appState.guilds.forEach(g => { const activeClass = g.name === defaultGuild ? 'bg-pink-500 text-white shadow-lg' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'; tabsHtml += `<button onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '${g.name}')" class="px-6 py-3 rounded-2xl text-xs font-bold transition-all ${activeClass}">${g.name}</button>`; });
+            appState.guilds.forEach(g => {
+                const activeClass = g.name === defaultGuild ? 'bg-pink-500 text-white shadow-lg' : 'bg-gray-50 text-gray-500 hover:bg-gray-100';
+                tabsHtml += `<button onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '${g.name}')" class="px-6 py-3 rounded-2xl text-xs font-bold transition-all ${activeClass}">${g.name}</button>`;
+            });
+
             let tableRows = tableData.map((d, i) => {
                 const diffClass = d.diff > 0 ? 'text-red-500 trend-up' : (d.diff < 0 ? 'text-blue-500 trend-down' : 'text-gray-400');
                 const diffIcon = d.diff > 0 ? '▲' : (d.diff < 0 ? '▼' : '-');
                 return `<tr class="hover:bg-gray-50 border-b border-gray-50 transition-colors"><td class="p-4 text-center text-gray-400 font-bold text-xs">${i+1}</td><td class="p-4 font-bold text-gray-700">${d.name}</td><td class="p-4 text-right font-bold text-gray-800">${d.current.toLocaleString()}</td><td class="p-4 text-right font-bold text-xs ${diffClass}">${diffIcon} ${Math.abs(d.diff).toLocaleString()} <span class="text-[9px] opacity-70 ml-1">(${d.diff > 0 ? '+' : ''}${d.percent}%)</span></td></tr>`;
             }).join('');
-            container.innerHTML = `<div class="flex flex-col gap-8 fade-in h-full"><div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm"><div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-6"><h2 class="text-xl font-bold text-gray-800 tracking-tight">수로 점수 분석</h2><div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar w-full md:w-auto">${tabsHtml}</div></div><div class="bg-gray-50 rounded-3xl p-8 text-center border border-gray-100"><p class="text-xs text-gray-400 font-bold uppercase tracking-widest mb-2">${defaultGuild} 이번 주 총점</p><h1 class="text-4xl font-black text-gray-800 tracking-tighter">${totalScore.toLocaleString()}</h1><p class="text-[10px] text-gray-400 mt-2 font-bold">${lastHeader} 기준</p></div></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 min-h-0"><div class="lg:col-span-1 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col"><h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">주간 총점 추이</h3><div class="flex-1 relative" style="min-height: 200px;"><canvas id="analysisChart"></canvas></div></div><div class="lg:col-span-2 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col overflow-hidden"><div class="p-6 border-b border-gray-50"><h3 class="text-sm font-bold text-gray-800">개인별 점수 현황</h3></div><div class="flex-1 overflow-y-auto p-0"><table class="w-full text-left"><thead class="bg-gray-50 text-gray-500 text-[10px] font-bold uppercase sticky top-0"><tr><th class="p-4 text-center w-16">Rank</th><th class="p-4">Nickname</th><th class="p-4 text-right">Score</th><th class="p-4 text-right">Change</th></tr></thead><tbody class="divide-y divide-gray-50">${tableRows}</tbody></table></div></div></div></div>`;
+
+            container.innerHTML = `<div class="flex flex-col gap-8 fade-in h-full"><div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm"><div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-6"><h2 class="text-xl font-bold text-gray-800 tracking-tight">수로 점수 분석</h2><div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar w-full md:w-auto">${tabsHtml}</div></div><div class="bg-gray-50 rounded-3xl p-8 text-center border border-gray-100"><p class="text-xs text-gray-400 font-bold uppercase tracking-widest mb-2">${defaultGuild} 이번 주 총점</p><h1 class="text-4xl font-black text-gray-800 tracking-tighter">${totalScore.toLocaleString()}</h1><p class="text-[10px] text-gray-400 mt-2 font-bold">${lastHeader || '데이터 없음'} 기준</p></div></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 min-h-0"><div class="lg:col-span-1 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col"><h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">주간 총점 추이</h3><div class="flex-1 relative" style="min-height: 200px;"><canvas id="analysisChart"></canvas></div></div><div class="lg:col-span-2 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col overflow-hidden"><div class="p-6 border-b border-gray-50"><h3 class="text-sm font-bold text-gray-800">개인별 점수 현황</h3></div><div class="flex-1 overflow-y-auto p-0"><table class="w-full text-left"><thead class="bg-gray-50 text-gray-500 text-[10px] font-bold uppercase sticky top-0"><tr><th class="p-4 text-center w-16">Rank</th><th class="p-4">Nickname</th><th class="p-4 text-right">Score</th><th class="p-4 text-right">Change</th></tr></thead><tbody class="divide-y divide-gray-50">${tableRows}</tbody></table></div></div></div></div>`;
             updateAnalysisChart(defaultGuild);
         }
 
         function updateAnalysisChart(guildName) {
-            const ctx = document.getElementById('analysisChart'); if(!ctx) return;
-            const headers = appState.suroHeaders.slice(-5);
-            const data = headers.map(h => appState.members.filter(m => m.guild === guildName).reduce((sum, m) => sum + (Number(m.suro && m.suro[h] ? m.suro[h] : 0)), 0));
-            const labels = headers.map(h => h.substring(3, 8));
-            if(analysisChartInstance) analysisChartInstance.destroy();
-            analysisChartInstance = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: '총점', data: data, borderColor: '#ec4899', backgroundColor: 'rgba(236, 72, 153, 0.1)', borderWidth: 2, pointBackgroundColor: '#fff', pointBorderColor: '#ec4899', pointRadius: 4, fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } } } });
-        }
+            const ctx = document.getElementById('analysisChart');
+            if(!ctx) return;
+            
+            // 데이터 없으면 리턴
+            if (!appState.suroHeaders || appState.suroHeaders.length === 0) return;
 
+            const headers = appState.suroHeaders.slice(-5);
+            const data = headers.map(h => {
+                return appState.members
+                    .filter(m => m.guild === guildName)
+                    .reduce((sum, m) => sum + (Number(m.suro?.[h]) || 0), 0);
+            });
+
+            const labels = headers.map(h => h.substring(3, 8)); // 날짜 포맷팅
+
+            if(analysisChartInstance) analysisChartInstance.destroy();
+
+            analysisChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '총점',
+                        data: data,
+                        borderColor: '#ec4899',
+                        backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#ec4899',
+                        pointRadius: 4,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { display: false },
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+        
         function renderBail(container) {
             const bailCounts = {}; appState.bailHistory.forEach(b => { bailCounts[b.receiver] = (bailCounts[b.receiver] || 0) + (parseInt(b.amount)||1); });
             const payerOptions = appState.members.filter(m => m.guild === '뚠카롱').sort((a, b) => a.name.localeCompare(b.name, 'ko')).map(m => `<option value="${m.name}">${m.name} (${m.role})</option>`).join('');
             const receiverOptions = appState.members.filter(m => m.guild === '뚠카롱' && (m.role === '마카롱' || m.role === '다쿠아즈')).sort((a, b) => a.name.localeCompare(b.name, 'ko')).map(m => `<option value="${m.name}">${m.name} (${m.role})</option>`).join('');
             const historyRows = appState.bailHistory.length > 0 ? appState.bailHistory.map(h => `<tr class="hover:bg-gray-50 border-b border-gray-100"><td class="p-4 font-mono text-gray-500 text-xs">${h.date}</td><td class="p-4 font-bold text-gray-800">${h.payer}</td><td class="p-4 font-bold text-blue-500">${h.receiver}</td><td class="p-4 font-bold text-pink-500 text-right">${h.amount||1}개</td></tr>`).join('') : `<tr><td colspan="4" class="p-10 text-center text-gray-400 font-bold italic">내역이 없습니다.</td></tr>`;
             const statsHtml = Object.entries(bailCounts).map(([name, count]) => `<div class="bg-gray-50 rounded-2xl p-4 flex justify-between items-center border border-gray-100"><span class="font-bold text-gray-700 text-xs">${name}</span><span class="font-black text-pink-500 text-lg">${count}개</span></div>`).join('');
-            container.innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in h-full"><div class="lg:col-span-1 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col h-full"><div class="mb-6"><h3 class="text-lg font-bold text-gray-800 tracking-tight">보석금 납부 등록</h3><p class="text-xs text-gray-400 mt-1">노블 스킬 잠금 해제 기록</p></div><div class="space-y-6 flex-1"><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">납부자</label><input type="text" id="bailPayerInput" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs font-bold text-gray-700 outline-none focus:ring-4 focus:ring-pink-50 transition-all" placeholder="닉네임 직접 입력"></div><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">수령자</label><select id="bailReceiver" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs font-bold text-gray-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all cursor-pointer"><option value="">선택하세요</option>${receiverOptions}</select></div><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">수량</label><input type="number" id="bailAmount" value="1" min="1" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs font-bold text-gray-700 outline-none focus:ring-4 focus:ring-pink-50 transition-all"></div><button onclick="submitBail()" class="w-full py-5 bg-gray-900 text-white rounded-2xl font-bold text-xs shadow-xl hover:bg-black transition-all">납부 확인 및 저장</button></div><div class="mt-8 border-t border-gray-100 pt-6"><h4 class="text-xs font-bold text-gray-400 mb-4 uppercase tracking-widest">간부별 수령 총계</h4><div class="grid grid-cols-2 gap-2 overflow-y-auto max-h-40 no-scrollbar">${statsHtml}</div></div></div><div class="lg:col-span-2 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col overflow-hidden"><div class="p-6 border-b border-gray-50 flex justify-between items-center"><h3 class="text-sm font-bold text-gray-800">최근 보석금 내역</h3><span class="text-[10px] font-bold text-gray-400">Total: ${appState.bailHistory.length}</span></div><div class="flex-1 overflow-y-auto"><table class="w-full text-left"><thead class="bg-gray-50 text-gray-500 text-[10px] font-bold uppercase sticky top-0 z-10"><tr><th class="p-4 w-32">Date</th><th class="p-4">Payer</th><th class="p-4">Receiver</th><th class="p-4 text-right">Qty</th></tr></thead><tbody class="divide-y divide-gray-50">${historyRows}</tbody></table></div></div></div>`;
+            container.innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in h-full"><div class="lg:col-span-1 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col h-full"><div class="mb-6"><h3 class="text-lg font-bold text-gray-800 tracking-tight">보석금 납부 등록</h3><p class="text-xs text-gray-400 mt-1">노블 스킬 잠금 해제 기록</p></div><div class="space-y-6 flex-1"><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">납부자 (Payer)</label><input type="text" id="bailPayerInput" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs font-bold text-gray-700 outline-none focus:ring-4 focus:ring-pink-50 transition-all" placeholder="닉네임 직접 입력"></div><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">수령자 (Admin)</label><select id="bailReceiver" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs font-bold text-gray-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all cursor-pointer"><option value="">선택하세요</option>${receiverOptions}</select></div><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">수량 (Amount)</label><input type="number" id="bailAmount" value="1" min="1" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs font-bold text-gray-700 outline-none focus:ring-4 focus:ring-pink-50 transition-all"></div><button onclick="submitBail()" class="w-full py-5 bg-gray-900 text-white rounded-2xl font-bold text-xs shadow-xl hover:bg-black transition-all">납부 확인 및 저장</button></div><div class="mt-8 border-t border-gray-100 pt-6"><h4 class="text-xs font-bold text-gray-400 mb-4 uppercase tracking-widest">간부별 수령 총계</h4><div class="grid grid-cols-2 gap-2 overflow-y-auto max-h-40 no-scrollbar">${statsHtml}</div></div></div><div class="lg:col-span-2 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col overflow-hidden"><div class="p-6 border-b border-gray-50 flex justify-between items-center"><h3 class="text-sm font-bold text-gray-800">최근 보석금 내역</h3><span class="text-[10px] font-bold text-gray-400">Total: ${appState.bailHistory.length}</span></div><div class="flex-1 overflow-y-auto"><table class="w-full text-left"><thead class="bg-gray-50 text-gray-500 text-[10px] font-bold uppercase sticky top-0 z-10"><tr><th class="p-4 w-32">Date</th><th class="p-4">Payer</th><th class="p-4">Receiver</th><th class="p-4 text-right">Qty</th></tr></thead><tbody class="divide-y divide-gray-50">${historyRows}</tbody></table></div></div></div>`;
+        }
+
+        async function submitBail() {
+            const payer = document.getElementById('bailPayerInput').value.trim();
+            const receiver = document.getElementById('bailReceiver').value;
+            const amount = parseInt(document.getElementById('bailAmount').value); 
+
+            if(!payer || !receiver || !amount) return alert("모든 항목을 입력해주세요.");
+            if(!confirm(`${payer} 님의 보석금 ${amount}개를 ${receiver} 님이 수령했습니까?`)) return;
+            
+            try {
+                await sendAction('save_bail', { payer, receiver, amount });
+            } catch(e) {
+                console.error(e);
+                alert("저장 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+            }
         }
 
         function renderSheet(container) {
@@ -486,8 +812,9 @@
         function filterSuroGuild(g) { appState.suroFilters.guild = g; updateSuroTable(); }
         function filterSuroSearch(v) { appState.suroFilters.search = v; updateSuroTable(); }
         function handleSuroSort(field) { if (appState.suroFilters.sortField === field) { appState.suroFilters.sortOrder = appState.suroFilters.sortOrder === 'asc' ? 'desc' : 'asc'; } else { appState.suroFilters.sortField = field; appState.suroFilters.sortOrder = 'asc'; } updateSuroTable(); }
+        
         function updateSuroTable() {
-            const container = document.getElementById('suroTableContainer'); if(!container) return; const period = getSuroPeriodHeader(); let prevWeekHeader = ""; let prevWeekScoreMap = {}; if (appState.suroHeaders && appState.suroHeaders.length > 0) { const lastHeader = appState.suroHeaders[appState.suroHeaders.length - 1]; if (lastHeader !== period) { prevWeekHeader = lastHeader; } else if (appState.suroHeaders.length >= 2) { prevWeekHeader = appState.suroHeaders[appState.suroHeaders.length - 2]; } } if (prevWeekHeader) { appState.members.forEach(m => { if (m.suro && m.suro[prevWeekHeader]) { prevWeekScoreMap[m.name] = m.suro[prevWeekHeader]; } }); } const term = appState.suroFilters.search.toLowerCase(); const membersToInput = appState.members.filter(m => { const gMatch = appState.suroFilters.guild === 'all' || m.guild === appState.suroFilters.guild; const sMatch = m.name.toLowerCase().includes(term); return gMatch && sMatch; }); membersToInput.sort((a, b) => { let vA, vB; if (appState.suroFilters.sortField === 'score') { vA = Number(appState.currentSuroInputs[a.name] || (a.suro && a.suro[period]) || 0); vB = Number(appState.currentSuroInputs[b.name] || (b.suro && b.suro[period]) || 0); } else if (appState.suroFilters.sortField === 'prevScore') { vA = Number(prevWeekScoreMap[a.name] || 0); vB = Number(prevWeekScoreMap[b.name] || 0); } else { vA = a[appState.suroFilters.sortField] || ''; vB = b[appState.suroFilters.sortField] || ''; return appState.suroFilters.sortOrder === 'asc' ? vA.toString().localeCompare(vB.toString(), 'ko') : vB.toString().localeCompare(vA.toString(), 'ko'); } return appState.suroFilters.sortOrder === 'asc' ? vA - vB : vB - vA; }); const getSortIcon = (f) => { if (appState.suroFilters.sortField !== f) return '<i class="fas fa-sort ml-1 opacity-30 text-[9px]"></i>'; return appState.suroFilters.sortOrder === 'asc' ? '<i class="fas fa-sort-up ml-1 text-blue-500 text-[10px]"></i>' : '<i class="fas fa-sort-down ml-1 text-blue-500 text-[10px]"></i>'; }; let tableRows = membersToInput.map((m, idx) => { const prevScore = prevWeekScoreMap[m.name] || 0; const currentScore = appState.currentSuroInputs[m.name] !== undefined ? appState.currentSuroInputs[m.name] : ((m.suro && m.suro[period]) ? m.suro[period] : ''); return `<tr class="hover:bg-blue-50/30 transition-colors border-b border-gray-100 group"><td class="p-4 font-bold text-gray-700">${m.name}</td><td class="p-4 text-xs text-gray-500 font-bold">${m.guild}</td><td class="p-4 text-right font-mono text-gray-400 text-xs font-bold">${prevScore > 0 ? Number(prevScore).toLocaleString() : '-'}</td><td class="p-3"><input type="number" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-right font-bold text-gray-800 outline-none focus:ring-2 focus:ring-blue-200 focus:bg-white transition-all suro-input shadow-inner" data-name="${m.name}" value="${currentScore}" placeholder="점수" oninput="handleSuroInput(this)" onkeydown="handleSuroEnter(event, ${idx})"></td></tr>`; }).join(''); container.innerHTML = `<div class="overflow-y-auto flex-1 p-0"><table class="w-full text-left"><thead class="bg-gray-50 text-gray-500 text-[10px] font-bold uppercase sticky top-0 z-10 border-b border-gray-100 shadow-sm"><tr><th class="p-4 cursor-pointer hover:bg-gray-100" onclick="handleSuroSort('name')">닉네임 ${getSortIcon('name')}</th><th class="p-4 cursor-pointer hover:bg-gray-100" onclick="handleSuroSort('guild')">소속 ${getSortIcon('guild')}</th><th class="p-4 text-right cursor-pointer hover:bg-gray-100" onclick="handleSuroSort('prevScore')">지난주 점수 ${getSortIcon('prevScore')}</th><th class="p-4 text-right w-48 cursor-pointer hover:bg-gray-100" onclick="handleSuroSort('score')">이번주 점수 ${getSortIcon('score')}</th></tr></thead><tbody class="divide-y divide-gray-50">${tableRows.length > 0 ? tableRows : '<tr><td colspan="4" class="p-10 text-center text-gray-300 font-bold italic">검색 결과가 없습니다.</td></tr>'}</tbody></table></div>`;
+            const container = document.getElementById('suroTableContainer'); if(!container) return; const period = getSuroPeriodHeader(); let prevWeekHeader = ""; let prevWeekScoreMap = {}; if (appState.suroHeaders.length > 0) { const lastHeader = appState.suroHeaders[appState.suroHeaders.length - 1]; if (lastHeader !== period) { prevWeekHeader = lastHeader; } else if (appState.suroHeaders.length >= 2) { prevWeekHeader = appState.suroHeaders[appState.suroHeaders.length - 2]; } } if (prevWeekHeader) { appState.members.forEach(m => { if (m.suro && m.suro[prevWeekHeader]) { prevWeekScoreMap[m.name] = m.suro[prevWeekHeader]; } }); } const term = appState.suroFilters.search.toLowerCase(); const membersToInput = appState.members.filter(m => { const gMatch = appState.suroFilters.guild === 'all' || m.guild === appState.suroFilters.guild; const sMatch = m.name.toLowerCase().includes(term); return gMatch && sMatch; }); membersToInput.sort((a, b) => { let vA, vB; if (appState.suroFilters.sortField === 'score') { vA = Number(appState.currentSuroInputs[a.name] || (a.suro && a.suro[period]) || 0); vB = Number(appState.currentSuroInputs[b.name] || (b.suro && b.suro[period]) || 0); } else if (appState.suroFilters.sortField === 'prevScore') { vA = Number(prevWeekScoreMap[a.name] || 0); vB = Number(prevWeekScoreMap[b.name] || 0); } else { vA = a[appState.suroFilters.sortField] || ''; vB = b[appState.suroFilters.sortField] || ''; return appState.suroFilters.sortOrder === 'asc' ? vA.toString().localeCompare(vB.toString(), 'ko') : vB.toString().localeCompare(vA.toString(), 'ko'); } return appState.suroFilters.sortOrder === 'asc' ? vA - vB : vB - vA; }); const getSortIcon = (f) => { if (appState.suroFilters.sortField !== f) return '<i class="fas fa-sort ml-1 opacity-30 text-[9px]"></i>'; return appState.suroFilters.sortOrder === 'asc' ? '<i class="fas fa-sort-up ml-1 text-blue-500 text-[10px]"></i>' : '<i class="fas fa-sort-down ml-1 text-blue-500 text-[10px]"></i>'; }; let tableRows = membersToInput.map((m, idx) => { const prevScore = prevWeekScoreMap[m.name] || 0; const currentScore = appState.currentSuroInputs[m.name] !== undefined ? appState.currentSuroInputs[m.name] : ((m.suro && m.suro[period]) ? m.suro[period] : ''); return `<tr class="hover:bg-blue-50/30 transition-colors border-b border-gray-100 group"><td class="p-4 font-bold text-gray-700">${m.name}</td><td class="p-4 text-xs text-gray-500 font-bold">${m.guild}</td><td class="p-4 text-right font-mono text-gray-400 text-xs font-bold">${prevScore > 0 ? Number(prevScore).toLocaleString() : '-'}</td><td class="p-3"><input type="number" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-right font-bold text-gray-800 outline-none focus:ring-2 focus:ring-blue-200 focus:bg-white transition-all suro-input shadow-inner" data-name="${m.name}" value="${currentScore}" placeholder="점수" oninput="handleSuroInput(this)" onkeydown="handleSuroEnter(event, ${idx})"></td></tr>`; }).join(''); container.innerHTML = `<div class="overflow-y-auto flex-1 p-0"><table class="w-full text-left"><thead class="bg-gray-50 text-gray-500 text-[10px] font-bold uppercase sticky top-0 z-10 border-b border-gray-100 shadow-sm"><tr><th class="p-4 cursor-pointer hover:bg-gray-100" onclick="handleSuroSort('name')">닉네임 ${getSortIcon('name')}</th><th class="p-4 cursor-pointer hover:bg-gray-100" onclick="handleSuroSort('guild')">소속 ${getSortIcon('guild')}</th><th class="p-4 text-right cursor-pointer hover:bg-gray-100" onclick="handleSuroSort('prevScore')">지난주 점수 ${getSortIcon('prevScore')}</th><th class="p-4 text-right w-48 cursor-pointer hover:bg-gray-100" onclick="handleSuroSort('score')">이번주 점수 ${getSortIcon('score')}</th></tr></thead><tbody class="divide-y divide-gray-50">${tableRows.length > 0 ? tableRows : '<tr><td colspan="4" class="p-10 text-center text-gray-300 font-bold italic">검색 결과가 없습니다.</td></tr>'}</tbody></table></div>`;
         }
         function checkAutoRank(n) { /* 기존 로직 */ }
         
@@ -496,7 +823,12 @@
             if(openBtn) { openBtn.onclick = () => { sb.classList.remove('-translate-x-full'); ov.classList.remove('hidden'); }; }
             if(closeBtn) { closeBtn.onclick = () => { sb.classList.add('-translate-x-full'); ov.classList.add('hidden'); }; }
             if(ov) { ov.onclick = () => { sb.classList.add('-translate-x-full'); ov.classList.add('hidden'); }; }
-            if(!document.getElementById('resetModal')){ const resetHtml = `<div id="resetModal" class="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm hidden fade-in font-bold"><div class="bg-white rounded-[3rem] shadow-2xl w-full max-w-md p-12 text-center border border-gray-50"><div class="w-20 h-20 bg-red-50 text-red-500 rounded-[2rem] flex items-center justify-center text-4xl mx-auto mb-6 shadow-inner"><i class="fas fa-radiation"></i></div><h3 class="text-2xl font-black text-gray-800 tracking-tight mb-4">데이터 전체 초기화</h3><p class="text-xs text-gray-500 mb-8 leading-relaxed">구글 시트의 모든 데이터와 로그가 완전히 지워집니다.<br>정말 진행하시겠습니까?</p><div class="grid grid-cols-2 gap-4"><button onclick="closeModal('resetModal')" class="py-4 bg-gray-50 rounded-2xl font-bold text-xs text-gray-500 hover:bg-gray-100 transition-all">취소</button><button onclick="confirmReset()" class="py-4 bg-red-600 text-white rounded-2xl font-bold text-xs shadow-xl hover:bg-red-700 transition-all">초기화 진행</button></div></div></div>`; document.body.insertAdjacentHTML('beforeend', resetHtml); }
+            
+            // 본문에 초기화 모달이 없으면 생성
+            if(!document.getElementById('resetModal')){
+                const resetHtml = `<div id="resetModal" class="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm hidden fade-in font-bold"><div class="bg-white rounded-[3rem] shadow-2xl w-full max-w-md p-12 text-center border border-gray-50"><div class="w-20 h-20 bg-red-50 text-red-500 rounded-[2rem] flex items-center justify-center text-4xl mx-auto mb-6 shadow-inner"><i class="fas fa-radiation"></i></div><h3 class="text-2xl font-black text-gray-800 tracking-tight mb-4">데이터 전체 초기화</h3><p class="text-xs text-gray-500 mb-8 leading-relaxed">구글 시트의 모든 데이터와 로그가 완전히 지워집니다.<br>정말 진행하시겠습니까?</p><div class="grid grid-cols-2 gap-4"><button onclick="closeModal('resetModal')" class="py-4 bg-gray-50 rounded-2xl font-bold text-xs text-gray-500 hover:bg-gray-100 transition-all">취소</button><button onclick="confirmReset()" class="py-4 bg-red-600 text-white rounded-2xl font-bold text-xs shadow-xl hover:bg-red-700 transition-all">초기화 진행</button></div></div></div>`;
+                document.body.insertAdjacentHTML('beforeend', resetHtml);
+            }
         }
         
         document.addEventListener('DOMContentLoaded', () => { initSidebar(); fetchMembers(); });
