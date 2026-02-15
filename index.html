@@ -243,7 +243,7 @@
 
         function formatRankWithSuffix(rank) {
             if (!rank) return '-';
-            const special = ['크라운', '파르페', '티라미슈', '크로칸슈', '롤케이크', '팬케이크', '와플'];
+            const special = ['크라운', '파르페', '티라미슈', '크로칸슈'];
             if (special.includes(rank)) return `${rank} <span class="text-[8.5px] text-blue-500 font-bold tracking-tighter">(아인슈패너)</span>`;
             return rank;
         }
