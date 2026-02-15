@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; }
         .chart-container { position: relative; width: 100%; height: 300px; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -83,6 +83,7 @@
             <button onclick="router('suro')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="suro"><i class="fas fa-edit w-5 text-center"></i><span>수로 점수 입력</span></button>
             <button onclick="router('analysis')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="analysis"><i class="fas fa-chart-line w-5 text-center"></i><span>수로 점수 분석</span></button>
             <button onclick="router('bail')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="bail"><i class="fas fa-gem w-5 text-center"></i><span>보석금 관리</span></button>
+            <button onclick="router('penalty')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="penalty"><i class="fas fa-exclamation-triangle w-5 text-center"></i><span>벌점 관리</span></button>
             <button onclick="router('sheet')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="sheet"><i class="fas fa-table w-5 text-center"></i><span>시트 보기</span></button>
             <button onclick="router('history')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="history"><i class="fas fa-history w-5 text-center"></i><span>운영 이력</span></button>
             <button onclick="router('settings')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="settings"><i class="fas fa-cog w-5 text-center"></i><span>설정</span></button>
@@ -99,8 +100,8 @@
                 <div class="px-4 py-1.5 bg-pink-50 text-pink-600 rounded-full text-[11px] font-bold border border-pink-100 shadow-sm">
                     ✨ <span id="anniversaryLabel">로딩 중...</span>
                 </div>
-                <div class="hidden md:flex px-4 py-1.5 bg-slate-50 text-slate-600 rounded-full text-[11px] font-bold border border-slate-100 shadow-sm">
-                    👥 인원: <span id="totalMembersCount">0</span>명
+                <div class="hidden md:flex px-4 py-1.5 bg-slate-50 text-slate-600 rounded-full text-[11px] font-bold border border-slate-100 shadow-sm gap-2">
+                    <span>👥</span> <span id="totalMembersCount">로딩 중...</span>
                 </div>
                 <button id="refreshBtn" onclick="fetchMembers()" class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-400 transition-all border border-gray-100 shadow-sm"><i class="fas fa-sync-alt"></i></button>
             </div>
@@ -143,7 +144,7 @@
     <script>
         // --- CONSTANTS ---
         const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/1HTx8eM9tWNYJlcT9GxHKLM3XBH_o3QgPJ01rYoE8hYw/edit?gid=1534314866#gid=1534314866";
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbze4CcBhs4v-RA2JnCpsoWNfJwX9_wMWoPXyfU1mllzBoJdE1A6E-HnNYtMTU-AoObPxg/exec";
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbytp-QMaJc1xP_1sprCrOPxF2gREfgKvFcy4mhTk5grPv75fEYiQAXtXLcQM88IGdWR0A/exec";
         const GUILD_START_DATE = new Date('2020-03-17');
         const MAPLE_JOBS = ["히어로", "다크나이트", "팔라딘", "불독", "썬콜", "비숍", "보우마스터", "신궁", "패스파인더","나이트로드", "섀도어", "듀얼블레이드", "캡틴", "바이퍼", "캐논마스터","미하일", "소울마스터", "플레임위자드", "윈드브레이커", "나이트워커", "스트라이커","아란", "에반", "루미너스", "메르세데스", "팬텀", "은월","데몬 슬레이어", "데몬 어벤져", "블래스터", "배틀메이지", "와일드헌터", "메카닉", "제논","카이저", "카인", "카데나", "엔젤릭버스터","라라", "호영", "아델", "일리움", "아크", "칼리","제로", "키네시스", "렌"];
         const baseRanks = ['마카롱', '다쿠아즈'];
@@ -172,6 +173,7 @@
             ],
             members: [], history: [], bailHistory: [], suroHeaders: [],
             events: [],
+            penaltyHistory: [],
             filters: { guild: 'all', search: '', sortField: 'name', sortOrder: 'asc' },
             suroFilters: { guild: 'all', search: '', sortField: 'name', sortOrder: 'asc' },
             analysisFilters: { sortField: 'avg', sortOrder: 'desc' },
@@ -277,9 +279,24 @@
                     appState.suroHeaders = json.data.suroHeaders || [];
                     appState.bailHistory = json.data.bailHistory || [];
                     appState.events = json.data.events || [];
+                    appState.penaltyHistory = json.data.penaltyHistory || [];
                     
                     const countEl = document.getElementById('totalMembersCount');
-                    if (countEl) countEl.innerText = appState.members.length;
+                    if (countEl) {
+                        const counts = {};
+                        appState.guilds.forEach(g => counts[g.name] = 0);
+                        appState.members.forEach(m => {
+                            if (counts[m.guild] !== undefined) counts[m.guild]++;
+                        });
+                        
+                        const aliases = { '뚠카롱': '뚠', '뚱카롱': '뚱', '밤카롱': '밤', '별카롱': '별', '달카롱': '달', '꿀카롱': '꿀' };
+                        const text = appState.guilds.map(g => {
+                            const name = aliases[g.name] || g.name.substring(0, 1);
+                            return `${name}:${counts[g.name]}`;
+                        }).join(' ');
+                        
+                        countEl.innerText = text;
+                    }
                     
                     window.updateAnniversaryLabel();
                     window.router(appState.activeTab);
@@ -321,13 +338,14 @@
             const content = document.getElementById('contentArea'); if(!content) return;
             content.innerHTML = '';
             document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.target === tab));
-            const titles = { dashboard: '길드 현황판', members: '길드원 관리', suro: '수로 점수 입력', analysis: '수로 분석', bail: '보석금 관리', sheet: '시트 보기', history: '운영 이력', settings: '설정' };
+            const titles = { dashboard: '길드 현황판', members: '길드원 관리', suro: '수로 점수 입력', analysis: '수로 분석', bail: '보석금 관리', penalty: '벌점 관리 시스템', sheet: '시트 보기', history: '운영 이력', settings: '설정' };
             document.getElementById('pageTitle').innerText = titles[tab] || '';
             if (tab === 'dashboard') window.renderDashboard(content);
             else if (tab === 'members') window.renderMembers(content);
             else if (tab === 'suro') window.renderSuro(content);
             else if (tab === 'analysis') window.renderAnalysis(content, appState.analysisGuild);
             else if (tab === 'bail') window.renderBail(content);
+            else if (tab === 'penalty') window.renderPenalty(content);
             else if (tab === 'sheet') window.renderSheet(content);
             else if (tab === 'history') window.renderHistory(content);
             else if (tab === 'settings') window.renderSettings(content);
@@ -633,12 +651,11 @@
             const term = appState.filters.search.toLowerCase();
             const filtered = appState.members.filter(m => { 
                 const gMatch = appState.filters.guild === 'all' || m.guild === appState.filters.guild; 
-                // 검색 범위 확장: 닉네임, 직업, 직위 + 본캐 정보(mainCharName)
                 const sMatch = m.name.toLowerCase().includes(term) || 
                                (m.class||'').toLowerCase().includes(term) || 
                                (m.role||'').toLowerCase().includes(term) ||
-                               (m.mainCharName || '').toLowerCase().includes(term) || // 부캐의 경우 본캐명으로 검색 가능
-                               (m.isMain && m.name.toLowerCase().includes(term)); // 본캐 검색 시 자신 포함
+                               (m.mainCharName || '').toLowerCase().includes(term) || 
+                               (m.isMain && m.name.toLowerCase().includes(term)); 
                 return gMatch && sMatch; 
             });
             filtered.sort((a, b) => smartCompare(a, b, appState.filters.sortField, appState.filters.sortOrder));
@@ -698,6 +715,124 @@
             if (btn) { btn.disabled = true; btn.innerText = "전송 중..."; }
             if (await window.sendAction('save_bail', { payer, receiver, amount })) { pI.value = ''; aI.value = '1'; }
             else if (btn) { btn.disabled = false; btn.innerText = "납부 확인 및 저장"; }
+        };
+
+        // --- PENALTY MANAGEMENT ---
+        window.renderPenalty = (container) => {
+            const memberOptions = appState.members.map(m => `<option value="${m.name}">${m.name} (${m.guild})</option>`).sort();
+            
+            // Calculate penalty counts
+            const penaltyCounts = {};
+            appState.penaltyHistory.forEach(h => {
+                penaltyCounts[h.name] = (penaltyCounts[h.name] || 0) + Number(h.points);
+            });
+            // Just displaying users with > 0 total points (simple logic for now)
+            const activePenalties = Object.entries(penaltyCounts).filter(([name, pts]) => pts > 0);
+
+            const penaltyRows = [...appState.penaltyHistory].map(h => `
+                <tr class="hover:bg-gray-50 border-b border-gray-50 h-12 transition-colors font-bold text-xs">
+                    <td class="p-4 font-mono text-gray-400 text-[10px]">${h.date.split(' ')[0]}</td>
+                    <td class="p-4 text-gray-700">${h.name}</td>
+                    <td class="p-4 text-red-500">${h.points}점</td>
+                    <td class="p-4 text-gray-500 text-[11px]">${h.reason}</td>
+                </tr>
+            `).join('');
+
+            container.innerHTML = `
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in h-full">
+                <!-- Left: Form -->
+                <div class="lg:col-span-1 bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden">
+                    <div class="mb-8">
+                        <h3 class="text-xl font-bold text-gray-800 tracking-tight">벌점 부여</h3>
+                        <p class="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">PENALTY RECORD</p>
+                    </div>
+                    <div class="space-y-6 flex-1 overflow-y-auto no-scrollbar pb-6">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">부여 날짜</label>
+                            <input type="date" id="penaltyDate" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-inner" value="${new Date().toISOString().split('T')[0]}">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">대상자</label>
+                            <select id="penaltyTarget" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-sm cursor-pointer font-bold">
+                                <option value="">대상자를 선택하세요</option>
+                                ${memberOptions}
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">벌점 (1~10점)</label>
+                            <select id="penaltyPoints" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-sm cursor-pointer font-bold">
+                                ${[1,2,3,4,5,6,7,8,9,10].map(i => `<option value="${i}">${i}점</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">부여 사유</label>
+                            <textarea id="penaltyReason" rows="4" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-inner resize-none" placeholder="상세 사유를 입력하세요"></textarea>
+                        </div>
+                        <button onclick="window.submitPenalty()" id="btnPenaltySubmit" class="w-full py-6 bg-red-600 text-white rounded-[2rem] font-bold text-xs shadow-xl hover:bg-red-700 transition-all active:scale-[0.98] mt-4">벌점 저장</button>
+                    </div>
+                </div>
+
+                <!-- Right: Status & History -->
+                <div class="lg:col-span-2 flex flex-col gap-6 h-full overflow-hidden">
+                    <!-- Current Targets Card -->
+                    <div class="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm shrink-0 min-h-[160px]">
+                        <div class="mb-4">
+                            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">현재 벌점 관리 대상자</h3>
+                        </div>
+                        <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+                            ${activePenalties.length > 0 
+                                ? activePenalties.map(([name, pts]) => `
+                                    <div class="flex items-center gap-3 bg-red-50 pl-2 pr-5 py-2 rounded-full border border-red-100 shrink-0">
+                                        <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-red-500 font-bold text-xs shadow-sm">${pts}</div>
+                                        <span class="text-xs font-bold text-red-600">${name}</span>
+                                    </div>
+                                  `).join('')
+                                : '<p class="text-xs text-gray-300 font-bold italic w-full">현재 벌점자가 없습니다.</p>'
+                            }
+                        </div>
+                    </div>
+
+                    <!-- History Table -->
+                    <div class="bg-white rounded-[3rem] border border-gray-100 shadow-sm flex flex-col flex-1 overflow-hidden">
+                        <div class="p-8 border-b border-gray-50 flex justify-between items-center shrink-0">
+                            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">상세 부여 이력</h3>
+                        </div>
+                        <div class="flex-1 overflow-y-auto no-scrollbar">
+                            <table class="w-full text-left text-xs whitespace-nowrap">
+                                <thead class="bg-gray-50 text-[10px] font-bold text-gray-500 uppercase sticky top-0">
+                                    <tr>
+                                        <th class="p-5">날짜</th>
+                                        <th class="p-5">대상자</th>
+                                        <th class="p-5">점수</th>
+                                        <th class="p-5">부여 사유</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50">
+                                    ${penaltyRows || '<tr><td colspan="4" class="p-20 text-center text-gray-300 font-bold italic">벌점 이력이 없습니다.</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        };
+
+        window.submitPenalty = async () => {
+            const date = document.getElementById('penaltyDate').value;
+            const target = document.getElementById('penaltyTarget').value;
+            const points = document.getElementById('penaltyPoints').value;
+            const reason = document.getElementById('penaltyReason').value.trim();
+            const btn = document.getElementById('btnPenaltySubmit');
+
+            if (!date || !target || !points || !reason) return window.showMsg("모든 항목을 입력해주세요.", "error");
+            if (!confirm(`${target}님에게 ${date} 일자로 벌점 ${points}점을 부여하시겠습니까?`)) return;
+
+            if (btn) { btn.disabled = true; btn.innerText = "저장 중..."; }
+            if (await window.sendAction('save_penalty', { date: date, name: target, points: points, reason: reason })) {
+                document.getElementById('penaltyReason').value = '';
+            } else if (btn) {
+                btn.disabled = false; btn.innerText = "벌점 저장";
+            }
         };
 
         // --- OTHER TABS ---
