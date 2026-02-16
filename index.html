@@ -150,7 +150,7 @@
         const baseRanks = ['마카롱', '다쿠아즈'];
         const initialGuildRanks = {
             '뚠카롱': [...baseRanks, '크라운', '파르페', '티라미슈', '크로칸슈', '롤케이크', '팬케이크', '와플'],
-            '뚱카롱': [...baseRanks, '뚠케이크', '뚠브레드', '수플레', '뚠스콘', '부팬케이크', '반죽(휴면)', '아인슈패너'],
+            '뚱카롱': [...baseRanks, '뚠케이크', '뚠브레드', '수플레', '뚠스콘', '반죽', '반죽(휴면)', '아인슈패너'],
             '밤카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈패너', '반죽', '반죽(휴면)'],
             '별카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈패너', '반죽', '반죽(휴면)'],
             '달카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈패너', '반죽', '반죽(휴면)'],
@@ -187,7 +187,7 @@
             currentSelectedDate: null
         };
 
-        // --- HELPER FUNCTIONS (Attached to window to fix global scope issues) ---
+        // --- HELPER FUNCTIONS ---
         window.showMsg = (text, type = 'info') => {
             const box = document.getElementById('msgBox'); if(!box) return;
             document.getElementById('msgText').innerText = text;
@@ -261,11 +261,78 @@
             return `${f(startDate)}(목) ~ ${f(endDate)}(수) 수로 점수`; 
         };
 
+        // --- BATCH MODE FUNCTIONS ---
+        window.toggleBatchMode = () => { 
+            appState.isBatchMode = !appState.isBatchMode; 
+            appState.pendingUpdates = {}; 
+            window.renderMembers(document.getElementById('contentArea')); 
+        };
+
+        window.stageUpdate = (id, field, val) => { 
+            if(!appState.pendingUpdates[id]) appState.pendingUpdates[id] = { id }; 
+            appState.pendingUpdates[id][field] = val; 
+            window.updateMemberTable(); 
+        };
+
+        window.saveBatchUpdates = async () => { 
+            const updates = Object.values(appState.pendingUpdates); 
+            if(updates.length === 0) return window.showMsg("수정된 내용이 없습니다.", "error"); 
+            
+            if(confirm(`${updates.length}명의 정보를 업데이트하시겠습니까? (시간이 조금 걸릴 수 있습니다)`)) { 
+                window.showLoading(true); 
+                
+                let successCount = 0;
+                const total = updates.length;
+
+                for (const update of updates) {
+                    const original = appState.members.find(m => String(m.id) === String(update.id));
+                    if (!original) continue;
+
+                    const payload = {
+                        id: original.id,
+                        name: original.name,
+                        guild: update.guild !== undefined ? update.guild : original.guild,
+                        role: update.role !== undefined ? update.role : original.role,
+                        class: update.class !== undefined ? update.class : original.class,
+                        isMain: original.isMain,
+                        mainCharName: original.mainCharName || '',
+                        joinDate: original.joinDate || ''
+                    };
+
+                    try {
+                        const response = await fetch(appState.scriptUrl, { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                            body: JSON.stringify({ action: 'update', data: payload }), 
+                            redirect: 'follow' 
+                        });
+                        const res = await response.json();
+                        if (res.status === "success") successCount++;
+                    } catch (e) {
+                        console.error("Update failed for", original.name, e);
+                    }
+                }
+
+                window.showLoading(false);
+                
+                if (successCount === total) {
+                    window.showMsg("모든 변경사항이 저장되었습니다.", "success");
+                    appState.isBatchMode = false; 
+                    appState.pendingUpdates = {};
+                    await window.fetchMembers();
+                } else {
+                    window.showMsg(`${successCount}/${total}건 저장 완료. 일부 실패했습니다.`, "warning");
+                    await window.fetchMembers();
+                }
+            } 
+        };
+
         // --- CORE API ---
         window.fetchMembers = async () => {
             window.showLoading(true);
             try {
-                const targetUrl = appState.scriptUrl;
+                // Add timestamp to prevent caching in browser (Chrome/GitHub Pages issue)
+                const targetUrl = appState.scriptUrl + "?t=" + new Date().getTime();
                 const response = await fetch(targetUrl, { 
                     method: 'GET', 
                     mode: 'cors', 
@@ -274,7 +341,8 @@
                 });
                 const json = await response.json();
                 if (json.status === "success") {
-                    appState.members = (json.data.members || []).filter(m => m.name && m.name.trim() !== "");
+                    // Force ID to be String to ensure batch update lookups work consistently
+                    appState.members = (json.data.members || []).map(m => ({...m, id: String(m.id)})).filter(m => m.name && m.name.trim() !== "");
                     appState.history = json.data.history || [];
                     appState.suroHeaders = json.data.suroHeaders || [];
                     appState.bailHistory = json.data.bailHistory || [];
@@ -300,10 +368,12 @@
                     
                     window.updateAnniversaryLabel();
                     window.router(appState.activeTab);
+                } else {
+                    window.showMsg("데이터를 불러오지 못했습니다.", "error");
                 }
             } catch (e) { 
                 console.error("Fetch Error:", e); 
-                window.showMsg("데이터 연동 실패. 앱스크립트 배포 상태를 확인하세요.", "error"); 
+                window.showMsg("데이터 연동 실패. 네트워크 상태를 확인하세요.", "error"); 
             }
             window.showLoading(false);
         };
@@ -445,7 +515,7 @@
 
             for(let d=1; d<=last; d++) { 
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                // 날짜 비교 로직 강화: 공백 제거 및 부분 일치 확인
+                // 날짜 비교 로직 강화: 공백 제거 및 부분 일치 확인 (시간대 문제 방지)
                 const dayEvent = appState.events.find(e => {
                     const eDate = (e.date || '').trim();
                     return eDate === dateStr || eDate.startsWith(dateStr);
@@ -682,186 +752,11 @@
                 const currentRole = pending && pending.role ? pending.role : m.role;
                 const currentClass = pending && pending.class ? pending.class : (m.class || '');
 
-                html += `<tr class="${pending ? 'batch-modified' : ''} hover:bg-pink-50/20 group transition-colors h-14"><td class="p-3 text-center text-gray-400 text-[11px]">${idx+1}</td><td class="p-3 font-bold text-gray-800 flex items-center h-full leading-none">${window.getNicknameIcon(m.role)}<span class="text-sm tracking-tight">${m.name}</span></td><td class="p-3 leading-tight"><div><span class="block text-[11px] font-bold text-gray-700">${mainName}</span><span class="text-[9px] text-gray-400 font-medium">${mainRankHtml}</span></div></td><td class="p-3">${appState.isBatchMode ? `<select onchange="window.stageUpdate('${m.id}', 'guild', this.value)" class="bg-white border rounded px-1 text-[10px] outline-none">${appState.guilds.map(g=>`<option value="${g.name}" ${currentGuild===g.name?'selected':''}>${g.name}</option>`).join('')}</select>` : m.guild}</td><td class="p-3">${appState.isBatchMode ? `<select onchange="window.stageUpdate('${m.id}', 'role', this.value)" class="bg-white border rounded px-1 text-[10px] outline-none">${(appState.guildRanks[currentGuild]||initialGuildRanks[currentGuild]||initialGuildRanks['뚠카롱']).map(r=>`<option value="${r}" ${currentRole===r?'selected':''}>${r}</option>`).join('')}</select>` : `<span class="text-[10px]">${m.role}</span>`}</td><td class="p-3">${appState.isBatchMode ? `<input type="text" value="${currentClass}" oninput="window.stageUpdate('${m.id}', 'class', this.value)" class="bg-white border rounded px-1 text-[10px] w-24 outline-none">` : `<span class="text-[10px] text-gray-400">${m.class||'-'}</span>`}</td><td class="p-3 text-right">${!appState.isBatchMode ? `<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onclick="window.openEditModal('${m.id}')" class="w-8 h-8 rounded-xl border border-gray-100 text-blue-500 hover:bg-blue-50 flex items-center justify-center shadow-sm"><i class="fas fa-edit text-[10px]"></i></button><button onclick="window.openDeleteModal('${m.id}')" class="w-8 h-8 rounded-xl border border-gray-100 text-red-500 hover:bg-red-50 flex items-center justify-center shadow-sm"><i class="fas fa-trash text-[10px]"></i></button></div>` : '<span class="text-[9px] text-gray-300">수정 중</span>'}</td></tr>`;
+                html += `<tr class="${pending ? 'batch-modified' : ''} hover:bg-pink-50/20 group transition-colors h-14"><td class="p-3 text-center text-gray-400 text-[11px]">${idx+1}</td><td class="p-3 font-bold text-gray-800 flex items-center h-full leading-none">${window.getNicknameIcon(m.role)}<span class="text-sm tracking-tight">${m.name}</span></td><td class="p-3 leading-tight"><div><span class="block text-[11px] font-bold text-gray-700">${mainName}</span><span class="text-[9px] text-gray-400 font-medium">${mainRankHtml}</span></div></td><td class="p-3">${appState.isBatchMode ? `<select onchange="window.stageUpdate('${m.id}', 'guild', this.value)" class="bg-white border rounded px-1 text-[10px] outline-none">${appState.guilds.map(g=>`<option value="${g.name}" ${currentGuild===g.name?'selected':''}>${g.name}</option>`).join('')}</select>` : m.guild}</td><td class="p-3">${appState.isBatchMode ? `<select onchange="window.stageUpdate('${m.id}', 'role', this.value)" class="bg-white border rounded px-1 text-[10px] outline-none">${(appState.guildRanks[currentGuild]||initialGuildRanks[currentGuild]||initialGuildRanks['뚠카롱']).map(r=>`<option value="${r}" ${currentRole===r?'selected':''}>${r}</option>`).join('')}</select>` : `<span class="text-[10px]">${m.role}</span>`}</td><td class="p-3">${appState.isBatchMode ? `<input type="text" value="${currentClass}" onchange="window.stageUpdate('${m.id}', 'class', this.value)" class="bg-white border rounded px-1 text-[10px] w-24 outline-none">` : `<span class="text-[10px] text-gray-400">${m.class||'-'}</span>`}</td><td class="p-3 text-right">${!appState.isBatchMode ? `<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onclick="window.openEditModal('${m.id}')" class="w-8 h-8 rounded-xl border border-gray-100 text-blue-500 hover:bg-blue-50 flex items-center justify-center shadow-sm"><i class="fas fa-edit text-[10px]"></i></button><button onclick="window.openDeleteModal('${m.id}')" class="w-8 h-8 rounded-xl border border-gray-100 text-red-500 hover:bg-red-50 flex items-center justify-center shadow-sm"><i class="fas fa-trash text-[10px]"></i></button></div>` : '<span class="text-[9px] text-gray-300">수정 중</span>'}</td></tr>`;
             });
             html += `</tbody></table></div>`; container.innerHTML = html;
         };
 
-        // --- SURO SCORES ---
-        window.renderSuro = (container) => {
-            container.innerHTML = `<div class="flex flex-col gap-8 fade-in h-full"><div class="bg-white p-10 rounded-t-[3rem] border border-gray-100 space-y-8 shadow-sm shrink-0"><div class="flex flex-col md:flex-row justify-between items-center gap-6"><div class="flex overflow-x-auto pb-2 no-scrollbar w-full md:w-auto gap-3"><button onclick="window.filterSuroGuild('all')" class="shrink-0 px-8 py-3 rounded-2xl text-xs font-bold transition-all ${appState.suroFilters.guild === 'all' ? 'bg-gray-800 text-white shadow-xl' : 'bg-gray-50 text-gray-500'}">전체 보기</button>${appState.guilds.map(g => `<button onclick="window.filterSuroGuild('${g.name}')" class="shrink-0 px-8 py-3 rounded-2xl text-xs font-bold transition-all ${appState.suroFilters.guild === g.name ? 'bg-blue-500 text-white shadow-xl' : 'bg-gray-50 text-gray-500'}">${g.name}</button>`).join('')}</div><button onclick="window.saveSuroInputs()" id="btnSuroSave" class="px-10 py-4 bg-blue-500 text-white rounded-2xl font-bold shadow-xl hover:bg-blue-600 transition-all text-xs">수로 점수 저장</button></div><div class="relative"><i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" oninput="window.filterSuroSearch(this.value)" class="w-full pl-16 pr-8 py-4 bg-gray-50 border border-gray-100 rounded-[2rem] outline-none font-bold text-sm shadow-inner focus:ring-4 focus:ring-blue-50 transition-all" placeholder="닉네임 검색"></div></div><div id="suroTableContainer" class="bg-white rounded-b-[3rem] border border-gray-100 overflow-hidden shadow-sm flex-1 min-h-0 flex flex-col"></div></div>`;
-            window.updateSuroTable();
-        };
-
-        window.updateSuroTable = () => {
-            const container = document.getElementById('suroTableContainer'); if(!container) return;
-            const period = window.getSuroPeriodHeader(); const prevHeader = appState.suroHeaders.slice(-2)[0] || ""; const term = (appState.suroFilters.search || '').toLowerCase();
-            const filtered = appState.members.filter(m => (appState.suroFilters.guild === 'all' || m.guild === appState.suroFilters.guild) && m.name.toLowerCase().includes(term));
-            filtered.sort((a, b) => { const f = appState.suroFilters.sortField, o = appState.suroFilters.sortOrder; if (f === 'prev') return smartCompare({prev: Number(a.suro?.[prevHeader]||0)}, {prev: Number(b.suro?.[prevHeader]||0)}, 'prev', o); if (f === 'curr') { const valA = Number(appState.currentSuroInputs[a.name] || a.suro?.[period] || 0), valB = Number(appState.currentSuroInputs[b.name] || b.suro?.[period] || 0); return o === 'asc' ? valA - valB : valB - valA; } return smartCompare(a, b, f, o); });
-            const sortIcon = (f) => appState.suroFilters.sortField === f ? (appState.suroFilters.sortOrder === 'asc' ? ' <i class="fas fa-sort-up"></i>' : ' <i class="fas fa-sort-down"></i>') : '';
-            let html = `<div class="overflow-y-auto flex-1 p-0"><table class="w-full text-left min-w-[800px]"><thead class="bg-gray-50 text-gray-500 text-[10px] font-bold uppercase sticky top-0 z-10 border-b border-gray-100 shadow-sm"><tr><th class="p-4 cursor-pointer hover:bg-gray-100 transition-colors" onclick="window.handleSuroSort('name')">닉네임 (유니코드)${sortIcon('name')}</th><th class="p-4 cursor-pointer hover:bg-gray-100 transition-colors" onclick="window.handleSuroSort('guild')">소속${sortIcon('guild')}</th><th class="p-4 text-right cursor-pointer hover:bg-gray-100 transition-colors" onclick="window.handleSuroSort('prev')">지난 기록${sortIcon('prev')}</th><th class="p-4 text-right w-48 cursor-pointer hover:bg-gray-100 transition-colors" onclick="window.handleSuroSort('curr')">이번주 점수${sortIcon('curr')}</th></tr></thead><tbody class="divide-y divide-gray-50 font-bold">`;
-            filtered.forEach((m, idx) => {
-                const currVal = appState.currentSuroInputs[m.name] !== undefined ? appState.currentSuroInputs[m.name] : (m.suro?.[period] || ''), prevVal = Number(m.suro?.[prevHeader] || 0);
-                html += `<tr class="hover:bg-blue-50/30 transition-colors h-14"><td class="p-4 font-bold text-gray-800 flex items-center h-full text-sm leading-none">${window.getNicknameIcon(m.role)}${m.name}</td><td class="p-4 text-xs font-bold text-gray-400">${m.guild}</td><td class="p-4 text-right font-mono text-gray-300 text-xs">${prevVal > 0 ? prevVal.toLocaleString() : '-'}</td><td class="p-3"><input type="number" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-right font-bold outline-none focus:bg-white focus:ring-2 focus:ring-blue-100 shadow-inner" value="${currVal}" oninput="appState.currentSuroInputs['${m.name}']=this.value"></td></tr>`;
-            });
-            html += `</tbody></table></div>`; container.innerHTML = html;
-        };
-
-        window.saveSuroInputs = async () => {
-            const data = Object.entries(appState.currentSuroInputs).filter(([n, s]) => s !== "" && s !== null).map(([name, score]) => ({ name, score }));
-            if(data.length === 0) return window.showMsg("입력된 점수가 없습니다.", "error");
-            if(!confirm(`${data.length}명의 정보를 저장하시겠습니까?`)) return;
-            const btn = document.getElementById('btnSuroSave'); if (btn) { btn.disabled = true; btn.innerText = "저장 중..."; }
-            if (await window.sendAction('save_suro', data)) { appState.currentSuroInputs = {}; }
-            else if (btn) { btn.disabled = false; btn.innerText = "수로 점수 저장"; }
-        };
-
-        // --- BAIL MANAGEMENT ---
-        window.renderBail = (container) => {
-            const receivers = appState.members.filter(m => m.guild === '뚠카롱' && ['마카롱', '다쿠아즈'].includes(m.role)).sort((a,b) => smartCompare(a, b, 'name', 'asc'));
-            const adminStats = window.getAdminBailStats();
-            const historyRows = [...appState.bailHistory].reverse().map(h => `<tr class="hover:bg-gray-50 border-b border-gray-50 h-12 transition-colors font-bold text-xs"><td class="p-4 font-mono text-gray-400 text-[10px]">${h.date}</td><td class="p-4 text-gray-700">${h.payer}</td><td class="p-4 text-blue-500">${h.receiver}</td><td class="p-4 text-right text-pink-500">${h.amount}개</td></tr>`).join('');
-            const statsHtml = adminStats.map(([name, count]) => `<div class="bg-gray-50 rounded-2xl p-4 flex justify-between items-center border border-gray-100 hover:bg-white transition-all shadow-sm"><span class="font-bold text-gray-700 text-xs">${name}</span><span class="font-black text-pink-500 text-lg">${count}개</span></div>`).join('');
-            container.innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in h-full"><div class="lg:col-span-1 bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden"><div class="mb-8"><h3 class="text-xl font-bold text-gray-800 tracking-tight">보석금 납부 등록</h3><p class="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">GEM BAIL REGISTRATION</p></div><div class="space-y-6 flex-1 overflow-y-auto no-scrollbar pb-6"><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">납부자</label><input type="text" id="bailPayerInput" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-inner" placeholder="닉네임 직접 입력"></div><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">수령자</label><select id="bailReceiver" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-sm cursor-pointer font-bold">${receivers.map(r=>`<option value="${r.name}">${r.name} (${r.role})</option>`).join('')}</select></div><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">수량</label><input type="number" id="bailAmount" value="1" min="1" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-inner"></div><button onclick="window.submitBail()" id="btnBailSubmit" class="w-full py-6 bg-gray-900 text-white rounded-[2rem] font-bold text-xs shadow-2xl hover:bg-black transition-all active:scale-[0.98]">납부 확인 및 저장</button><div class="mt-8 border-t pt-8"><h4 class="text-xs font-bold text-gray-400 mb-4 uppercase tracking-widest">간부별 수령 총계</h4><div class="grid grid-cols-1 gap-2">${statsHtml || '<p class="text-[10px] text-gray-300 italic text-center">데이터 없음</p>'}</div></div></div></div><div class="lg:col-span-2 bg-white rounded-[3rem] border border-gray-100 shadow-sm flex flex-col overflow-hidden h-full"><div class="p-8 border-b border-gray-50 flex justify-between items-center"><h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">최근 보석금 내역 (yy-mm-dd)</h3><span class="text-[10px] text-gray-400 font-bold italic">Total: ${appState.bailHistory.length}</span></div><div class="flex-1 overflow-y-auto no-scrollbar"><table class="w-full text-left text-xs"><thead class="bg-gray-50 text-[10px] font-bold text-gray-500 uppercase sticky top-0"><tr><th class="p-5">날짜</th><th class="p-5">납부자</th><th class="p-5">수령자</th><th class="p-5 text-right">수량</th></tr></thead><tbody class="divide-y divide-gray-50">${historyRows || '<tr><td colspan="4" class="p-20 text-center text-gray-300 font-bold italic">내역이 존재하지 않습니다.</td></tr>'}</tbody></table></div></div></div>`;
-        };
-
-        window.submitBail = async () => {
-            const pI = document.getElementById('bailPayerInput'), rI = document.getElementById('bailReceiver'), aI = document.getElementById('bailAmount'), btn = document.getElementById('btnBailSubmit');
-            const payer = pI.value.trim(), receiver = rI.value, amount = aI.value; if(!payer || !receiver || !amount) return window.showMsg("항목을 모두 입력하세요.", "error");
-            if(!confirm(`${payer} 님의 보석금 ${amount}개를 저장하시겠습니까?`)) return;
-            if (btn) { btn.disabled = true; btn.innerText = "전송 중..."; }
-            if (await window.sendAction('save_bail', { payer, receiver, amount })) { pI.value = ''; aI.value = '1'; }
-            else if (btn) { btn.disabled = false; btn.innerText = "납부 확인 및 저장"; }
-        };
-
-        // --- PENALTY MANAGEMENT ---
-        window.renderPenalty = (container) => {
-            const memberOptions = appState.members.map(m => `<option value="${m.name}">${m.name} (${m.guild})</option>`).sort();
-            
-            // Calculate penalty counts
-            const penaltyCounts = {};
-            appState.penaltyHistory.forEach(h => {
-                penaltyCounts[h.name] = (penaltyCounts[h.name] || 0) + Number(h.points);
-            });
-            // Just displaying users with > 0 total points (simple logic for now)
-            const activePenalties = Object.entries(penaltyCounts).filter(([name, pts]) => pts > 0);
-
-            const penaltyRows = [...appState.penaltyHistory].map(h => `
-                <tr class="hover:bg-gray-50 border-b border-gray-50 h-12 transition-colors font-bold text-xs">
-                    <!-- 날짜 형식 YY-MM-DD로 변경 -->
-                    <td class="p-4 font-mono text-gray-400 text-[10px]">${h.date.split(' ')[0].substring(2)}</td>
-                    <td class="p-4 text-gray-700">${h.name}</td>
-                    <td class="p-4 text-red-500">${h.points}점</td>
-                    <td class="p-4 text-gray-500 text-[11px]">${h.reason}</td>
-                </tr>
-            `).join('');
-
-            container.innerHTML = `
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in h-full">
-                <!-- Left: Form -->
-                <div class="lg:col-span-1 bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden">
-                    <div class="mb-8">
-                        <h3 class="text-xl font-bold text-gray-800 tracking-tight">벌점 부여</h3>
-                        <p class="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">PENALTY RECORD</p>
-                    </div>
-                    <div class="space-y-6 flex-1 overflow-y-auto no-scrollbar pb-6">
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">부여 날짜</label>
-                            <input type="date" id="penaltyDate" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-inner" value="${new Date().toISOString().split('T')[0]}">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">대상자</label>
-                            <select id="penaltyTarget" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-sm cursor-pointer font-bold">
-                                <option value="">대상자를 선택하세요</option>
-                                ${memberOptions}
-                            </select>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">벌점 (1~10점)</label>
-                            <select id="penaltyPoints" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-sm cursor-pointer font-bold">
-                                ${[1,2,3,4,5,6,7,8,9,10].map(i => `<option value="${i}">${i}점</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">부여 사유</label>
-                            <textarea id="penaltyReason" rows="4" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-inner resize-none" placeholder="상세 사유를 입력하세요"></textarea>
-                        </div>
-                        <button onclick="window.submitPenalty()" id="btnPenaltySubmit" class="w-full py-6 bg-red-600 text-white rounded-[2rem] font-bold text-xs shadow-xl hover:bg-red-700 transition-all active:scale-[0.98] mt-4">벌점 저장</button>
-                    </div>
-                </div>
-
-                <!-- Right: Status & History -->
-                <div class="lg:col-span-2 flex flex-col gap-6 h-full overflow-hidden">
-                    <!-- Current Targets Card -->
-                    <div class="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm shrink-0 min-h-[160px]">
-                        <div class="mb-4">
-                            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">현재 벌점 관리 대상자</h3>
-                        </div>
-                        <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
-                            ${activePenalties.length > 0 
-                                ? activePenalties.map(([name, pts]) => `
-                                    <div class="flex items-center gap-3 bg-red-50 pl-2 pr-5 py-2 rounded-full border border-red-100 shrink-0">
-                                        <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-red-500 font-bold text-xs shadow-sm">${pts}</div>
-                                        <span class="text-xs font-bold text-red-600">${name}</span>
-                                    </div>
-                                  `).join('')
-                                : '<p class="text-xs text-gray-300 font-bold italic w-full">현재 벌점자가 없습니다.</p>'
-                            }
-                        </div>
-                    </div>
-
-                    <!-- History Table -->
-                    <div class="bg-white rounded-[3rem] border border-gray-100 shadow-sm flex flex-col flex-1 overflow-hidden">
-                        <div class="p-8 border-b border-gray-50 flex justify-between items-center shrink-0">
-                            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">상세 부여 이력</h3>
-                        </div>
-                        <div class="flex-1 overflow-y-auto no-scrollbar">
-                            <table class="w-full text-left text-xs whitespace-nowrap">
-                                <thead class="bg-gray-50 text-[10px] font-bold text-gray-500 uppercase sticky top-0">
-                                    <tr>
-                                        <th class="p-5">날짜</th>
-                                        <th class="p-5">대상자</th>
-                                        <th class="p-5">점수</th>
-                                        <th class="p-5">부여 사유</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-50">
-                                    ${penaltyRows || '<tr><td colspan="4" class="p-20 text-center text-gray-300 font-bold italic">벌점 이력이 없습니다.</td></tr>'}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        };
-
-        window.submitPenalty = async () => {
-            const date = document.getElementById('penaltyDate').value;
-            const target = document.getElementById('penaltyTarget').value;
-            const points = document.getElementById('penaltyPoints').value;
-            const reason = document.getElementById('penaltyReason').value.trim();
-            const btn = document.getElementById('btnPenaltySubmit');
-
-            if (!date || !target || !points || !reason) return window.showMsg("모든 항목을 입력해주세요.", "error");
-            if (!confirm(`${target}님에게 ${date} 일자로 벌점 ${points}점을 부여하시겠습니까?`)) return;
-
-            if (btn) { btn.disabled = true; btn.innerText = "저장 중..."; }
-            if (await window.sendAction('save_penalty', { date: date, name: target, points: points, reason: reason })) {
-                document.getElementById('penaltyReason').value = '';
-            } else if (btn) {
-                btn.disabled = false; btn.innerText = "벌점 저장";
-            }
-        };
-
-        // --- OTHER TABS ---
-        window.renderSheet = (container) => { const embedUrl = appState.sheetUrl.includes('/edit') ? appState.sheetUrl.split('/edit')[0] + '/preview' : appState.sheetUrl; container.innerHTML = `<div class="h-full flex flex-col gap-6 fade-in"><div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 shrink-0"><div><h3 class="text-lg font-bold text-gray-800 tracking-tight">구글 스프레드시트 뷰어</h3><p class="text-xs text-gray-400 mt-1">원본 시트를 즉시 연결하거나 실시간으로 확인합니다.</p></div><button onclick="window.open('${appState.sheetUrl}', '_blank')" class="px-10 py-4 bg-gray-900 text-white text-xs font-bold rounded-2xl shadow-xl hover:bg-black transition-all flex items-center gap-2"><i class="fas fa-external-link-alt"></i> 원본 시트 바로가기</button></div><div class="flex-1 bg-white rounded-[3rem] border border-gray-100 overflow-hidden shadow-sm relative"><iframe src="${embedUrl}" class="w-full h-full border-none"></iframe></div></div>`; };
-        window.renderHistory = (container) => { container.innerHTML = `<div class="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden h-full flex flex-col"><div class="p-8 border-b font-bold text-gray-800 shrink-0">운영 이력</div><div class="flex-1 overflow-y-auto no-scrollbar"><table class="w-full text-left text-xs whitespace-nowrap"><thead class="bg-gray-50 text-[10px] font-bold text-gray-500 uppercase sticky top-0"><tr><th class="p-6">DATE</th><th class="p-6">TYPE</th><th class="p-6">NAME</th><th class="p-6">CONTENT</th></tr></thead><tbody class="divide-y divide-gray-100">${appState.history.length === 0 ? `<tr><td colspan="4" class="p-20 text-center text-gray-300 font-bold">기록 없음</td></tr>` : [...appState.history].reverse().map(l => `<tr class="hover:bg-gray-50 transition-colors h-12 leading-none font-bold"><td class="p-6 text-gray-400 font-mono text-[10px]">${l.date}</td><td class="p-6"><span class="px-2 py-1 rounded-lg bg-gray-100 text-[9px] font-bold">${l.category}</span></td><td class="p-6 text-gray-700">${l.name}</td><td class="p-6 text-gray-500">${l.content}</td></tr>`).join('')}</tbody></table></div></div>`; };
-        window.renderSettings = (container) => { container.innerHTML = `<div class="bg-white p-12 rounded-[3rem] border border-gray-100 shadow-sm max-w-4xl font-bold h-fit"><h3 class="text-xl mb-10 text-gray-800">시스템 설정</h3><div class="space-y-8"><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 uppercase font-bold">Apps Script WebApp URL</label><input type="text" id="settingScriptUrl" value="${localStorage.getItem('macaron_script_url') || appState.scriptUrl}" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-5 text-xs font-mono outline-none shadow-inner focus:ring-4 focus:ring-gray-100 transition-all"></div><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 uppercase font-bold">Google Sheet URL</label><input type="text" id="settingSheetUrl" value="${localStorage.getItem('macaron_sheet_url') || appState.sheetUrl}" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-5 text-xs font-mono outline-none shadow-inner focus:ring-4 focus:ring-gray-100 transition-all"></div><button onclick="window.saveSettings()" class="w-full py-6 bg-gray-900 text-white rounded-3xl font-bold shadow-xl active:scale-[0.98] transition-all">설정 저장 및 시스템 재시작</button></div></div>`; };
-        window.saveSettings = () => { localStorage.setItem('macaron_script_url', document.getElementById('settingScriptUrl').value.trim()); localStorage.setItem('macaron_sheet_url', document.getElementById('settingSheetUrl').value.trim()); window.showMsg("저장되었습니다.", "success"); setTimeout(()=>location.reload(), 800); };
-
-        window.toggleBatchMode = () => { appState.isBatchMode = !appState.isBatchMode; appState.pendingUpdates = {}; window.renderMembers(document.getElementById('contentArea')); };
-        window.stageUpdate = (id, field, val) => { if(!appState.pendingUpdates[id]) appState.pendingUpdates[id] = { id }; appState.pendingUpdates[id][field] = val; window.updateMemberTable(); };
-        window.saveBatchUpdates = async () => { const updates = Object.values(appState.pendingUpdates); if(updates.length === 0) return window.showMsg("수정된 내용이 없습니다.", "error"); if(confirm(`${updates.length}명의 정보를 업데이트하시겠습니까?`)) { if(await window.sendAction('bulk_update', updates)) { appState.isBatchMode = false; appState.pendingUpdates = {}; } } };
         window.handleSearch = (v) => { appState.filters.search = v; window.updateMemberTable(); };
         window.filterByGuild = (g) => { appState.filters.guild = g; if(appState.activeTab === 'members') window.renderMembers(document.getElementById('contentArea')); else window.updateMemberTable(); };
         window.handleSort = (field) => { if(appState.filters.sortField === field) appState.filters.sortOrder = appState.filters.sortOrder === 'asc' ? 'desc' : 'asc'; else { appState.filters.sortField = field; appState.filters.sortOrder = 'asc'; } window.updateMemberTable(); };
@@ -907,4 +802,3 @@
     </script>
 </body>
 </html>
-
