@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>뚠카롱 길드 관리 시스템 (v8.25)</title>
+    <title>뚠카롱 길드 관리 시스템 (v8.28)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -55,6 +55,10 @@
         .score-zero { background-color: #fee2e2 !important; color: #ef4444 !important; }
         .score-cell { transition: background 0.2s; }
         .score-cell:hover { background-color: #f8fafb; }
+        
+        /* Custom Checkbox Style */
+        .custom-checkbox { width: 1.25rem; height: 1.25rem; border-radius: 0.5rem; border: 2px solid #e5e7eb; appearance: none; cursor: pointer; transition: all 0.2s; }
+        .custom-checkbox:checked { background-color: #ef4444; border-color: #ef4444; background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e"); }
     </style>
 </head>
 <body class="bg-gray-50 text-slate-800 h-screen overflow-hidden flex font-medium">
@@ -74,7 +78,7 @@
     <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col shadow-sm">
         <div class="p-6 border-b border-gray-100 flex items-center gap-3">
             <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-400 to-rose-400 flex items-center justify-center text-white font-bold shadow-lg shadow-pink-100 text-xl">뚠</div>
-            <div><h1 class="text-lg font-bold text-gray-800 tracking-tight">뚠카롱 길드 관리</h1><p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">v8.25 Stable</p></div>
+            <div><h1 class="text-lg font-bold text-gray-800 tracking-tight">뚠카롱 길드 관리</h1><p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">v8.28 Stable</p></div>
             <button id="closeSidebar" class="lg:hidden ml-auto text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
         </div>
         <nav class="p-4 space-y-2 flex-1 overflow-y-auto no-scrollbar">
@@ -106,13 +110,14 @@
                 <button id="refreshBtn" onclick="fetchMembers()" class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-400 transition-all border border-gray-100 shadow-sm"><i class="fas fa-sync-alt"></i></button>
             </div>
         </header>
-        <div id="contentArea" class="flex-1 overflow-y-auto p-4 lg:p-10 relative bg-gray-50 flex flex-col min-h-0"></div>
+        <!-- Modified Content Area Padding for wider view -->
+        <div id="contentArea" class="flex-1 overflow-y-auto p-3 lg:p-6 relative bg-gray-50 flex flex-col min-h-0"></div>
     </main>
 
     <!-- Modals -->
     <div id="memberModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm hidden fade-in font-bold"><div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden border border-gray-100"><div class="p-6 bg-pink-50 border-b border-pink-100 flex justify-between items-center"><div><h3 id="modalTitle" class="text-lg font-bold text-pink-700 tracking-tight">멤버 정보 입력</h3></div><button onclick="closeModal('memberModal')"><i class="fas fa-times text-gray-400 text-lg"></i></button></div><form id="memberForm" class="p-8 space-y-5"><input type="hidden" id="editMemberId"><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">닉네임</label><input type="text" id="inputName" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 outline-none focus:ring-4 focus:ring-pink-50 text-sm font-bold shadow-inner" required placeholder="정확한 캐릭터명"></div><div class="grid grid-cols-2 gap-4"><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">소속</label><select id="inputGuild" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 text-sm font-bold outline-none" onchange="onGuildSelectChange(this.value)"></select></div><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">직위</label><select id="inputRole" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 text-sm font-bold outline-none"></select></div></div><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">직업</label><select id="inputClass" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 text-sm font-bold outline-none shadow-inner cursor-pointer"><option value="">직업을 선택하세요</option></select></div><div class="flex items-center gap-3 py-1"><input type="checkbox" id="inputIsMain" class="w-5 h-5 text-pink-500 rounded focus:ring-pink-50 shadow-sm cursor-pointer" checked onchange="toggleMainCharInput()"><label for="inputIsMain" class="text-[11px] font-bold text-gray-600 uppercase tracking-tight cursor-pointer">본캐릭터입니까?</label></div><div id="mainCharInputGroup" class="hidden animate-fade-in space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">본캐 닉네임</label><input type="text" id="inputMainCharName" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 text-sm font-bold outline-none shadow-inner" placeholder="본캐릭명 입력"></div><button type="submit" id="btnSubmitMember" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-black transition-all shadow-xl mt-2">데이터베이스에 저장</button></form></div></div>
     
-    <div id="deleteModal" class="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm hidden fade-in font-bold"><div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 text-center border border-gray-50"><div class="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-5 shadow-inner"><i class="fas fa-user-minus"></i></div><p class="text-gray-800 font-bold text-lg mb-6 leading-tight">'<span id="deleteTargetName" class="text-red-500"></span>' 제거 확정</p><div class="space-y-4 text-left mb-8"><div class="flex gap-2"><button onclick="setDeleteType('leave')" id="btnLeave" class="flex-1 py-3 rounded-xl font-bold text-xs bg-gray-800 text-white shadow-sm transition-all">자진탈퇴</button><button onclick="setDeleteType('kick')" id="btnKick" class="flex-1 py-3 rounded-xl font-bold text-xs bg-gray-100 text-gray-400 transition-all">추방</button></div><input type="text" id="deleteReason" class="w-full border border-gray-100 bg-gray-50 rounded-xl p-3 text-xs font-bold outline-none shadow-inner" placeholder="사유를 입력하세요 (이력용)"></div><div class="grid grid-cols-2 gap-4"><button onclick="closeModal('deleteModal')" class="py-4 bg-gray-50 rounded-2xl font-bold text-xs text-gray-500 hover:bg-gray-100 transition-all">취소</button><button onclick="confirmDelete()" class="py-4 bg-red-500 text-white rounded-2xl font-bold text-xs shadow-xl hover:bg-red-600 transition-all">삭제 확정</button></div></div></div>
+    <div id="deleteModal" class="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm hidden fade-in font-bold"><div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 text-center border border-gray-50"><div class="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-5 shadow-inner"><i class="fas fa-user-minus"></i></div><p class="text-gray-800 font-bold text-lg mb-6 leading-tight"><span id="deleteTargetName" class="text-red-500"></span> 제거 확정</p><div class="space-y-4 text-left mb-8"><div class="flex gap-2"><button onclick="setDeleteType('leave')" id="btnLeave" class="flex-1 py-3 rounded-xl font-bold text-xs bg-gray-800 text-white shadow-sm transition-all">자진탈퇴</button><button onclick="setDeleteType('kick')" id="btnKick" class="flex-1 py-3 rounded-xl font-bold text-xs bg-gray-100 text-gray-400 transition-all">추방</button></div><input type="text" id="deleteReason" class="w-full border border-gray-100 bg-gray-50 rounded-xl p-3 text-xs font-bold outline-none shadow-inner" placeholder="사유를 입력하세요 (이력용)"></div><div class="grid grid-cols-2 gap-4"><button onclick="closeModal('deleteModal')" class="py-4 bg-gray-50 rounded-2xl font-bold text-xs text-gray-500 hover:bg-gray-100 transition-all">취소</button><button onclick="confirmDelete()" class="py-4 bg-red-500 text-white rounded-2xl font-bold text-xs shadow-xl hover:bg-red-600 transition-all">삭제 확정</button></div></div></div>
 
     <!-- Event Detail Modal -->
     <div id="eventDetailModal" class="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm hidden fade-in font-bold">
@@ -156,6 +161,7 @@
             '달카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈패너', '반죽', '반죽(휴면)'],
             '꿀카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈패너', '반죽', '반죽(휴면)']
         };
+        const ITEMS_PER_PAGE = 17;
 
         // --- GLOBAL STATE ---
         let jobChartInstance = null;
@@ -179,12 +185,14 @@
             analysisFilters: { sortField: 'avg', sortOrder: 'desc' },
             analysisGuild: '뚠카롱',
             isBatchMode: false, pendingUpdates: {},
+            isKickMode: false, kickSelection: new Set(),
             calendarView: { year: new Date().getFullYear(), month: new Date().getMonth() },
             scriptUrl: APPS_SCRIPT_URL,
             sheetUrl: DEFAULT_SHEET_URL,
             guildRanks: initialGuildRanks,
             currentSuroInputs: {},
-            currentSelectedDate: null
+            currentSelectedDate: null,
+            pagination: { members: 1, suro: 1, analysis: 1 } // Pagination State
         };
 
         // --- HELPER FUNCTIONS ---
@@ -264,6 +272,11 @@
         // --- BATCH MODE FUNCTIONS ---
         window.toggleBatchMode = () => { 
             appState.isBatchMode = !appState.isBatchMode; 
+            // If batch mode ON, turn off kick mode
+            if(appState.isBatchMode) {
+                appState.isKickMode = false;
+                appState.kickSelection.clear();
+            }
             appState.pendingUpdates = {}; 
             window.renderMembers(document.getElementById('contentArea')); 
         };
@@ -327,6 +340,41 @@
             } 
         };
 
+        // --- KICK MODE FUNCTIONS ---
+        window.toggleKickMode = () => {
+            appState.isKickMode = !appState.isKickMode;
+            // If kick mode ON, turn off batch mode
+            if(appState.isKickMode) {
+                appState.isBatchMode = false;
+                appState.pendingUpdates = {};
+            }
+            appState.kickSelection.clear();
+            window.renderMembers(document.getElementById('contentArea'));
+        };
+
+        window.handleKickSelect = (id) => {
+            if(appState.kickSelection.has(id)) appState.kickSelection.delete(id);
+            else appState.kickSelection.add(id);
+            // Re-render only buttons/header would be efficient, but simple re-render is safer
+            window.renderMembers(document.getElementById('contentArea'));
+        };
+
+        window.openBulkKickModal = () => {
+            if(appState.kickSelection.size === 0) return window.showMsg("선택된 인원이 없습니다.", "error");
+            appState.deleteType = 'kick'; // Force kick type for bulk
+            
+            // Set modal text for bulk
+            document.getElementById('deleteTargetName').innerText = `'${appState.kickSelection.size}명'`;
+            
+            // Hide single user buttons since it is always kick
+            document.getElementById('btnLeave').classList.add('hidden');
+            document.getElementById('btnKick').classList.add('hidden');
+            
+            // Show custom title or adjust logic
+            document.getElementById('deleteReason').value = '';
+            document.getElementById('deleteModal').classList.remove('hidden');
+        };
+
         // --- CORE API ---
         window.fetchMembers = async () => {
             window.showLoading(true);
@@ -378,8 +426,8 @@
             window.showLoading(false);
         };
 
-        window.sendAction = async (action, data) => {
-            window.showMsg("데이터 처리 중...", "info");
+        window.sendAction = async (action, data, skipRefresh = false) => {
+            if(!skipRefresh) window.showMsg("데이터 처리 중...", "info");
             try {
                 const targetUrl = appState.scriptUrl;
                 const response = await fetch(targetUrl, { 
@@ -390,8 +438,10 @@
                 });
                 const res = await response.json();
                 if (res.status === "success") { 
-                    window.showMsg("완료되었습니다.", "success"); 
-                    await window.fetchMembers(); 
+                    if(!skipRefresh) {
+                        window.showMsg("완료되었습니다.", "success"); 
+                        await window.fetchMembers(); 
+                    }
                     return true; 
                 }
                 else { window.showMsg(res.message || "오류 발생", "error"); return false; }
@@ -579,6 +629,14 @@
             if (success) window.closeModal('eventDetailModal');
         };
 
+        // --- PAGINATION HELPERS ---
+        window.changePage = (type, delta) => {
+            appState.pagination[type] += delta;
+            if (type === 'members') window.updateMemberTable();
+            if (type === 'suro') window.updateSuroTable();
+            if (type === 'analysis') window.renderAnalysis(document.getElementById('contentArea'), appState.analysisGuild);
+        };
+
         // --- ANALYSIS ---
         window.renderAnalysis = (container, gName) => {
             appState.analysisGuild = gName;
@@ -605,6 +663,14 @@
                 }
                 return smartCompare(a, b, f, o);
             });
+
+            // Pagination Logic
+            const totalItems = processedList.length;
+            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+            if (appState.pagination.analysis > totalPages && totalPages > 0) appState.pagination.analysis = totalPages;
+            if (appState.pagination.analysis < 1) appState.pagination.analysis = 1;
+            
+            const pageData = processedList.slice((appState.pagination.analysis - 1) * ITEMS_PER_PAGE, appState.pagination.analysis * ITEMS_PER_PAGE);
 
             const sortIcon = (f) => appState.analysisFilters.sortField === f ? (appState.analysisFilters.sortOrder === 'asc' ? ' <i class="fas fa-sort-up"></i>' : ' <i class="fas fa-sort-down"></i>') : '';
 
@@ -652,10 +718,11 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-50 font-bold">
-                                    ${processedList.map((m, i) => {
+                                    ${pageData.map((m, i) => {
+                                        const globalIndex = (appState.pagination.analysis - 1) * ITEMS_PER_PAGE + i + 1;
                                         return `
                                         <tr class="hover:bg-gray-50 transition-colors h-12">
-                                            <td class="p-4 text-center text-gray-300">${i + 1}</td>
+                                            <td class="p-4 text-center text-gray-300">${globalIndex}</td>
                                             <td class="p-4 text-gray-800 flex items-center leading-none">
                                                 ${window.getNicknameIcon(m.role)}${m.name}
                                             </td>
@@ -669,6 +736,12 @@
                                     }).join('')}
                                 </tbody>
                             </table>
+                        </div>
+                        <!-- Pagination Controls -->
+                        <div class="p-3 border-t border-gray-100 flex justify-center items-center gap-4 bg-gray-50/50">
+                            <button onclick="changePage('analysis', -1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-pink-50 hover:text-pink-500 hover:border-pink-200 disabled:opacity-30 disabled:hover:bg-white" ${appState.pagination.analysis <= 1 ? 'disabled' : ''}><i class="fas fa-chevron-left text-[10px]"></i></button>
+                            <span class="text-xs font-bold text-gray-500">${appState.pagination.analysis} / ${totalPages || 1}</span>
+                            <button onclick="changePage('analysis', 1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-pink-50 hover:text-pink-500 hover:border-pink-200 disabled:opacity-30 disabled:hover:bg-white" ${appState.pagination.analysis >= totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right text-[10px]"></i></button>
                         </div>
                     </div>
                 </div>
@@ -712,6 +785,7 @@
         window.setAnalysisSort = (f) => { 
             if(appState.analysisFilters.sortField === f) appState.analysisFilters.sortOrder = appState.analysisFilters.sortOrder === 'asc' ? 'desc' : 'asc'; 
             else { appState.analysisFilters.sortField = f; appState.analysisFilters.sortOrder = (f==='score'||f==='rank'||f==='avg') ? 'desc' : 'asc'; } 
+            appState.pagination.analysis = 1; // Reset to page 1 on sort
             window.renderAnalysis(document.getElementById('contentArea'), appState.analysisGuild); 
         };
 
@@ -726,7 +800,42 @@
 
         // --- MEMBERS MANAGEMENT ---
         window.renderMembers = (container) => {
-            container.innerHTML = `<div class="flex flex-col gap-8 fade-in h-full"><div class="bg-white p-10 rounded-t-[3rem] border border-gray-100 space-y-8 shadow-sm"><div class="flex flex-col md:flex-row justify-between items-center gap-6"><div class="flex overflow-x-auto pb-2 no-scrollbar w-full md:w-auto gap-3"><button onclick="window.filterByGuild('all')" class="shrink-0 px-8 py-3 rounded-2xl text-xs font-bold transition-all ${appState.filters.guild === 'all' ? 'bg-gray-800 text-white shadow-xl' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">전체 보기</button>${appState.guilds.map(g => `<button onclick="window.filterByGuild('${g.name}')" class="shrink-0 px-8 py-3 rounded-2xl text-xs font-bold transition-all ${appState.filters.guild === g.name ? 'bg-pink-500 text-white shadow-xl' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">${g.name}</button>`).join('')}</div><div class="flex gap-4 items-center"><button onclick="window.toggleBatchMode()" class="px-6 py-3 rounded-2xl text-xs font-bold transition-all ${appState.isBatchMode ? 'bg-gray-800 text-white shadow-xl' : 'bg-pink-50 text-pink-500 hover:bg-pink-100'}"><i class="fas fa-edit mr-1"></i> 일괄 수정 ${appState.isBatchMode?'OFF':'ON'}</button>${appState.isBatchMode ? `<button onclick="window.saveBatchUpdates()" class="px-6 py-3 bg-pink-500 text-white rounded-2xl text-xs font-bold shadow-xl animate-pulse">변경사항 저장</button>` : ''}<button onclick="window.openAddModal()" class="w-10 h-10 flex items-center justify-center rounded-2xl bg-pink-50 text-pink-500 hover:bg-pink-100 shadow-sm"><i class="fas fa-plus"></i></button></div></div><div class="relative"><i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" oninput="window.handleSearch(this.value)" value="${appState.filters.search}" class="w-full pl-16 pr-8 py-4 bg-gray-50 border border-gray-100 rounded-[2rem] outline-none text-sm font-bold shadow-inner focus:ring-4 focus:ring-pink-50 transition-all" placeholder="닉네임, 직위, 직업 검색"></div></div><div id="memberTableContainer" class="bg-white rounded-b-[3rem] border border-gray-100 overflow-hidden shadow-sm flex-1 min-h-0"></div></div>`;
+            container.innerHTML = `
+            <div class="flex flex-col gap-3 fade-in h-full">
+                <!-- Compact Header Control Panel -->
+                <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col xl:flex-row items-center gap-4 shrink-0">
+                    <!-- Guild Tabs -->
+                    <div class="flex overflow-x-auto no-scrollbar w-full xl:w-auto gap-2 shrink-0">
+                        <button onclick="window.filterByGuild('all')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${appState.filters.guild === 'all' ? 'bg-gray-800 text-white shadow-md' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">전체</button>
+                        ${appState.guilds.map(g => `<button onclick="window.filterByGuild('${g.name}')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${appState.filters.guild === g.name ? 'bg-pink-500 text-white shadow-md' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">${g.name}</button>`).join('')}
+                    </div>
+                    
+                    <!-- Search Bar (Takes available width) -->
+                    <div class="relative flex-1 w-full">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                        <input type="text" oninput="window.handleSearch(this.value)" value="${appState.filters.search}" class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none text-xs font-bold shadow-inner focus:ring-2 focus:ring-pink-50 transition-all" placeholder="닉네임, 직위, 직업 검색">
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-2 shrink-0">
+                        <button onclick="window.toggleKickMode()" class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${appState.isKickMode ? 'bg-red-500 text-white shadow-md animate-pulse' : 'bg-red-50 text-red-500 hover:bg-red-100'}">
+                            <i class="fas fa-user-minus mr-1"></i> 일괄 추방 ${appState.isKickMode?'ON':'OFF'}
+                        </button>
+                        ${appState.isKickMode && appState.kickSelection.size > 0 ? `<button onclick="window.openBulkKickModal()" class="px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-bold shadow-md hover:bg-red-700 transition-all">선택된 ${appState.kickSelection.size}명 추방</button>` : ''}
+                        
+                        ${!appState.isKickMode ? `
+                        <button onclick="window.toggleBatchMode()" class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${appState.isBatchMode ? 'bg-gray-800 text-white shadow-md' : 'bg-pink-50 text-pink-500 hover:bg-pink-100'}">
+                            <i class="fas fa-edit mr-1"></i> 일괄 수정 ${appState.isBatchMode?'OFF':'ON'}
+                        </button>
+                        ${appState.isBatchMode ? `<button onclick="window.saveBatchUpdates()" class="px-4 py-2 bg-pink-500 text-white rounded-xl text-xs font-bold shadow-md animate-pulse">저장</button>` : ''}
+                        <button onclick="window.openAddModal()" class="w-9 h-9 flex items-center justify-center rounded-xl bg-pink-50 text-pink-500 hover:bg-pink-100 shadow-sm"><i class="fas fa-plus"></i></button>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <!-- Table Area -->
+                <div id="memberTableContainer" class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm flex-1 min-h-0 flex flex-col"></div>
+            </div>`;
             window.updateMemberTable();
         };
 
@@ -743,27 +852,99 @@
                 return gMatch && sMatch; 
             });
             filtered.sort((a, b) => smartCompare(a, b, appState.filters.sortField, appState.filters.sortOrder));
+            
+            // Pagination Logic
+            const totalItems = filtered.length;
+            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+            if (appState.pagination.members > totalPages && totalPages > 0) appState.pagination.members = totalPages;
+            if (appState.pagination.members < 1) appState.pagination.members = 1;
+            
+            const pageData = filtered.slice((appState.pagination.members - 1) * ITEMS_PER_PAGE, appState.pagination.members * ITEMS_PER_PAGE);
+
             const sortIcon = (f) => appState.filters.sortField === f ? (appState.filters.sortOrder === 'asc' ? ' <i class="fas fa-sort-up"></i>' : ' <i class="fas fa-sort-down"></i>') : '';
-            let html = `<div class="overflow-y-auto h-full"><table class="w-full text-left min-w-[900px] text-xs whitespace-nowrap"><thead class="bg-gray-50 text-[10px] font-bold text-gray-500 border-b border-gray-100 sticky top-0 z-10"><tr><th class="p-4 text-center w-16">No.</th><th class="p-4 sortable" onclick="window.handleSort('name')">닉네임${sortIcon('name')}</th><th class="p-4 sortable" onclick="window.handleSort('mainInfo')">본캐 정보${sortIcon('mainInfo')}</th><th class="p-4 sortable" onclick="window.handleSort('guild')">소속${sortIcon('guild')}</th><th class="p-4 sortable" onclick="window.handleSort('role')">직위${sortIcon('role')}</th><th class="p-4 sortable" onclick="window.handleSort('class')">직업${sortIcon('class')}</th><th class="p-4 text-right">관리</th></tr></thead><tbody class="divide-y divide-gray-50 text-gray-600 font-bold">`;
-            filtered.forEach((m, idx) => {
+            let html = `<div class="overflow-y-auto flex-1"><table class="w-full text-left min-w-[900px] text-xs whitespace-nowrap"><thead class="bg-gray-50 text-[10px] font-bold text-gray-500 border-b border-gray-100 sticky top-0 z-10"><tr><th class="p-4 text-center w-16">${appState.isKickMode ? '선택' : 'No.'}</th><th class="p-4 sortable" onclick="window.handleSort('name')">닉네임${sortIcon('name')}</th><th class="p-4 sortable" onclick="window.handleSort('mainInfo')">본캐 정보${sortIcon('mainInfo')}</th><th class="p-4 sortable" onclick="window.handleSort('guild')">소속${sortIcon('guild')}</th><th class="p-4 sortable" onclick="window.handleSort('role')">직위${sortIcon('role')}</th><th class="p-4 sortable" onclick="window.handleSort('class')">직업${sortIcon('class')}</th><th class="p-4 text-right">관리</th></tr></thead><tbody class="divide-y divide-gray-50 text-gray-600 font-bold">`;
+            
+            pageData.forEach((m, idx) => {
+                const globalIndex = (appState.pagination.members - 1) * ITEMS_PER_PAGE + idx + 1;
                 const mainName = m.isMain ? m.name : (m.mainCharName || '-'); 
                 const mainMem = appState.members.find(x => x.name === mainName);
                 const mainRankHtml = mainMem ? formatRankWithSuffix(mainMem.role) : '-';
                 
-                // 일괄 수정 모드일 때, 수정 대기 중인 값이 있는지 확인
+                // Color logic for Main Info Cell
+                let mainInfoStyle = "";
+                let mainInfoTextClass = "text-gray-700";
+                let subInfoTextClass = "text-gray-400";
+                
+                if (['티라미슈', '파르페', '크라운'].includes(m.role)) {
+                    mainInfoStyle = "background-color: #0066FF;";
+                    mainInfoTextClass = "text-white";
+                    subInfoTextClass = "text-white opacity-80";
+                } else if (m.role === '크로칸슈') {
+                    mainInfoStyle = "background-color: #92D050;";
+                    mainInfoTextClass = "text-black";
+                    subInfoTextClass = "text-black opacity-80";
+                }
+
+                // Batch Mode pending check
                 const pending = appState.pendingUpdates[m.id];
                 const currentGuild = pending && pending.guild ? pending.guild : m.guild;
                 const currentRole = pending && pending.role ? pending.role : m.role;
                 const currentClass = pending && pending.class ? pending.class : (m.class || '');
 
-                html += `<tr class="${pending ? 'batch-modified' : ''} hover:bg-pink-50/20 group transition-colors h-14"><td class="p-3 text-center text-gray-400 text-[11px]">${idx+1}</td><td class="p-3 font-bold text-gray-800 flex items-center h-full leading-none">${window.getNicknameIcon(m.role)}<span class="text-sm tracking-tight">${m.name}</span></td><td class="p-3 leading-tight"><div><span class="block text-[11px] font-bold text-gray-700">${mainName}</span><span class="text-[9px] text-gray-400 font-medium">${mainRankHtml}</span></div></td><td class="p-3">${appState.isBatchMode ? `<select onchange="window.stageUpdate('${m.id}', 'guild', this.value)" class="bg-white border rounded px-1 text-[10px] outline-none">${appState.guilds.map(g=>`<option value="${g.name}" ${currentGuild===g.name?'selected':''}>${g.name}</option>`).join('')}</select>` : m.guild}</td><td class="p-3">${appState.isBatchMode ? `<select onchange="window.stageUpdate('${m.id}', 'role', this.value)" class="bg-white border rounded px-1 text-[10px] outline-none">${(appState.guildRanks[currentGuild]||initialGuildRanks[currentGuild]||initialGuildRanks['뚠카롱']).map(r=>`<option value="${r}" ${currentRole===r?'selected':''}>${r}</option>`).join('')}</select>` : `<span class="text-[10px]">${m.role}</span>`}</td><td class="p-3">${appState.isBatchMode ? `<input type="text" value="${currentClass}" onchange="window.stageUpdate('${m.id}', 'class', this.value)" class="bg-white border rounded px-1 text-[10px] w-24 outline-none">` : `<span class="text-[10px] text-gray-400">${m.class||'-'}</span>`}</td><td class="p-3 text-right">${!appState.isBatchMode ? `<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onclick="window.openEditModal('${m.id}')" class="w-8 h-8 rounded-xl border border-gray-100 text-blue-500 hover:bg-blue-50 flex items-center justify-center shadow-sm"><i class="fas fa-edit text-[10px]"></i></button><button onclick="window.openDeleteModal('${m.id}')" class="w-8 h-8 rounded-xl border border-gray-100 text-red-500 hover:bg-red-50 flex items-center justify-center shadow-sm"><i class="fas fa-trash text-[10px]"></i></button></div>` : '<span class="text-[9px] text-gray-300">수정 중</span>'}</td></tr>`;
+                html += `<tr class="${pending ? 'batch-modified' : ''} hover:bg-pink-50/20 group transition-colors h-12">
+                    <td class="p-3 text-center text-gray-400 text-[11px]">
+                        ${appState.isKickMode 
+                            ? `<input type="checkbox" class="custom-checkbox" ${appState.kickSelection.has(m.id) ? 'checked' : ''} onchange="window.handleKickSelect('${m.id}')">`
+                            : globalIndex}
+                    </td>
+                    <td class="p-3 font-bold text-gray-800 flex items-center h-full leading-none">${window.getNicknameIcon(m.role)}<span class="text-sm tracking-tight">${m.name}</span></td>
+                    <td class="p-3 leading-tight">
+                        <div class="rounded-xl p-2 transition-colors -m-1" style="${mainInfoStyle}">
+                            <span class="block text-[11px] font-bold ${mainInfoTextClass}">${mainName}</span>
+                            <span class="text-[9px] font-medium ${subInfoTextClass}">${mainRankHtml}</span>
+                        </div>
+                    </td>
+                    <td class="p-3">${appState.isBatchMode ? `<select onchange="window.stageUpdate('${m.id}', 'guild', this.value)" class="bg-white border rounded px-1 text-[10px] outline-none">${appState.guilds.map(g=>`<option value="${g.name}" ${currentGuild===g.name?'selected':''}>${g.name}</option>`).join('')}</select>` : m.guild}</td>
+                    <td class="p-3">${appState.isBatchMode ? `<select onchange="window.stageUpdate('${m.id}', 'role', this.value)" class="bg-white border rounded px-1 text-[10px] outline-none">${(appState.guildRanks[currentGuild]||initialGuildRanks[currentGuild]||initialGuildRanks['뚠카롱']).map(r=>`<option value="${r}" ${currentRole===r?'selected':''}>${r}</option>`).join('')}</select>` : `<span class="text-[10px]">${m.role}</span>`}</td>
+                    <td class="p-3">${appState.isBatchMode ? `<input type="text" value="${currentClass}" onchange="window.stageUpdate('${m.id}', 'class', this.value)" class="bg-white border rounded px-1 text-[10px] w-24 outline-none">` : `<span class="text-[10px] text-gray-400">${m.class||'-'}</span>`}</td>
+                    <td class="p-3 text-right">
+                        ${!appState.isBatchMode && !appState.isKickMode ? `<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onclick="window.openEditModal('${m.id}')" class="w-8 h-8 rounded-xl border border-gray-100 text-blue-500 hover:bg-blue-50 flex items-center justify-center shadow-sm"><i class="fas fa-edit text-[10px]"></i></button><button onclick="window.openDeleteModal('${m.id}')" class="w-8 h-8 rounded-xl border border-gray-100 text-red-500 hover:bg-red-50 flex items-center justify-center shadow-sm"><i class="fas fa-trash text-[10px]"></i></button></div>` : '<span class="text-[9px] text-gray-300">-</span>'}
+                    </td>
+                </tr>`;
             });
-            html += `</tbody></table></div>`; container.innerHTML = html;
+            html += `</tbody></table></div>`;
+            
+            // Add Pagination Controls
+            html += `<div class="p-3 border-t border-gray-100 flex justify-center items-center gap-4 bg-gray-50/50">
+                <button onclick="changePage('members', -1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-pink-50 hover:text-pink-500 hover:border-pink-200 disabled:opacity-30 disabled:hover:bg-white" ${appState.pagination.members <= 1 ? 'disabled' : ''}><i class="fas fa-chevron-left text-[10px]"></i></button>
+                <span class="text-xs font-bold text-gray-500">${appState.pagination.members} / ${totalPages || 1}</span>
+                <button onclick="changePage('members', 1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-pink-50 hover:text-pink-500 hover:border-pink-200 disabled:opacity-30 disabled:hover:bg-white" ${appState.pagination.members >= totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right text-[10px]"></i></button>
+            </div>`;
+
+            container.innerHTML = html;
         };
 
         // --- SURO SCORES ---
         window.renderSuro = (container) => {
-            container.innerHTML = `<div class="flex flex-col gap-8 fade-in h-full"><div class="bg-white p-10 rounded-t-[3rem] border border-gray-100 space-y-8 shadow-sm shrink-0"><div class="flex flex-col md:flex-row justify-between items-center gap-6"><div class="flex overflow-x-auto pb-2 no-scrollbar w-full md:w-auto gap-3"><button onclick="window.filterSuroGuild('all')" class="shrink-0 px-8 py-3 rounded-2xl text-xs font-bold transition-all ${appState.suroFilters.guild === 'all' ? 'bg-gray-800 text-white shadow-xl' : 'bg-gray-50 text-gray-500'}">전체 보기</button>${appState.guilds.map(g => `<button onclick="window.filterSuroGuild('${g.name}')" class="shrink-0 px-8 py-3 rounded-2xl text-xs font-bold transition-all ${appState.suroFilters.guild === g.name ? 'bg-blue-500 text-white shadow-xl' : 'bg-gray-50 text-gray-500'}">${g.name}</button>`).join('')}</div><button onclick="window.saveSuroInputs()" id="btnSuroSave" class="px-10 py-4 bg-blue-500 text-white rounded-2xl font-bold shadow-xl hover:bg-blue-600 transition-all text-xs">수로 점수 저장</button></div><div class="relative"><i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" oninput="window.filterSuroSearch(this.value)" class="w-full pl-16 pr-8 py-4 bg-gray-50 border border-gray-100 rounded-[2rem] outline-none font-bold text-sm shadow-inner focus:ring-4 focus:ring-blue-50 transition-all" placeholder="닉네임 검색"></div></div><div id="suroTableContainer" class="bg-white rounded-b-[3rem] border border-gray-100 overflow-hidden shadow-sm flex-1 min-h-0 flex flex-col"></div></div>`;
+            container.innerHTML = `
+            <div class="flex flex-col gap-3 fade-in h-full">
+                <!-- Compact Header -->
+                <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col xl:flex-row items-center gap-4 shrink-0">
+                    <div class="flex overflow-x-auto no-scrollbar w-full xl:w-auto gap-2 shrink-0">
+                        <button onclick="window.filterSuroGuild('all')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${appState.suroFilters.guild === 'all' ? 'bg-gray-800 text-white shadow-md' : 'bg-gray-50 text-gray-500'}">전체</button>
+                        ${appState.guilds.map(g => `<button onclick="window.filterSuroGuild('${g.name}')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${appState.suroFilters.guild === g.name ? 'bg-blue-500 text-white shadow-md' : 'bg-gray-50 text-gray-500'}">${g.name}</button>`).join('')}
+                    </div>
+                    
+                    <div class="relative flex-1 w-full">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                        <input type="text" oninput="window.filterSuroSearch(this.value)" class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-xs shadow-inner focus:ring-2 focus:ring-blue-50 transition-all" placeholder="닉네임 검색">
+                    </div>
+
+                    <button onclick="window.saveSuroInputs()" id="btnSuroSave" class="shrink-0 px-6 py-2 bg-blue-500 text-white rounded-xl font-bold shadow-md hover:bg-blue-600 transition-all text-xs">저장</button>
+                </div>
+
+                <div id="suroTableContainer" class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm flex-1 min-h-0 flex flex-col"></div>
+            </div>`;
             window.updateSuroTable();
         };
 
@@ -772,13 +953,31 @@
             const period = window.getSuroPeriodHeader(); const prevHeader = appState.suroHeaders.slice(-2)[0] || ""; const term = (appState.suroFilters.search || '').toLowerCase();
             const filtered = appState.members.filter(m => (appState.suroFilters.guild === 'all' || m.guild === appState.suroFilters.guild) && m.name.toLowerCase().includes(term));
             filtered.sort((a, b) => { const f = appState.suroFilters.sortField, o = appState.suroFilters.sortOrder; if (f === 'prev') return smartCompare({prev: Number(a.suro?.[prevHeader]||0)}, {prev: Number(b.suro?.[prevHeader]||0)}, 'prev', o); if (f === 'curr') { const valA = Number(appState.currentSuroInputs[a.name] || a.suro?.[period] || 0), valB = Number(appState.currentSuroInputs[b.name] || b.suro?.[period] || 0); return o === 'asc' ? valA - valB : valB - valA; } return smartCompare(a, b, f, o); });
+            
+            // Pagination Logic
+            const totalItems = filtered.length;
+            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+            if (appState.pagination.suro > totalPages && totalPages > 0) appState.pagination.suro = totalPages;
+            if (appState.pagination.suro < 1) appState.pagination.suro = 1;
+
+            const pageData = filtered.slice((appState.pagination.suro - 1) * ITEMS_PER_PAGE, appState.pagination.suro * ITEMS_PER_PAGE);
+
             const sortIcon = (f) => appState.suroFilters.sortField === f ? (appState.suroFilters.sortOrder === 'asc' ? ' <i class="fas fa-sort-up"></i>' : ' <i class="fas fa-sort-down"></i>') : '';
             let html = `<div class="overflow-y-auto flex-1 p-0"><table class="w-full text-left min-w-[800px]"><thead class="bg-gray-50 text-gray-500 text-[10px] font-bold uppercase sticky top-0 z-10 border-b border-gray-100 shadow-sm"><tr><th class="p-4 cursor-pointer hover:bg-gray-100 transition-colors" onclick="window.handleSuroSort('name')">닉네임 (유니코드)${sortIcon('name')}</th><th class="p-4 cursor-pointer hover:bg-gray-100 transition-colors" onclick="window.handleSuroSort('guild')">소속${sortIcon('guild')}</th><th class="p-4 text-right cursor-pointer hover:bg-gray-100 transition-colors" onclick="window.handleSuroSort('prev')">지난 기록${sortIcon('prev')}</th><th class="p-4 text-right w-48 cursor-pointer hover:bg-gray-100 transition-colors" onclick="window.handleSuroSort('curr')">이번주 점수${sortIcon('curr')}</th></tr></thead><tbody class="divide-y divide-gray-50 font-bold">`;
-            filtered.forEach((m, idx) => {
+            pageData.forEach((m, idx) => {
                 const currVal = appState.currentSuroInputs[m.name] !== undefined ? appState.currentSuroInputs[m.name] : (m.suro?.[period] || ''), prevVal = Number(m.suro?.[prevHeader] || 0);
-                html += `<tr class="hover:bg-blue-50/30 transition-colors h-14"><td class="p-4 font-bold text-gray-800 flex items-center h-full text-sm leading-none">${window.getNicknameIcon(m.role)}${m.name}</td><td class="p-4 text-xs font-bold text-gray-400">${m.guild}</td><td class="p-4 text-right font-mono text-gray-300 text-xs">${prevVal > 0 ? prevVal.toLocaleString() : '-'}</td><td class="p-3"><input type="number" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-right font-bold outline-none focus:bg-white focus:ring-2 focus:ring-blue-100 shadow-inner" value="${currVal}" oninput="appState.currentSuroInputs['${m.name}']=this.value"></td></tr>`;
+                html += `<tr class="hover:bg-blue-50/30 transition-colors h-12"><td class="p-4 font-bold text-gray-800 flex items-center h-full text-sm leading-none">${window.getNicknameIcon(m.role)}${m.name}</td><td class="p-4 text-xs font-bold text-gray-400">${m.guild}</td><td class="p-4 text-right font-mono text-gray-300 text-xs">${prevVal > 0 ? prevVal.toLocaleString() : '-'}</td><td class="p-3"><input type="number" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-1.5 text-right font-bold outline-none focus:bg-white focus:ring-2 focus:ring-blue-100 shadow-inner" value="${currVal}" oninput="appState.currentSuroInputs['${m.name}']=this.value"></td></tr>`;
             });
-            html += `</tbody></table></div>`; container.innerHTML = html;
+            html += `</tbody></table></div>`;
+
+             // Add Pagination Controls
+             html += `<div class="p-3 border-t border-gray-100 flex justify-center items-center gap-4 bg-gray-50/50">
+                <button onclick="changePage('suro', -1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-blue-50 hover:text-blue-500 hover:border-blue-200 disabled:opacity-30 disabled:hover:bg-white" ${appState.pagination.suro <= 1 ? 'disabled' : ''}><i class="fas fa-chevron-left text-[10px]"></i></button>
+                <span class="text-xs font-bold text-gray-500">${appState.pagination.suro} / ${totalPages || 1}</span>
+                <button onclick="changePage('suro', 1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-blue-50 hover:text-blue-500 hover:border-blue-200 disabled:opacity-30 disabled:hover:bg-white" ${appState.pagination.suro >= totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right text-[10px]"></i></button>
+            </div>`;
+
+            container.innerHTML = html;
         };
 
         window.saveSuroInputs = async () => {
@@ -944,12 +1143,12 @@
         window.toggleBatchMode = () => { appState.isBatchMode = !appState.isBatchMode; appState.pendingUpdates = {}; window.renderMembers(document.getElementById('contentArea')); };
         window.stageUpdate = (id, field, val) => { if(!appState.pendingUpdates[id]) appState.pendingUpdates[id] = { id }; appState.pendingUpdates[id][field] = val; window.updateMemberTable(); };
         window.saveBatchUpdates = async () => { const updates = Object.values(appState.pendingUpdates); if(updates.length === 0) return window.showMsg("수정된 내용이 없습니다.", "error"); if(confirm(`${updates.length}명의 정보를 업데이트하시겠습니까?`)) { if(await window.sendAction('bulk_update', updates)) { appState.isBatchMode = false; appState.pendingUpdates = {}; } } };
-        window.handleSearch = (v) => { appState.filters.search = v; window.updateMemberTable(); };
-        window.filterByGuild = (g) => { appState.filters.guild = g; if(appState.activeTab === 'members') window.renderMembers(document.getElementById('contentArea')); else window.updateMemberTable(); };
-        window.handleSort = (field) => { if(appState.filters.sortField === field) appState.filters.sortOrder = appState.filters.sortOrder === 'asc' ? 'desc' : 'asc'; else { appState.filters.sortField = field; appState.filters.sortOrder = 'asc'; } window.updateMemberTable(); };
-        window.handleSuroSort = (field) => { if(appState.suroFilters.sortField === field) appState.suroFilters.sortOrder = appState.suroFilters.sortOrder === 'asc' ? 'desc' : 'asc'; else { appState.suroFilters.sortField = field; appState.suroFilters.sortOrder = 'asc'; } window.updateSuroTable(); };
-        window.filterSuroGuild = (g) => { appState.suroFilters.guild = g; window.updateSuroTable(); window.renderSuro(document.getElementById('contentArea')); };
-        window.filterSuroSearch = (v) => { appState.suroFilters.search = v; window.updateSuroTable(); };
+        window.handleSearch = (v) => { appState.filters.search = v; appState.pagination.members = 1; window.updateMemberTable(); };
+        window.filterByGuild = (g) => { appState.filters.guild = g; appState.pagination.members = 1; if(appState.activeTab === 'members') window.renderMembers(document.getElementById('contentArea')); else window.updateMemberTable(); };
+        window.handleSort = (field) => { if(appState.filters.sortField === field) appState.filters.sortOrder = appState.filters.sortOrder === 'asc' ? 'desc' : 'asc'; else { appState.filters.sortField = field; appState.filters.sortOrder = 'asc'; } appState.pagination.members = 1; window.updateMemberTable(); };
+        window.handleSuroSort = (field) => { if(appState.suroFilters.sortField === field) appState.suroFilters.sortOrder = appState.suroFilters.sortOrder === 'asc' ? 'desc' : 'asc'; else { appState.suroFilters.sortField = field; appState.suroFilters.sortOrder = 'asc'; } appState.pagination.suro = 1; window.updateSuroTable(); };
+        window.filterSuroGuild = (g) => { appState.suroFilters.guild = g; appState.pagination.suro = 1; window.updateSuroTable(); window.renderSuro(document.getElementById('contentArea')); };
+        window.filterSuroSearch = (v) => { appState.suroFilters.search = v; appState.pagination.suro = 1; window.updateSuroTable(); };
         window.closeModal = (id) => { document.getElementById(id)?.classList.add('hidden'); };
         
         window.openEditModal = (id) => { 
@@ -968,7 +1167,43 @@
         };
         window.openDeleteModal = (id) => { appState.memberToDelete = appState.members.find(x => x.id == id); document.getElementById('deleteTargetName').innerText = appState.memberToDelete.name; document.getElementById('deleteModal').classList.remove('hidden'); };
         window.setDeleteType = (t) => { appState.deleteType = t; document.getElementById('btnLeave').className = t === 'leave' ? 'flex-1 py-3 rounded-xl font-bold text-xs bg-gray-800 text-white shadow-sm transition-all' : 'flex-1 py-3 rounded-xl font-bold text-xs bg-gray-100 text-gray-400 transition-all'; document.getElementById('btnKick').className = t === 'kick' ? 'flex-1 py-3 rounded-xl font-bold text-xs bg-red-600 text-white shadow-sm transition-all' : 'flex-1 py-3 rounded-xl font-bold text-xs bg-gray-100 text-gray-400 transition-all'; };
-        window.confirmDelete = async () => { if(await window.sendAction('delete', { id: appState.memberToDelete.id, type: appState.deleteType, reason: document.getElementById('deleteReason').value })) window.closeModal('deleteModal'); };
+        
+        // Modified confirmDelete for both Single and Bulk
+        window.confirmDelete = async () => { 
+            const reason = document.getElementById('deleteReason').value;
+            
+            // BULK KICK LOGIC
+            if (appState.isKickMode && appState.kickSelection.size > 0) {
+                const ids = Array.from(appState.kickSelection);
+                window.showLoading(true);
+                let successCount = 0;
+                
+                for(const id of ids) {
+                    const m = appState.members.find(x => x.id === id);
+                    if(m) {
+                        // Force type 'kick' and skip auto-refresh for performance
+                        const success = await window.sendAction('delete', { id: id, type: 'kick', reason: reason }, true);
+                        if(success) successCount++;
+                    }
+                }
+                
+                window.showLoading(false);
+                window.showMsg(`${successCount}명 추방 완료.`, "success");
+                window.closeModal('deleteModal');
+                
+                // Cleanup
+                appState.isKickMode = false;
+                appState.kickSelection.clear();
+                await window.fetchMembers();
+                return;
+            }
+
+            // SINGLE DELETE LOGIC (Existing)
+            if(await window.sendAction('delete', { id: appState.memberToDelete.id, type: appState.deleteType, reason: reason })) {
+                window.closeModal('deleteModal'); 
+            }
+        };
+
         function onGuildSelectChange(v) { document.getElementById('inputRole').innerHTML = (appState.guildRanks[v] || initialGuildRanks[v] || initialGuildRanks['뚠카롱']).map(r => `<option value="${r}">${r}</option>`).join(''); }
         function toggleMainCharInput() { document.getElementById('mainCharInputGroup').classList.toggle('hidden', document.getElementById('inputIsMain').checked); }
         
