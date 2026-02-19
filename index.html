@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>뚠카롱 길드 관리 시스템 (v8.28)</title>
+    <title>뚠카롱 길드 관리 시스템 (v8.29)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -78,7 +78,7 @@
     <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col shadow-sm">
         <div class="p-6 border-b border-gray-100 flex items-center gap-3">
             <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-400 to-rose-400 flex items-center justify-center text-white font-bold shadow-lg shadow-pink-100 text-xl">뚠</div>
-            <div><h1 class="text-lg font-bold text-gray-800 tracking-tight">뚠카롱 길드 관리</h1><p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">v8.28 Stable</p></div>
+            <div><h1 class="text-lg font-bold text-gray-800 tracking-tight">뚠카롱 길드 관리</h1><p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">v8.29 Stable</p></div>
             <button id="closeSidebar" class="lg:hidden ml-auto text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
         </div>
         <nav class="p-4 space-y-2 flex-1 overflow-y-auto no-scrollbar">
@@ -510,14 +510,14 @@
                 </div>
                 <div class="flex flex-col gap-8 h-full">
                     <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100 flex flex-col h-[300px] overflow-hidden shrink-0">
-                        <div class="flex justify-between items-center mb-4">
+                        <div class="flex justify-between items-center mb-4 shrink-0">
                             <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest">직업 분포도</h3>
                             <select onchange="window.updateJobChart(this.value)" class="bg-gray-50 rounded-xl px-3 py-1.5 text-xs font-bold outline-none cursor-pointer hover:bg-gray-100">
                                 <option value="all">전체</option>${appState.guilds.map(g => `<option value="${g.name}">${g.name}</option>`).join('')}
                             </select>
                         </div>
-                        <div class="flex-1 overflow-y-auto no-scrollbar">
-                            <div style="min-height: 250px;"><canvas id="jobChart"></canvas></div>
+                        <div class="flex-1 overflow-y-auto no-scrollbar relative">
+                            <div id="jobChartContainer" style="min-height: 250px;"><canvas id="jobChart"></canvas></div>
                         </div>
                     </div>
                     <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100 flex flex-col flex-1 min-h-[200px] overflow-hidden">
@@ -791,11 +791,64 @@
 
         window.updateJobChart = (target) => {
             const ctx = document.getElementById('jobChart'); if(!ctx) return;
+            const container = document.getElementById('jobChartContainer');
+            
             const targets = target === 'all' ? appState.members : appState.members.filter(m => m.guild === target);
             const counts = {}; targets.forEach(m => { const j = m.class || '미설정'; counts[j] = (counts[j] || 0) + 1; });
             const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
+            
+            // Dynamic Height Logic: Base 50px + 30px per item
+            const newHeight = Math.max(250, 50 + (sorted.length * 30));
+            if(container) container.style.height = newHeight + 'px';
+
+            // Custom Pastel Palette for jobs
+            const jobPalette = [
+                '#FF9AA2', '#FFB7B2', '#FFDAC1', '#E2F0CB', '#B5EAD7', '#C7CEEA',
+                '#FF6F61', '#6B5B95', '#88B04B', '#F7CAC9', '#92A8D1', '#955251',
+                '#B565A7', '#009B77', '#DD4124', '#D65076', '#45B8AC', '#EFC050',
+                '#5B5EA6', '#9B2335', '#DFCFBE', '#55B4B0', '#E15D44', '#7FCDCD',
+                '#BC243C', '#C3447A', '#98B4D4'
+            ];
+
+            // Assign colors cyclically
+            const backgroundColors = sorted.map((_, i) => jobPalette[i % jobPalette.length]);
+
             if(jobChartInstance) jobChartInstance.destroy();
-            jobChartInstance = new Chart(ctx, { type: 'bar', data: { labels: sorted.map(j => j[0]), datasets: [{ label: '인원', data: sorted.map(j => j[1]), backgroundColor: '#f472b6', borderRadius: 4, barThickness: 12 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } } });
+            jobChartInstance = new Chart(ctx, { 
+                type: 'bar', 
+                data: { 
+                    labels: sorted.map(j => j[0]), 
+                    datasets: [{ 
+                        label: '인원', 
+                        data: sorted.map(j => j[1]), 
+                        backgroundColor: backgroundColors, // Apply colorful palette
+                        borderRadius: 4, 
+                        barThickness: 20 // Fixed thickness for better visibility
+                    }] 
+                }, 
+                options: { 
+                    indexAxis: 'y', 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { 
+                        x: { 
+                            beginAtZero: true, 
+                            ticks: { precision: 0 } 
+                        },
+                        y: {
+                            ticks: {
+                                autoSkip: false, // Force show all labels
+                                font: {
+                                    size: 11,
+                                    weight: 'bold'
+                                },
+                                color: '#4b5563' // Darker text for readability
+                            }
+                        }
+                    } 
+                } 
+            });
         };
 
         // --- MEMBERS MANAGEMENT ---
