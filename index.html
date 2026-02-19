@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>뚠카롱 길드 관리 시스템 (v8.35)</title>
+    <title>뚠카롱 길드 관리 시스템 (v8.36)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -81,7 +81,7 @@
     <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col shadow-sm">
         <div class="p-6 border-b border-gray-100 flex items-center gap-3">
             <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-400 to-rose-400 flex items-center justify-center text-white font-bold shadow-lg shadow-pink-100 text-xl">뚠</div>
-            <div><h1 class="text-lg font-bold text-gray-800 tracking-tight">뚠카롱 길드 관리</h1><p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">v8.35 Stable</p></div>
+            <div><h1 class="text-lg font-bold text-gray-800 tracking-tight">뚠카롱 길드 관리</h1><p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">v8.36 Multi-Search</p></div>
             <button id="closeSidebar" class="lg:hidden ml-auto text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
         </div>
         <nav class="p-4 space-y-2 flex-1 overflow-y-auto no-scrollbar">
@@ -956,7 +956,7 @@
                     <!-- Search Bar (Takes available width) -->
                     <div class="relative flex-1 w-full">
                         <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                        <input type="text" oninput="window.handleSearch(this.value)" value="${appState.filters.search}" class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none text-xs font-bold shadow-inner focus:ring-2 focus:ring-pink-50 transition-all" placeholder="닉네임, 직위, 직업 검색">
+                        <input type="text" oninput="window.handleSearch(this.value)" value="${appState.filters.search}" class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none text-xs font-bold shadow-inner focus:ring-2 focus:ring-pink-50 transition-all" placeholder="닉네임 다중 검색 가능 (줄바꿈/띄어쓰기로 구분)">
                     </div>
 
                     <!-- Action Buttons -->
@@ -984,16 +984,33 @@
 
         window.updateMemberTable = () => {
             const container = document.getElementById('memberTableContainer'); if(!container) return;
-            const term = appState.filters.search.toLowerCase();
+            
+            // --- MODIFIED: Multi-Search Logic ---
+            const rawSearchTerm = appState.filters.search.trim();
+            // Split by newline, comma, or whitespace to support copy-paste lists
+            const searchTokens = rawSearchTerm.length > 0 
+                ? rawSearchTerm.toLowerCase().split(/[\s,]+/).filter(t => t.length > 0)
+                : [];
+
             const filtered = appState.members.filter(m => { 
                 const gMatch = appState.filters.guild === 'all' || m.guild === appState.filters.guild; 
-                const sMatch = m.name.toLowerCase().includes(term) || 
-                               (m.class||'').toLowerCase().includes(term) || 
-                               (m.role||'').toLowerCase().includes(term) ||
-                               (m.mainCharName || '').toLowerCase().includes(term) || 
-                               (m.isMain && m.name.toLowerCase().includes(term)); 
+                
+                // If no search input, just return guild match
+                if (searchTokens.length === 0) return gMatch;
+
+                // Check if ANY token matches ANY field (OR logic)
+                const sMatch = searchTokens.some(token => {
+                    return m.name.toLowerCase().includes(token) || 
+                           (m.class||'').toLowerCase().includes(token) || 
+                           (m.role||'').toLowerCase().includes(token) ||
+                           (m.mainCharName || '').toLowerCase().includes(token) || 
+                           (m.isMain && m.name.toLowerCase().includes(token)); 
+                });
+
                 return gMatch && sMatch; 
             });
+            // ------------------------------------
+
             filtered.sort((a, b) => smartCompare(a, b, appState.filters.sortField, appState.filters.sortOrder));
             
             // Pagination Logic
@@ -1090,7 +1107,7 @@
                     
                     <div class="relative flex-1 w-full">
                         <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                        <input type="text" oninput="window.filterSuroSearch(this.value)" class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-xs shadow-inner focus:ring-2 focus:ring-blue-50 transition-all" placeholder="닉네임 검색">
+                        <input type="text" oninput="window.filterSuroSearch(this.value)" class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-xs shadow-inner focus:ring-2 focus:ring-blue-50 transition-all" placeholder="닉네임 다중 검색 가능 (줄바꿈/띄어쓰기로 구분)">
                     </div>
 
                     <button onclick="window.saveSuroInputs()" id="btnSuroSave" class="shrink-0 px-6 py-2 bg-blue-500 text-white rounded-xl font-bold shadow-md hover:bg-blue-600 transition-all text-xs">저장</button>
@@ -1103,8 +1120,20 @@
 
         window.updateSuroTable = () => {
             const container = document.getElementById('suroTableContainer'); if(!container) return;
-            const period = window.getSuroPeriodHeader(); const prevHeader = appState.suroHeaders.slice(-2)[0] || ""; const term = (appState.suroFilters.search || '').toLowerCase();
-            const filtered = appState.members.filter(m => (appState.suroFilters.guild === 'all' || m.guild === appState.suroFilters.guild) && m.name.toLowerCase().includes(term));
+            const period = window.getSuroPeriodHeader(); const prevHeader = appState.suroHeaders.slice(-2)[0] || ""; 
+            
+            // --- MODIFIED: Multi-Search Logic for Suro ---
+            const rawTerm = (appState.suroFilters.search || '').trim();
+            const searchTokens = rawTerm.length > 0 ? rawTerm.toLowerCase().split(/[\s,]+/).filter(t => t.length > 0) : [];
+
+            const filtered = appState.members.filter(m => {
+                const gMatch = appState.suroFilters.guild === 'all' || m.guild === appState.suroFilters.guild;
+                if (searchTokens.length === 0) return gMatch;
+                const sMatch = searchTokens.some(token => m.name.toLowerCase().includes(token));
+                return gMatch && sMatch;
+            });
+            // ---------------------------------------------
+
             filtered.sort((a, b) => { const f = appState.suroFilters.sortField, o = appState.suroFilters.sortOrder; if (f === 'prev') return smartCompare({prev: Number(a.suro?.[prevHeader]||0)}, {prev: Number(b.suro?.[prevHeader]||0)}, 'prev', o); if (f === 'curr') { const valA = Number(appState.currentSuroInputs[a.name] || a.suro?.[period] || 0), valB = Number(appState.currentSuroInputs[b.name] || b.suro?.[period] || 0); return o === 'asc' ? valA - valB : valB - valA; } return smartCompare(a, b, f, o); });
             
             // Pagination Logic
