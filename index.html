@@ -155,11 +155,11 @@
         const baseRanks = ['마카롱', '다쿠아즈'];
         const initialGuildRanks = {
             '뚠카롱': [...baseRanks, '크라운', '파르페', '티라미슈', '크로칸슈', '롤케이크', '팬케이크', '와플'],
-            '뚱카롱': [...baseRanks, '뚠케이크', '뚠브레드', '수플레', '뚠스콘', '반죽', '반죽(휴면)', '아인슈패너'],
-            '밤카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈패너', '반죽', '반죽(휴면)'],
-            '별카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈패너', '반죽', '반죽(휴면)'],
-            '달카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈패너', '반죽', '반죽(휴면)'],
-            '꿀카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈패너', '반죽', '반죽(휴면)']
+            '뚱카롱': [...baseRanks, '뚠케이크', '뚠브레드', '수플레', '뚠스콘', '반죽', '반죽(휴면)', '아인슈페너'],
+            '밤카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽', '반죽(휴면)'],
+            '별카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽', '반죽(휴면)'],
+            '달카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽', '반죽(휴면)'],
+            '꿀카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽', '반죽(휴면)']
         };
         const ITEMS_PER_PAGE = 17;
 
@@ -252,7 +252,7 @@
         function formatRankWithSuffix(rank) {
             if (!rank) return '-';
             const special = ['크라운', '파르페', '티라미슈', '크로칸슈'];
-            if (special.includes(rank)) return `${rank} <span class="text-[8.5px] text-blue-500 font-bold tracking-tighter">(아인슈패너)</span>`;
+            if (special.includes(rank)) return `${rank} <span class="text-[8.5px] text-blue-500 font-bold tracking-tighter">(아인슈페너)</span>`;
             return rank;
         }
 
@@ -894,6 +894,13 @@
                 const currentRole = pending && pending.role ? pending.role : m.role;
                 const currentClass = pending && pending.class ? pending.class : (m.class || '');
 
+                // Logic for Role Badge styling (Display mode only)
+                let roleHtml = `<span class="text-[10px]">${m.role}</span>`;
+                if (!appState.isBatchMode && m.role === '아인슈페너') {
+                    // Using requested color #FF99FF and White text for "Special" look
+                    roleHtml = `<span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold text-white tracking-tight shadow-sm" style="background-color: #FF99FF; text-shadow: 0 1px 1px rgba(0,0,0,0.1);">${m.role}</span>`;
+                }
+
                 html += `<tr class="${pending ? 'batch-modified' : ''} hover:bg-pink-50/20 group transition-colors h-12">
                     <td class="p-3 text-center text-gray-400 text-[11px]">
                         ${appState.isKickMode 
@@ -908,7 +915,7 @@
                         </div>
                     </td>
                     <td class="p-3">${appState.isBatchMode ? `<select onchange="window.stageUpdate('${m.id}', 'guild', this.value)" class="bg-white border rounded px-1 text-[10px] outline-none">${appState.guilds.map(g=>`<option value="${g.name}" ${currentGuild===g.name?'selected':''}>${g.name}</option>`).join('')}</select>` : m.guild}</td>
-                    <td class="p-3">${appState.isBatchMode ? `<select onchange="window.stageUpdate('${m.id}', 'role', this.value)" class="bg-white border rounded px-1 text-[10px] outline-none">${(appState.guildRanks[currentGuild]||initialGuildRanks[currentGuild]||initialGuildRanks['뚠카롱']).map(r=>`<option value="${r}" ${currentRole===r?'selected':''}>${r}</option>`).join('')}</select>` : `<span class="text-[10px]">${m.role}</span>`}</td>
+                    <td class="p-3">${appState.isBatchMode ? `<select onchange="window.stageUpdate('${m.id}', 'role', this.value)" class="bg-white border rounded px-1 text-[10px] outline-none">${(appState.guildRanks[currentGuild]||initialGuildRanks[currentGuild]||initialGuildRanks['뚠카롱']).map(r=>`<option value="${r}" ${currentRole===r?'selected':''}>${r}</option>`).join('')}</select>` : roleHtml}</td>
                     <td class="p-3">${appState.isBatchMode ? `<input type="text" value="${currentClass}" onchange="window.stageUpdate('${m.id}', 'class', this.value)" class="bg-white border rounded px-1 text-[10px] w-24 outline-none">` : `<span class="text-[10px] text-gray-400">${m.class||'-'}</span>`}</td>
                     <td class="p-3 text-right">
                         ${!appState.isBatchMode && !appState.isKickMode ? `<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onclick="window.openEditModal('${m.id}')" class="w-8 h-8 rounded-xl border border-gray-100 text-blue-500 hover:bg-blue-50 flex items-center justify-center shadow-sm"><i class="fas fa-edit text-[10px]"></i></button><button onclick="window.openDeleteModal('${m.id}')" class="w-8 h-8 rounded-xl border border-gray-100 text-red-500 hover:bg-red-50 flex items-center justify-center shadow-sm"><i class="fas fa-trash text-[10px]"></i></button></div>` : '<span class="text-[9px] text-gray-300">-</span>'}
