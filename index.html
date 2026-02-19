@@ -870,16 +870,19 @@
                 const mainMem = appState.members.find(x => x.name === mainName);
                 const mainRankHtml = mainMem ? formatRankWithSuffix(mainMem.role) : '-';
                 
-                // Color logic for Main Info Cell
+                // Color logic for Main Info Cell - Modified to check Main Character's Role
                 let mainInfoStyle = "";
                 let mainInfoTextClass = "text-gray-700";
                 let subInfoTextClass = "text-gray-400";
                 
-                if (['티라미슈', '파르페', '크라운'].includes(m.role)) {
+                // 본캐 정보를 기준으로 색상 결정 (부캐일 경우 본캐의 직위를 따라감)
+                const targetRole = mainMem ? mainMem.role : (m.isMain ? m.role : '');
+
+                if (['티라미슈', '파르페', '크라운'].includes(targetRole)) {
                     mainInfoStyle = "background-color: #0066FF;";
                     mainInfoTextClass = "text-white";
                     subInfoTextClass = "text-white opacity-80";
-                } else if (m.role === '크로칸슈') {
+                } else if (targetRole === '크로칸슈') {
                     mainInfoStyle = "background-color: #92D050;";
                     mainInfoTextClass = "text-black";
                     subInfoTextClass = "text-black opacity-80";
