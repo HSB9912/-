@@ -822,7 +822,8 @@
                     return searchTokens.some(token => 
                         m.name.toLowerCase().includes(token) || 
                         mainName.toLowerCase().includes(token) ||
-                        (m.mainCharName || '').toLowerCase().includes(token)
+                        (m.mainCharName || '').toLowerCase().includes(token) ||
+                        (m.class || '').toLowerCase().includes(token)
                     );
                 }) 
                 : guildTargets;
@@ -875,7 +876,7 @@
                     <td class="p-3 text-center text-gray-400 group-hover:bg-gray-50 border-r border-gray-50">${globalIndex}</td>
                     <td class="p-3 text-gray-800 group-hover:bg-gray-50 border-r border-gray-50">
                         <div class="flex items-center leading-none overflow-hidden text-ellipsis">
-                            ${window.getNicknameIcon(m.role)}<span class="truncate">${m.name}</span>
+                            ${window.getNicknameIcon(m.role)}<div class="flex flex-col min-w-0"><span class="truncate">${m.name}</span><span class="text-[9px] text-gray-400 font-medium truncate">${m.class||''}</span></div>
                         </div>
                     </td>
                     <td class="p-3 text-center text-pink-600 bg-pink-50/30 group-hover:bg-pink-100 border-r border-pink-50">${m.avg.toLocaleString()}</td>
@@ -917,7 +918,8 @@
                     return searchTokens.some(token => 
                         m.name.toLowerCase().includes(token) || 
                         mainName.toLowerCase().includes(token) ||
-                        (m.mainCharName || '').toLowerCase().includes(token)
+                        (m.mainCharName || '').toLowerCase().includes(token) ||
+                        (m.class || '').toLowerCase().includes(token)
                     );
                 }) 
                 : guildTargets;
@@ -1075,7 +1077,7 @@
                     </div>
                     <div class="relative w-full sm:w-64 shrink-0">
                         <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                        <input type="text" oninput="window.setAnalysisSearch(this.value)" value="${appState.analysisFilters.search || ''}" class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-100 rounded-xl outline-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-pink-50 transition-all" placeholder="닉네임/본캐명 검색 (띄어쓰기로 다중검색)">
+                        <input type="text" oninput="window.setAnalysisSearch(this.value)" value="${appState.analysisFilters.search || ''}" class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-100 rounded-xl outline-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-pink-50 transition-all" placeholder="닉네임/본캐/직업 검색 (다중검색)">
                     </div>
                 </div>
 
@@ -1154,7 +1156,7 @@
                                             <td class="p-3 text-center text-gray-400 group-hover:bg-gray-50 border-r border-gray-50">${globalIndex}</td>
                                             <td class="p-3 text-gray-800 group-hover:bg-gray-50 border-r border-gray-50">
                                                 <div class="flex items-center leading-none overflow-hidden text-ellipsis">
-                                                    ${window.getNicknameIcon(m.role)}<span class="truncate">${m.name}</span>
+                                                    ${window.getNicknameIcon(m.role)}<div class="flex flex-col min-w-0"><span class="truncate">${m.name}</span><span class="text-[9px] text-gray-400 font-medium truncate">${m.class||''}</span></div>
                                                 </div>
                                             </td>
                                             <td class="p-3 text-center text-pink-600 bg-pink-50/30 group-hover:bg-pink-100 border-r border-pink-50">${m.avg.toLocaleString()}</td>
