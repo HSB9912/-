@@ -64,6 +64,75 @@
 
         /* Event List Styles */
         .event-item-active { background-color: #fdf2f8; border-color: #f472b6; color: #db2777; }
+
+        /* ===== MOBILE OPTIMIZATIONS ===== */
+        
+        /* Touch targets - minimum 44px for mobile */
+        @media (max-width: 768px) {
+            .nav-item { min-height: 44px; }
+            button, select, input[type="checkbox"] { min-height: 36px; }
+        }
+        
+        /* Mobile scrollbar hide for cleaner look */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Safe area for notch devices */
+        @supports (padding-top: env(safe-area-inset-top)) {
+            body { 
+                padding-top: env(safe-area-inset-top); 
+                padding-bottom: env(safe-area-inset-bottom); 
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+        }
+        
+        /* Mobile dashboard cards */
+        @media (max-width: 640px) {
+            .calendar-grid { gap: 0.125rem; font-size: 0.65rem; }
+            .calendar-day { min-height: 38px; padding: 0.125rem; }
+            .calendar-head { font-size: 0.6rem; padding-bottom: 4px; }
+            .event-snippet { font-size: 8px; padding: 0px 1px; }
+            
+            /* Compact mobile message box */
+            #msgBox { 
+                left: 1rem; right: 1rem; 
+                transform: translateX(0) translateY(100px) !important; 
+                width: auto; 
+                padding: 0.75rem 1rem;
+                bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+            }
+            #msgBox.show { transform: translateX(0) translateY(0) !important; }
+        }
+        
+        /* Prevent horizontal overflow on mobile */
+        @media (max-width: 1024px) {
+            .overflow-x-guard { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        }
+        
+        /* Mobile table improvements */
+        @media (max-width: 768px) {
+            table { font-size: 0.65rem; }
+            table th, table td { padding: 0.5rem 0.375rem !important; }
+            table th { font-size: 9px; }
+        }
+        
+        /* Smooth touch scrolling */
+        .overflow-y-auto, .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+        
+        /* Prevent text selection on mobile interactive elements */
+        .nav-item, button { -webkit-tap-highlight-color: transparent; }
+        
+        /* Mobile modal improvements */
+        @media (max-width: 640px) {
+            #memberModal > div > div,
+            #deleteModal > div > div,
+            #eventDetailModal > div > div { 
+                max-height: 90vh; 
+                overflow-y: auto;
+                border-radius: 1.5rem;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-slate-800 h-screen overflow-hidden flex font-medium">
@@ -75,7 +144,7 @@
         </div>
     </div>
 
-    <div id="msgBox" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/10">
+    <div id="msgBox" class="fixed bottom-10 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-[200] bg-slate-900 text-white px-5 lg:px-8 py-3 lg:py-4 rounded-xl lg:rounded-2xl shadow-2xl flex items-center gap-3 lg:gap-4 border border-white/10 max-w-md mx-auto sm:mx-0">
         <div id="msgIcon" class="text-pink-500"><i class="fas fa-info-circle"></i></div>
         <p id="msgText" class="text-sm font-bold"></p>
     </div>
@@ -102,19 +171,19 @@
     <div id="sidebarOverlay" class="fixed inset-0 bg-black/10 z-[990] hidden lg:hidden"></div>
 
     <main class="flex-1 flex flex-col overflow-hidden bg-gray-50 relative z-0">
-        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 shrink-0 z-10 shadow-sm relative">
-            <div class="flex items-center gap-2 lg:gap-4"><button id="openSidebar" class="p-2 lg:hidden rounded-lg hover:bg-gray-100 text-gray-600"><i class="fas fa-bars text-xl"></i></button><h2 id="pageTitle" class="text-lg lg:text-xl font-bold text-gray-800 tracking-tight">대시보드</h2></div>
-            <div class="flex items-center gap-3 lg:gap-4">
-                <div class="px-3 lg:px-4 py-1.5 bg-pink-50 text-pink-600 rounded-full text-[10px] lg:text-[11px] font-bold border border-pink-100 shadow-sm hidden sm:block">
+        <header class="h-14 lg:h-16 bg-white border-b border-gray-200 flex items-center justify-between px-3 lg:px-8 shrink-0 z-10 shadow-sm relative">
+            <div class="flex items-center gap-2 lg:gap-4 min-w-0"><button id="openSidebar" class="p-2 lg:hidden rounded-lg hover:bg-gray-100 text-gray-600 shrink-0"><i class="fas fa-bars text-lg"></i></button><h2 id="pageTitle" class="text-base lg:text-xl font-bold text-gray-800 tracking-tight truncate">대시보드</h2></div>
+            <div class="flex items-center gap-2 lg:gap-4 shrink-0">
+                <div class="px-2 lg:px-4 py-1 lg:py-1.5 bg-pink-50 text-pink-600 rounded-full text-[9px] lg:text-[11px] font-bold border border-pink-100 shadow-sm hidden md:block">
                     ✨ <span id="anniversaryLabel">로딩 중...</span>
                 </div>
-                <div class="px-3 lg:px-4 py-1.5 bg-slate-50 text-slate-600 rounded-full text-[10px] lg:text-[11px] font-bold border border-slate-100 shadow-sm flex items-center gap-2">
-                    <span>👥</span> <span id="totalMembersCount">로딩 중...</span>
+                <div class="px-2 lg:px-4 py-1 lg:py-1.5 bg-slate-50 text-slate-600 rounded-full text-[9px] lg:text-[11px] font-bold border border-slate-100 shadow-sm flex items-center gap-1 lg:gap-2">
+                    <span>👥</span> <span id="totalMembersCount" class="truncate max-w-[120px] sm:max-w-none">로딩 중...</span>
                 </div>
-                <button id="refreshBtn" onclick="fetchMembers()" class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-400 transition-all border border-gray-100 shadow-sm"><i class="fas fa-sync-alt text-xs lg:text-base"></i></button>
+                <button id="refreshBtn" onclick="fetchMembers()" class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-400 transition-all border border-gray-100 shadow-sm shrink-0"><i class="fas fa-sync-alt text-xs lg:text-base"></i></button>
             </div>
         </header>
-        <div id="contentArea" class="flex-1 overflow-y-auto p-3 lg:p-6 relative bg-gray-50 flex flex-col min-h-0"></div>
+        <div id="contentArea" class="flex-1 overflow-y-auto p-2 sm:p-3 lg:p-6 relative bg-gray-50 flex flex-col min-h-0"></div>
     </main>
 
     <!-- Modals -->
@@ -490,29 +559,29 @@
             const adminBailHtml = adminBailStats.map(([name, count]) => `<div class="flex justify-between items-center py-2 border-b border-gray-50 last:border-0"><span class="text-[11px] font-bold text-gray-600">${name}</span><span class="text-[11px] font-black text-pink-500">${count}개</span></div>`).join('') || '<p class="text-[10px] text-gray-300 italic text-center py-4">보석금 내역 없음</p>';
             
             container.innerHTML = `
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8 fade-in shrink-0">
-                <div class="flex flex-col gap-6">
-                    <div class="flex gap-6 h-40">
-                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚠카롱')" class="flex-1 bg-gradient-to-br from-pink-500 to-rose-500 rounded-[2.5rem] p-8 shadow-lg text-white cursor-pointer hover:scale-[1.02] transition-transform relative overflow-hidden flex flex-col justify-center border-none">
-                            <div class="absolute top-0 right-0 p-4 opacity-20 text-5xl"><i class="fas fa-crown"></i></div>
-                            <h3 class="text-sm font-bold opacity-80 uppercase tracking-widest text-center">뚠카롱 수로 총점</h3>
-                            <p class="text-3xl font-black tracking-tighter text-center">${ddunT.toLocaleString()}</p>
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-8 mb-4 lg:mb-8 fade-in shrink-0">
+                <div class="flex flex-col gap-4 lg:gap-6">
+                    <div class="grid grid-cols-2 gap-3 lg:gap-6 h-auto lg:h-40">
+                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚠카롱')" class="bg-gradient-to-br from-pink-500 to-rose-500 rounded-2xl lg:rounded-[2.5rem] p-4 lg:p-8 shadow-lg text-white cursor-pointer hover:scale-[1.02] transition-transform relative overflow-hidden flex flex-col justify-center border-none min-h-[100px]">
+                            <div class="absolute top-0 right-0 p-2 lg:p-4 opacity-20 text-3xl lg:text-5xl"><i class="fas fa-crown"></i></div>
+                            <h3 class="text-[10px] lg:text-sm font-bold opacity-80 uppercase tracking-widest text-center">뚠카롱 수로 총점</h3>
+                            <p class="text-xl lg:text-3xl font-black tracking-tighter text-center">${ddunT.toLocaleString()}</p>
                         </div>
-                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚱카롱')" class="flex-1 bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm text-gray-800 cursor-pointer hover:border-pink-200 transition-all flex flex-col justify-center relative overflow-hidden">
-                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest text-center">뚱카롱 수로 총점</h3>
-                            <p class="text-3xl font-black tracking-tighter text-pink-500 text-center">${ddungT.toLocaleString()}</p>
+                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚱카롱')" class="bg-white border border-gray-100 rounded-2xl lg:rounded-[2.5rem] p-4 lg:p-8 shadow-sm text-gray-800 cursor-pointer hover:border-pink-200 transition-all flex flex-col justify-center relative overflow-hidden min-h-[100px]">
+                            <h3 class="text-[10px] lg:text-sm font-bold text-gray-400 uppercase tracking-widest text-center">뚱카롱 수로 총점</h3>
+                            <p class="text-xl lg:text-3xl font-black tracking-tighter text-pink-500 text-center">${ddungT.toLocaleString()}</p>
                         </div>
                     </div>
-                    <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col">
-                        <div class="flex justify-between items-center mb-6">
-                            <div class="flex items-center gap-3">
-                                <span class="text-2xl">📅</span>
-                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Guild Calendar</h3>
+                    <div class="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col">
+                        <div class="flex justify-between items-center mb-4 lg:mb-6">
+                            <div class="flex items-center gap-2 lg:gap-3">
+                                <span class="text-lg lg:text-2xl">📅</span>
+                                <h3 class="text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest">Guild Calendar</h3>
                             </div>
-                            <div class="flex items-center gap-4">
-                                <div class="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-2xl border border-gray-100">
+                            <div class="flex items-center gap-2 lg:gap-4">
+                                <div class="flex items-center gap-1 lg:gap-2 bg-gray-50 px-2 lg:px-3 py-1 lg:py-1.5 rounded-xl lg:rounded-2xl border border-gray-100">
                                     <button onclick="moveMonth(-1)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-white hover:text-pink-500 transition-all text-gray-400"><i class="fas fa-chevron-left text-[10px]"></i></button>
-                                    <span class="text-[11px] font-bold text-gray-600 w-16 text-center">${appState.calendarView.year}.${String(appState.calendarView.month + 1).padStart(2, '0')}</span>
+                                    <span class="text-[10px] lg:text-[11px] font-bold text-gray-600 w-14 lg:w-16 text-center">${appState.calendarView.year}.${String(appState.calendarView.month + 1).padStart(2, '0')}</span>
                                     <button onclick="moveMonth(1)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-white hover:text-pink-500 transition-all text-gray-400"><i class="fas fa-chevron-right text-[10px]"></i></button>
                                 </div>
                             </div>
@@ -520,10 +589,10 @@
                         ${window.renderCalendar()}
                     </div>
                 </div>
-                <div class="flex flex-col gap-8 h-full">
-                    <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100 flex flex-col min-h-[300px] overflow-hidden shrink-0">
-                        <div class="flex justify-between items-center mb-4 shrink-0">
-                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest">직업 분포도</h3>
+                <div class="flex flex-col gap-4 lg:gap-8 h-full">
+                    <div class="bg-white p-5 lg:p-10 rounded-2xl lg:rounded-[3rem] shadow-sm border border-gray-100 flex flex-col min-h-[250px] lg:min-h-[300px] overflow-hidden shrink-0">
+                        <div class="flex justify-between items-center mb-3 lg:mb-4 shrink-0">
+                            <h3 class="text-[10px] lg:text-sm font-bold text-gray-400 uppercase tracking-widest">직업 분포도</h3>
                             <select onchange="window.updateJobChart(this.value)" class="bg-gray-50 rounded-xl px-3 py-1.5 text-xs font-bold outline-none cursor-pointer hover:bg-gray-100">
                                 <option value="all">전체</option>${appState.guilds.map(g => `<option value="${g.name}">${g.name}</option>`).join('')}
                             </select>
@@ -532,20 +601,20 @@
                             <div id="jobChartContainer" style="min-height: 250px;"><canvas id="jobChart"></canvas></div>
                         </div>
                     </div>
-                    <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100 flex flex-col flex-1 min-h-[200px] overflow-hidden">
-                        <div class="flex items-center justify-between mb-6">
-                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest">간부진 보석금 현황</h3>
+                    <div class="bg-white p-5 lg:p-10 rounded-2xl lg:rounded-[3rem] shadow-sm border border-gray-100 flex flex-col flex-1 min-h-[150px] lg:min-h-[200px] overflow-hidden">
+                        <div class="flex items-center justify-between mb-4 lg:mb-6">
+                            <h3 class="text-[10px] lg:text-sm font-bold text-gray-400 uppercase tracking-widest">간부진 보석금 현황</h3>
                             <i class="fas fa-gem text-pink-300"></i>
                         </div>
                         <div class="flex-1 overflow-y-auto no-scrollbar pr-2">${adminBailHtml}</div>
                     </div>
                 </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 fade-in shrink-0">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-6 fade-in shrink-0">
                 ${appState.guilds.map(g => { 
                     const count = appState.members.filter(m => m.guild === g.name).length; 
                     const pct = Math.min((count / g.max) * 100, 100); 
-                    return `<div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group" onclick="filterByGuild('${g.name}')"><div class="flex justify-between items-start mb-6"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-pink-50 group-hover:text-pink-500 transition-colors"><i class="fas ${g.icon}"></i></div><div><span class="block font-bold text-lg text-gray-800 group-hover:text-pink-500">${g.name}</span><span class="text-[10px] text-gray-400 font-bold">${g.type}</span></div></div></div><div class="w-full bg-gray-50 rounded-full h-1.5 overflow-hidden"><div class="h-full bg-pink-500 transition-all duration-1000" style="width:${pct}%"></div></div><p class="text-[10px] text-gray-400 font-bold mt-2 text-right">${count} / ${g.max}</p></div>`; 
+                    return `<div class="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group" onclick="filterByGuild('${g.name}')"><div class="flex justify-between items-start mb-3 lg:mb-6"><div class="flex items-center gap-2 lg:gap-3"><div class="w-8 h-8 lg:w-10 lg:h-10 bg-gray-50 rounded-xl lg:rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-pink-50 group-hover:text-pink-500 transition-colors text-xs lg:text-base"><i class="fas ${g.icon}"></i></div><div><span class="block font-bold text-sm lg:text-lg text-gray-800 group-hover:text-pink-500">${g.name}</span><span class="text-[8px] lg:text-[10px] text-gray-400 font-bold">${g.type}</span></div></div></div><div class="w-full bg-gray-50 rounded-full h-1 lg:h-1.5 overflow-hidden"><div class="h-full bg-pink-500 transition-all duration-1000" style="width:${pct}%"></div></div><p class="text-[9px] lg:text-[10px] text-gray-400 font-bold mt-1.5 lg:mt-2 text-right">${count} / ${g.max}</p></div>`; 
                 }).join('')}
             </div>`;
             setTimeout(() => window.updateJobChart('all'), 0);
@@ -696,9 +765,109 @@
             if (type === 'members') window.updateMemberTable();
         };
 
+        window._analysisSearchTimer = null;
         window.setAnalysisSearch = (val) => {
             appState.analysisFilters.search = val;
-            window.renderAnalysis(document.getElementById('contentArea'), appState.analysisGuild);
+            if (window._analysisSearchTimer) clearTimeout(window._analysisSearchTimer);
+            window._analysisSearchTimer = setTimeout(() => {
+                window.updateAnalysisTable();
+            }, 200);
+        };
+
+        window.updateAnalysisTable = () => {
+            const tbody = document.getElementById('analysisTableBody');
+            if (!tbody) return;
+            
+            const gName = appState.analysisGuild;
+            const guildTargets = appState.members.filter(m => m.guild === gName);
+            const rawSearch = (appState.analysisFilters.search || '').trim();
+            const searchTokens = rawSearch.length > 0 
+                ? rawSearch.toLowerCase().split(/[\s,]+/).filter(t => t.length > 0) 
+                : [];
+            
+            const displayTargets = searchTokens.length > 0 
+                ? guildTargets.filter(m => {
+                    const mainName = m.isMain ? m.name : (m.mainCharName || '');
+                    return searchTokens.some(token => 
+                        m.name.toLowerCase().includes(token) || 
+                        mainName.toLowerCase().includes(token) ||
+                        (m.mainCharName || '').toLowerCase().includes(token)
+                    );
+                }) 
+                : guildTargets;
+            
+            const recentHeaders = [...appState.suroHeaders];
+            const currentHeader = recentHeaders.length > 0 ? recentHeaders[recentHeaders.length - 1] : null;
+            
+            const processedList = displayTargets.map(m => {
+                const scores = recentHeaders.map(h => Math.round(Number(m.suro?.[h])) || 0);
+                const validScores = scores.filter(s => s > 0);
+                const avg = validScores.length > 0 ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length) : 0;
+                return { ...m, avg: avg, recentScores: scores };
+            });
+
+            const f = appState.analysisFilters.sortField;
+            const o = appState.analysisFilters.sortOrder;
+            processedList.sort((a, b) => {
+                if (f.startsWith('date_')) {
+                    const targetHeader = f.replace('date_', '');
+                    const headerIdx = recentHeaders.indexOf(targetHeader);
+                    const prevHeader = headerIdx > 0 ? recentHeaders[headerIdx - 1] : null;
+                    const getIncRate = (m) => {
+                        const curr = Math.round(Number(m.suro?.[targetHeader])) || 0;
+                        if (!prevHeader) return curr > 0 ? -500 : -1000;
+                        const prev = Math.round(Number(m.suro?.[prevHeader])) || 0;
+                        if (curr === 0 && prev === 0) return -1000; 
+                        if (prev === 0 && curr > 0) return -500; 
+                        return ((curr - prev) / prev) * 100;
+                    };
+                    const rateA = getIncRate(a); const rateB = getIncRate(b);
+                    if (rateA === rateB) {
+                        const currA = Math.round(Number(a.suro?.[targetHeader])) || 0;
+                        const currB = Math.round(Number(b.suro?.[targetHeader])) || 0;
+                        return o === 'asc' ? currA - currB : currB - currA;
+                    }
+                    return o === 'asc' ? rateA - rateB : rateB - rateA;
+                }
+                if (f === 'avg') return o === 'asc' ? a.avg - b.avg : b.avg - a.avg;
+                if (f === 'score') {
+                    const vA = Math.round(Number(a.suro?.[currentHeader])) || 0;
+                    const vB = Math.round(Number(b.suro?.[currentHeader])) || 0;
+                    return o === 'asc' ? vA - vB : vB - vA;
+                }
+                return smartCompare(a, b, f, o);
+            });
+
+            tbody.innerHTML = processedList.map((m, i) => {
+                const globalIndex = i + 1;
+                return `<tr class="group h-11 hover:bg-gray-50 transition-colors border-b border-gray-50">
+                    <td class="p-3 text-center text-gray-400 group-hover:bg-gray-50 border-r border-gray-50">${globalIndex}</td>
+                    <td class="p-3 text-gray-800 group-hover:bg-gray-50 border-r border-gray-50">
+                        <div class="flex items-center leading-none overflow-hidden text-ellipsis">
+                            ${window.getNicknameIcon(m.role)}<span class="truncate">${m.name}</span>
+                        </div>
+                    </td>
+                    <td class="p-3 text-center text-pink-600 bg-pink-50/30 group-hover:bg-pink-100 border-r border-pink-50">${m.avg.toLocaleString()}</td>
+                    ${m.recentScores.map((s, scoreIdx) => {
+                        let diffHtml = '';
+                        let prevScore = scoreIdx > 0 ? m.recentScores[scoreIdx - 1] : 0;
+                        if (s > 0 || (s === 0 && prevScore > 0)) {
+                            if (prevScore > 0) {
+                                const diffPct = ((s - prevScore) / prevScore * 100);
+                                if (s > prevScore) diffHtml = `<span class="text-[9px] text-red-500 font-bold tracking-tighter block mt-0.5">▲ ${diffPct.toFixed(1)}%</span>`;
+                                else if (s < prevScore) diffHtml = `<span class="text-[9px] text-blue-500 font-bold tracking-tighter block mt-0.5">▼ ${Math.abs(diffPct).toFixed(1)}%</span>`;
+                                else diffHtml = `<span class="text-[9px] text-gray-400 font-bold tracking-tighter block mt-0.5">- 0.0%</span>`;
+                            } else if (s > 0) diffHtml = `<span class="text-[9px] text-red-500 font-bold tracking-tighter block mt-0.5">▲ NEW</span>`;
+                        }
+                        return `<td class="p-3 min-w-[100px] text-right font-mono align-middle ${s === 0 ? 'bg-red-50/20 text-red-400 group-hover:bg-red-50/50' : 'bg-white text-gray-700 group-hover:bg-gray-50'} relative z-10">
+                            <div class="flex flex-col justify-center items-end leading-tight min-h-[28px]">
+                                <span class="${s > 0 ? 'text-xs' : 'text-gray-400'}">${s > 0 ? s.toLocaleString() : '0'}</span>
+                                ${diffHtml}
+                            </div>
+                        </td>`;
+                    }).join('')}
+                </tr>`;
+            }).join('');
         };
 
         // --- ANALYSIS ---
@@ -706,8 +875,21 @@
             appState.analysisGuild = gName;
             
             const guildTargets = appState.members.filter(m => m.guild === gName);
-            const searchToken = (appState.analysisFilters.search || '').toLowerCase().trim();
-            const displayTargets = searchToken ? guildTargets.filter(m => m.name.toLowerCase().includes(searchToken)) : guildTargets;
+            const rawSearch = (appState.analysisFilters.search || '').trim();
+            const searchTokens = rawSearch.length > 0 
+                ? rawSearch.toLowerCase().split(/[\s,]+/).filter(t => t.length > 0) 
+                : [];
+            
+            const displayTargets = searchTokens.length > 0 
+                ? guildTargets.filter(m => {
+                    const mainName = m.isMain ? m.name : (m.mainCharName || '');
+                    return searchTokens.some(token => 
+                        m.name.toLowerCase().includes(token) || 
+                        mainName.toLowerCase().includes(token) ||
+                        (m.mainCharName || '').toLowerCase().includes(token)
+                    );
+                }) 
+                : guildTargets;
             
             const getWedStr = (h) => {
                 if (!h) return '';
@@ -862,63 +1044,63 @@
                     </div>
                     <div class="relative w-full sm:w-64 shrink-0">
                         <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                        <input type="text" oninput="window.setAnalysisSearch(this.value)" value="${appState.analysisFilters.search || ''}" class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-100 rounded-xl outline-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-pink-50 transition-all" placeholder="닉네임 검색">
+                        <input type="text" oninput="window.setAnalysisSearch(this.value)" value="${appState.analysisFilters.search || ''}" class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-100 rounded-xl outline-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-pink-50 transition-all" placeholder="닉네임/본캐명 검색 (띄어쓰기로 다중검색)">
                     </div>
                 </div>
 
                 <!-- ★ 2단 분리 레이아웃: 기본 정보 3개 -> MVP 4개 -->
-                <div class="flex flex-col gap-3 shrink-0">
-                    <div class="grid grid-cols-3 gap-3 font-bold">
-                        <div class="bg-white py-3 lg:py-4 px-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center items-center h-full min-h-[80px]">
-                            <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1.5">전체 총점</p>
-                            <h4 class="text-base lg:text-xl font-black text-gray-800 tracking-tighter">${displayTotal.toLocaleString()}</h4>
+                <div class="flex flex-col gap-2 lg:gap-3 shrink-0">
+                    <div class="grid grid-cols-3 gap-2 lg:gap-3 font-bold">
+                        <div class="bg-white py-2 lg:py-4 px-3 lg:px-4 rounded-xl lg:rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center items-center h-full min-h-[60px] lg:min-h-[80px]">
+                            <p class="text-[8px] lg:text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1 lg:mb-1.5">전체 총점</p>
+                            <h4 class="text-sm lg:text-xl font-black text-gray-800 tracking-tighter">${displayTotal.toLocaleString()}</h4>
                         </div>
-                        <div class="bg-red-50 py-3 lg:py-4 px-4 rounded-2xl border border-red-100 shadow-sm flex flex-col justify-center items-center h-full min-h-[80px]">
-                            <p class="text-[9px] text-red-500 font-bold uppercase tracking-widest mb-1.5">🚨 미참여</p>
-                            <h4 class="text-base lg:text-xl font-black text-red-600 tracking-tighter">${zeroPointMembers.length}명</h4>
+                        <div class="bg-red-50 py-2 lg:py-4 px-3 lg:px-4 rounded-xl lg:rounded-2xl border border-red-100 shadow-sm flex flex-col justify-center items-center h-full min-h-[60px] lg:min-h-[80px]">
+                            <p class="text-[8px] lg:text-[9px] text-red-500 font-bold uppercase tracking-widest mb-1 lg:mb-1.5">🚨 미참여</p>
+                            <h4 class="text-sm lg:text-xl font-black text-red-600 tracking-tighter">${zeroPointMembers.length}명</h4>
                         </div>
-                        <div class="bg-white py-3 lg:py-4 px-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center items-center h-full min-h-[80px]">
-                            <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1.5">최근 데이터 주차</p>
-                            <h4 class="text-xs lg:text-sm font-bold text-gray-700">${currentHeader ? getWedStr(currentHeader) : '데이터 없음'}</h4>
+                        <div class="bg-white py-2 lg:py-4 px-3 lg:px-4 rounded-xl lg:rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center items-center h-full min-h-[60px] lg:min-h-[80px]">
+                            <p class="text-[8px] lg:text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1 lg:mb-1.5">최근 주차</p>
+                            <h4 class="text-[10px] lg:text-sm font-bold text-gray-700">${currentHeader ? getWedStr(currentHeader) : '없음'}</h4>
                         </div>
                     </div>
                     
                     <!-- MVP 정보 4개 카드 -->
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 font-bold">
-                        <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-3.5 rounded-2xl border border-blue-100 shadow-sm flex flex-col relative overflow-hidden h-full min-h-[100px]">
-                            <div class="absolute -right-2 -bottom-2 opacity-[0.05] text-6xl text-blue-500"><i class="fas fa-crown"></i></div>
-                            <p class="text-[9px] text-blue-600 font-bold uppercase tracking-widest z-10 flex items-center gap-1"><i class="fas fa-star"></i> 이번 주 고득점 MVP</p>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3 font-bold">
+                        <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-2.5 lg:p-3.5 rounded-xl lg:rounded-2xl border border-blue-100 shadow-sm flex flex-col relative overflow-hidden h-full min-h-[85px] lg:min-h-[100px]">
+                            <div class="absolute -right-2 -bottom-2 opacity-[0.05] text-4xl lg:text-6xl text-blue-500"><i class="fas fa-crown"></i></div>
+                            <p class="text-[8px] lg:text-[9px] text-blue-600 font-bold uppercase tracking-widest z-10 flex items-center gap-1"><i class="fas fa-star"></i> <span class="hidden sm:inline">이번 주</span> 고득점</p>
                             ${renderMvpList(topScoreHighMVP, 'high')}
                         </div>
-                        <div class="bg-gradient-to-br from-yellow-50 to-orange-50 p-3.5 rounded-2xl border border-orange-100 shadow-sm flex flex-col relative overflow-hidden h-full min-h-[100px]">
-                            <div class="absolute -right-2 -bottom-2 opacity-[0.05] text-6xl text-orange-500"><i class="fas fa-trophy"></i></div>
-                            <p class="text-[9px] text-orange-600 font-bold uppercase tracking-widest z-10 flex items-center gap-1"><i class="fas fa-arrow-trend-up"></i> 주간 점수 떡상 MVP</p>
+                        <div class="bg-gradient-to-br from-yellow-50 to-orange-50 p-2.5 lg:p-3.5 rounded-xl lg:rounded-2xl border border-orange-100 shadow-sm flex flex-col relative overflow-hidden h-full min-h-[85px] lg:min-h-[100px]">
+                            <div class="absolute -right-2 -bottom-2 opacity-[0.05] text-4xl lg:text-6xl text-orange-500"><i class="fas fa-trophy"></i></div>
+                            <p class="text-[8px] lg:text-[9px] text-orange-600 font-bold uppercase tracking-widest z-10 flex items-center gap-1"><i class="fas fa-arrow-trend-up"></i> 점수 떡상</p>
                             ${renderMvpList(topScoreMVP, 'score')}
                         </div>
-                        <div class="bg-gradient-to-br from-emerald-50 to-teal-50 p-3.5 rounded-2xl border border-emerald-100 shadow-sm flex flex-col relative overflow-hidden h-full min-h-[100px]">
-                            <div class="absolute -right-2 -bottom-2 opacity-[0.05] text-6xl text-emerald-500"><i class="fas fa-chart-line"></i></div>
-                            <p class="text-[9px] text-emerald-600 font-bold uppercase tracking-widest z-10 flex items-center gap-1"><i class="fas fa-percent"></i> 주간 상승률 MVP</p>
+                        <div class="bg-gradient-to-br from-emerald-50 to-teal-50 p-2.5 lg:p-3.5 rounded-xl lg:rounded-2xl border border-emerald-100 shadow-sm flex flex-col relative overflow-hidden h-full min-h-[85px] lg:min-h-[100px]">
+                            <div class="absolute -right-2 -bottom-2 opacity-[0.05] text-4xl lg:text-6xl text-emerald-500"><i class="fas fa-chart-line"></i></div>
+                            <p class="text-[8px] lg:text-[9px] text-emerald-600 font-bold uppercase tracking-widest z-10 flex items-center gap-1"><i class="fas fa-percent"></i> 상승률</p>
                             ${renderMvpList(topPctMVP, 'pct')}
                         </div>
-                        <div class="bg-gradient-to-br from-purple-50 to-fuchsia-50 p-3.5 rounded-2xl border border-purple-100 shadow-sm flex flex-col relative overflow-hidden h-full min-h-[100px]">
-                            <div class="absolute -right-2 -bottom-2 opacity-[0.05] text-6xl text-purple-500"><i class="fas fa-bolt"></i></div>
-                            <p class="text-[9px] text-purple-600 font-bold uppercase tracking-widest z-10 flex items-center gap-1"><i class="fas fa-balance-scale"></i> 주간 평균대비 떡상</p>
+                        <div class="bg-gradient-to-br from-purple-50 to-fuchsia-50 p-2.5 lg:p-3.5 rounded-xl lg:rounded-2xl border border-purple-100 shadow-sm flex flex-col relative overflow-hidden h-full min-h-[85px] lg:min-h-[100px]">
+                            <div class="absolute -right-2 -bottom-2 opacity-[0.05] text-4xl lg:text-6xl text-purple-500"><i class="fas fa-bolt"></i></div>
+                            <p class="text-[8px] lg:text-[9px] text-purple-600 font-bold uppercase tracking-widest z-10 flex items-center gap-1"><i class="fas fa-balance-scale"></i> 평균대비 떡상</p>
                             ${renderMvpList(topAvgMVP, 'avg')}
                         </div>
                     </div>
                 </div>
 
-                <div class="flex flex-col lg:flex-row gap-5 flex-1 min-h-[400px] lg:min-h-0">
-                    <div class="w-full lg:w-[30%] bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden shrink-0 lg:h-full">
-                        <h3 class="text-xs font-bold text-gray-400 mb-4 uppercase tracking-widest">주간 총점 추이</h3>
-                        <div class="flex-1 w-full min-h-[150px] relative">
+                <div class="flex flex-col lg:flex-row gap-3 lg:gap-5 flex-1 min-h-[300px] lg:min-h-0">
+                    <div class="w-full lg:w-[30%] bg-white p-4 lg:p-5 rounded-xl lg:rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden shrink-0 lg:h-full">
+                        <h3 class="text-[10px] lg:text-xs font-bold text-gray-400 mb-3 lg:mb-4 uppercase tracking-widest">주간 총점 추이</h3>
+                        <div class="flex-1 w-full min-h-[120px] lg:min-h-[150px] relative">
                             <canvas id="analysisChart"></canvas>
                         </div>
                     </div>
 
-                    <div class="w-full lg:w-[70%] bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden shrink-0 lg:h-full relative">
-                        <div class="p-4 border-b border-gray-50 flex justify-between items-center shrink-0 bg-white relative z-40">
-                            <h3 class="text-xs font-bold text-gray-800 uppercase tracking-widest">전체 데이터 (누적)</h3>
+                    <div class="w-full lg:w-[70%] bg-white rounded-xl lg:rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden shrink-0 lg:h-full relative">
+                        <div class="p-3 lg:p-4 border-b border-gray-50 flex justify-between items-center shrink-0 bg-white relative z-40">
+                            <h3 class="text-[10px] lg:text-xs font-bold text-gray-800 uppercase tracking-widest">전체 데이터 (누적)</h3>
                         </div>
                         <div id="analysisTableWrapper" class="flex-1 overflow-auto bg-white scroll-smooth relative">
                             <table class="w-full text-left text-xs whitespace-nowrap">
@@ -933,7 +1115,7 @@
                                         }).join('')}
                                     </tr>
                                 </thead>
-                                <tbody class="font-bold text-gray-700">
+                                <tbody id="analysisTableBody" class="font-bold text-gray-700">
                                     ${processedList.map((m, i) => {
                                         const globalIndex = i + 1;
                                         return `
@@ -1083,31 +1265,33 @@
 
         window.renderMembers = (container) => {
             container.innerHTML = `
-            <div class="flex flex-col gap-3 fade-in h-full">
-                <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col xl:flex-row items-center gap-4 shrink-0">
-                    <div class="flex overflow-x-auto no-scrollbar w-full xl:w-auto gap-2 shrink-0">
-                        <button onclick="window.filterByGuild('all')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${appState.filters.guild === 'all' ? 'bg-gray-800 text-white shadow-md' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">전체</button>
-                        ${appState.guilds.map(g => `<button onclick="window.filterByGuild('${g.name}')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${appState.filters.guild === g.name ? 'bg-pink-500 text-white shadow-md' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">${g.name}</button>`).join('')}
+            <div class="flex flex-col gap-2 lg:gap-3 fade-in h-full">
+                <div class="bg-white p-3 lg:p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-3 shrink-0">
+                    <div class="flex overflow-x-auto no-scrollbar w-full gap-1.5 lg:gap-2 shrink-0 pb-0.5">
+                        <button onclick="window.filterByGuild('all')" class="shrink-0 px-3 lg:px-4 py-1.5 lg:py-2 rounded-xl text-[10px] lg:text-xs font-bold transition-all ${appState.filters.guild === 'all' ? 'bg-gray-800 text-white shadow-md' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">전체</button>
+                        ${appState.guilds.map(g => `<button onclick="window.filterByGuild('${g.name}')" class="shrink-0 px-3 lg:px-4 py-1.5 lg:py-2 rounded-xl text-[10px] lg:text-xs font-bold transition-all ${appState.filters.guild === g.name ? 'bg-pink-500 text-white shadow-md' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">${g.name}</button>`).join('')}
                     </div>
                     
-                    <div class="relative flex-1 w-full">
-                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                        <input type="text" oninput="window.handleSearch(this.value)" value="${appState.filters.search}" class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none text-xs font-bold shadow-inner focus:ring-2 focus:ring-pink-50 transition-all" placeholder="닉네임 다중 검색 가능 (줄바꿈/띄어쓰기로 구분)">
-                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                        <div class="relative flex-1">
+                            <i class="fas fa-search absolute left-3 lg:left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                            <input type="text" oninput="window.handleSearch(this.value)" value="${appState.filters.search}" class="w-full pl-8 lg:pl-10 pr-3 lg:pr-4 py-2 lg:py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none text-[11px] lg:text-xs font-bold shadow-inner focus:ring-2 focus:ring-pink-50 transition-all" placeholder="닉네임 검색 (띄어쓰기로 다중검색)">
+                        </div>
 
-                    <div class="flex gap-2 shrink-0">
-                        <button onclick="window.toggleKickMode()" class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${appState.isKickMode ? 'bg-red-500 text-white shadow-md animate-pulse' : 'bg-red-50 text-red-500 hover:bg-red-100'}">
-                            <i class="fas fa-user-minus mr-1"></i> 일괄 추방 ${appState.isKickMode?'ON':'OFF'}
-                        </button>
-                        ${appState.isKickMode && appState.kickSelection.size > 0 ? `<button onclick="window.openBulkKickModal()" class="px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-bold shadow-md hover:bg-red-700 transition-all">선택된 ${appState.kickSelection.size}명 추방</button>` : ''}
-                        
-                        ${!appState.isKickMode ? `
-                        <button onclick="window.toggleBatchMode()" class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${appState.isBatchMode ? 'bg-gray-800 text-white shadow-md' : 'bg-pink-50 text-pink-500 hover:bg-pink-100'}">
-                            <i class="fas fa-edit mr-1"></i> 일괄 수정 ${appState.isBatchMode?'OFF':'ON'}
-                        </button>
-                        ${appState.isBatchMode ? `<button onclick="window.saveBatchUpdates()" class="px-4 py-2 bg-pink-500 text-white rounded-xl text-xs font-bold shadow-md animate-pulse">저장</button>` : ''}
-                        <button onclick="window.openAddModal()" class="w-9 h-9 flex items-center justify-center rounded-xl bg-pink-50 text-pink-500 hover:bg-pink-100 shadow-sm"><i class="fas fa-plus"></i></button>
-                        ` : ''}
+                        <div class="flex gap-1.5 lg:gap-2 shrink-0 flex-wrap">
+                            <button onclick="window.toggleKickMode()" class="px-3 lg:px-4 py-1.5 lg:py-2 rounded-xl text-[10px] lg:text-xs font-bold transition-all ${appState.isKickMode ? 'bg-red-500 text-white shadow-md animate-pulse' : 'bg-red-50 text-red-500 hover:bg-red-100'}">
+                                <i class="fas fa-user-minus mr-1"></i> <span class="hidden sm:inline">일괄 추방</span> ${appState.isKickMode?'ON':'OFF'}
+                            </button>
+                            ${appState.isKickMode && appState.kickSelection.size > 0 ? `<button onclick="window.openBulkKickModal()" class="px-3 lg:px-4 py-1.5 lg:py-2 bg-red-600 text-white rounded-xl text-[10px] lg:text-xs font-bold shadow-md hover:bg-red-700 transition-all">${appState.kickSelection.size}명 추방</button>` : ''}
+                            
+                            ${!appState.isKickMode ? `
+                            <button onclick="window.toggleBatchMode()" class="px-3 lg:px-4 py-1.5 lg:py-2 rounded-xl text-[10px] lg:text-xs font-bold transition-all ${appState.isBatchMode ? 'bg-gray-800 text-white shadow-md' : 'bg-pink-50 text-pink-500 hover:bg-pink-100'}">
+                                <i class="fas fa-edit mr-1"></i> <span class="hidden sm:inline">일괄 수정</span> ${appState.isBatchMode?'OFF':'ON'}
+                            </button>
+                            ${appState.isBatchMode ? `<button onclick="window.saveBatchUpdates()" class="px-3 lg:px-4 py-1.5 lg:py-2 bg-pink-500 text-white rounded-xl text-[10px] lg:text-xs font-bold shadow-md animate-pulse">저장</button>` : ''}
+                            <button onclick="window.openAddModal()" class="w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center rounded-xl bg-pink-50 text-pink-500 hover:bg-pink-100 shadow-sm shrink-0"><i class="fas fa-plus text-xs"></i></button>
+                            ` : ''}
+                        </div>
                     </div>
                 </div>
 
@@ -1147,7 +1331,7 @@
             const pageData = filtered.slice((appState.pagination.members - 1) * ITEMS_PER_PAGE, appState.pagination.members * ITEMS_PER_PAGE);
             const sortIcon = (f) => appState.filters.sortField === f ? (appState.filters.sortOrder === 'asc' ? ' <i class="fas fa-sort-up"></i>' : ' <i class="fas fa-sort-down"></i>') : '';
             
-            let html = `<div class="overflow-y-auto flex-1 relative"><table class="w-full text-left min-w-[900px] text-xs whitespace-nowrap"><thead class="bg-gray-50 text-[10px] font-bold text-gray-500 border-b border-gray-100 sticky top-0 z-10 shadow-sm"><tr><th class="p-4 text-center w-16">${appState.isKickMode ? '선택' : 'No.'}</th><th class="p-4 sortable" onclick="window.handleSort('name')">닉네임${sortIcon('name')}</th><th class="p-4 sortable" onclick="window.handleSort('mainInfo')">본캐 정보${sortIcon('mainInfo')}</th><th class="p-4 sortable" onclick="window.handleSort('guild')">소속${sortIcon('guild')}</th><th class="p-4 sortable" onclick="window.handleSort('role')">직위${sortIcon('role')}</th><th class="p-4 sortable" onclick="window.handleSort('class')">직업${sortIcon('class')}</th><th class="p-4 text-right">관리</th></tr></thead><tbody class="divide-y divide-gray-50 text-gray-600 font-bold relative z-0">`;
+            let html = `<div class="overflow-auto flex-1 relative -webkit-overflow-scrolling-touch"><table class="w-full text-left min-w-[700px] lg:min-w-[900px] text-[10px] lg:text-xs whitespace-nowrap"><thead class="bg-gray-50 text-[9px] lg:text-[10px] font-bold text-gray-500 border-b border-gray-100 sticky top-0 z-10 shadow-sm"><tr><th class="p-2 lg:p-4 text-center w-10 lg:w-16">${appState.isKickMode ? '선택' : 'No.'}</th><th class="p-2 lg:p-4 sortable" onclick="window.handleSort('name')">닉네임${sortIcon('name')}</th><th class="p-2 lg:p-4 sortable" onclick="window.handleSort('mainInfo')">본캐${sortIcon('mainInfo')}</th><th class="p-2 lg:p-4 sortable" onclick="window.handleSort('guild')">소속${sortIcon('guild')}</th><th class="p-2 lg:p-4 sortable" onclick="window.handleSort('role')">직위${sortIcon('role')}</th><th class="p-2 lg:p-4 sortable" onclick="window.handleSort('class')">직업${sortIcon('class')}</th><th class="p-2 lg:p-4 text-right">관리</th></tr></thead><tbody class="divide-y divide-gray-50 text-gray-600 font-bold relative z-0">`;
             
             pageData.forEach((m, idx) => {
                 const globalIndex = (appState.pagination.members - 1) * ITEMS_PER_PAGE + idx + 1;
@@ -1256,42 +1440,42 @@
             `}).join('');
 
             container.innerHTML = `
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in h-full">
-                <div class="lg:col-span-1 bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden">
-                    <div class="mb-8">
-                        <h3 class="text-xl font-bold text-gray-800 tracking-tight">벌점 부여</h3>
-                        <p class="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">PENALTY RECORD</p>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8 fade-in h-full">
+                <div class="lg:col-span-1 bg-white p-5 lg:p-10 rounded-2xl lg:rounded-[3rem] border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden">
+                    <div class="mb-4 lg:mb-8">
+                        <h3 class="text-base lg:text-xl font-bold text-gray-800 tracking-tight">벌점 부여</h3>
+                        <p class="text-[10px] lg:text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">PENALTY RECORD</p>
                     </div>
-                    <div class="space-y-6 flex-1 overflow-y-auto no-scrollbar pb-6">
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">부여 날짜</label>
-                            <input type="date" id="penaltyDate" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-inner" value="${new Date().toISOString().split('T')[0]}">
+                    <div class="space-y-4 lg:space-y-6 flex-1 overflow-y-auto no-scrollbar pb-4 lg:pb-6">
+                        <div class="space-y-1.5 lg:space-y-2">
+                            <label class="text-[9px] lg:text-[10px] font-bold text-gray-400 ml-1 uppercase">부여 날짜</label>
+                            <input type="date" id="penaltyDate" class="w-full bg-gray-50 border border-gray-100 rounded-xl lg:rounded-2xl p-3 lg:p-4 text-xs lg:text-sm font-bold outline-none shadow-inner" value="${new Date().toISOString().split('T')[0]}">
                         </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">대상자</label>
-                            <select id="penaltyTarget" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-sm cursor-pointer font-bold">
+                        <div class="space-y-1.5 lg:space-y-2">
+                            <label class="text-[9px] lg:text-[10px] font-bold text-gray-400 ml-1 uppercase">대상자</label>
+                            <select id="penaltyTarget" class="w-full bg-gray-50 border border-gray-100 rounded-xl lg:rounded-2xl p-3 lg:p-4 text-xs lg:text-sm font-bold outline-none shadow-sm cursor-pointer">
                                 <option value="">대상자를 선택하세요</option>
                                 ${memberOptions}
                             </select>
                         </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">벌점 (1~10점)</label>
-                            <select id="penaltyPoints" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-sm cursor-pointer font-bold">
+                        <div class="space-y-1.5 lg:space-y-2">
+                            <label class="text-[9px] lg:text-[10px] font-bold text-gray-400 ml-1 uppercase">벌점 (1~10점)</label>
+                            <select id="penaltyPoints" class="w-full bg-gray-50 border border-gray-100 rounded-xl lg:rounded-2xl p-3 lg:p-4 text-xs lg:text-sm font-bold outline-none shadow-sm cursor-pointer">
                                 ${[1,2,3,4,5,6,7,8,9,10].map(i => `<option value="${i}">${i}점</option>`).join('')}
                             </select>
                         </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">부여 사유</label>
-                            <textarea id="penaltyReason" rows="4" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-inner resize-none" placeholder="상세 사유를 입력하세요"></textarea>
+                        <div class="space-y-1.5 lg:space-y-2">
+                            <label class="text-[9px] lg:text-[10px] font-bold text-gray-400 ml-1 uppercase">부여 사유</label>
+                            <textarea id="penaltyReason" rows="3" class="w-full bg-gray-50 border border-gray-100 rounded-xl lg:rounded-2xl p-3 lg:p-4 text-xs lg:text-sm font-bold outline-none shadow-inner resize-none" placeholder="상세 사유를 입력하세요"></textarea>
                         </div>
-                        <button onclick="window.submitPenalty()" id="btnPenaltySubmit" class="w-full py-6 bg-red-600 text-white rounded-[2rem] font-bold text-xs shadow-xl hover:bg-red-700 transition-all active:scale-[0.98] mt-4">벌점 저장</button>
+                        <button onclick="window.submitPenalty()" id="btnPenaltySubmit" class="w-full py-4 lg:py-6 bg-red-600 text-white rounded-xl lg:rounded-[2rem] font-bold text-[10px] lg:text-xs shadow-xl hover:bg-red-700 transition-all active:scale-[0.98] mt-2 lg:mt-4">벌점 저장</button>
                     </div>
                 </div>
 
-                <div class="lg:col-span-2 flex flex-col gap-6 h-full overflow-hidden">
-                    <div class="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm shrink-0 min-h-[160px]">
-                        <div class="mb-4">
-                            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">현재 벌점 관리 대상자</h3>
+                <div class="lg:col-span-2 flex flex-col gap-4 lg:gap-6 h-full overflow-hidden">
+                    <div class="bg-white p-5 lg:p-8 rounded-2xl lg:rounded-[3rem] border border-gray-100 shadow-sm shrink-0 min-h-[120px] lg:min-h-[160px]">
+                        <div class="mb-3 lg:mb-4">
+                            <h3 class="text-[10px] lg:text-sm font-bold text-gray-800 uppercase tracking-widest">현재 벌점 관리 대상자</h3>
                         </div>
                         <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
                             ${activePenalties.length > 0 
@@ -1306,9 +1490,9 @@
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-[3rem] border border-gray-100 shadow-sm flex flex-col flex-1 overflow-hidden h-full">
-                        <div class="p-8 border-b border-gray-50 flex justify-between items-center shrink-0">
-                            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">상세 부여 이력</h3>
+                    <div class="bg-white rounded-2xl lg:rounded-[3rem] border border-gray-100 shadow-sm flex flex-col flex-1 overflow-hidden h-full">
+                        <div class="p-4 lg:p-8 border-b border-gray-50 flex justify-between items-center shrink-0">
+                            <h3 class="text-[10px] lg:text-sm font-bold text-gray-800 uppercase tracking-widest">상세 부여 이력</h3>
                         </div>
                         <div class="flex-1 overflow-y-auto no-scrollbar">
                             <table class="w-full text-left text-xs whitespace-nowrap">
@@ -1353,7 +1537,8 @@
         window.renderSettings = (container) => { container.innerHTML = `<div class="bg-white p-12 rounded-[3rem] border border-gray-100 shadow-sm max-w-4xl font-bold h-fit"><h3 class="text-xl mb-10 text-gray-800">시스템 설정</h3><div class="space-y-8"><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 uppercase font-bold">Apps Script WebApp URL</label><input type="text" id="settingScriptUrl" value="${localStorage.getItem('macaron_script_url') || appState.scriptUrl}" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-5 text-xs font-mono outline-none shadow-inner focus:ring-4 focus:ring-gray-100 transition-all"></div><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 uppercase font-bold">Google Sheet URL</label><input type="text" id="settingSheetUrl" value="${localStorage.getItem('macaron_sheet_url') || appState.sheetUrl}" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-5 text-xs font-mono outline-none shadow-inner focus:ring-4 focus:ring-gray-100 transition-all"></div><button onclick="window.saveSettings()" class="w-full py-6 bg-gray-900 text-white rounded-3xl font-bold shadow-xl active:scale-[0.98] transition-all">설정 저장 및 시스템 재시작</button></div></div>`; };
         window.saveSettings = () => { localStorage.setItem('macaron_script_url', document.getElementById('settingScriptUrl').value.trim()); localStorage.setItem('macaron_sheet_url', document.getElementById('settingSheetUrl').value.trim()); window.showMsg("저장되었습니다.", "success"); setTimeout(()=>location.reload(), 800); };
 
-        window.handleSearch = (v) => { appState.filters.search = v; appState.pagination.members = 1; window.updateMemberTable(); };
+        window._memberSearchTimer = null;
+        window.handleSearch = (v) => { appState.filters.search = v; appState.pagination.members = 1; if(window._memberSearchTimer) clearTimeout(window._memberSearchTimer); window._memberSearchTimer = setTimeout(() => window.updateMemberTable(), 100); };
         window.filterByGuild = (g) => { appState.filters.guild = g; appState.pagination.members = 1; if(appState.activeTab === 'members') window.renderMembers(document.getElementById('contentArea')); else window.updateMemberTable(); };
         window.handleSort = (field) => { if(appState.filters.sortField === field) appState.filters.sortOrder = appState.filters.sortOrder === 'asc' ? 'desc' : 'asc'; else { appState.filters.sortField = field; appState.filters.sortOrder = 'asc'; } appState.pagination.members = 1; window.updateMemberTable(); };
         window.closeModal = (id) => { document.getElementById(id)?.classList.add('hidden'); };
@@ -1428,4 +1613,3 @@
     </script>
 </body>
 </html>
-
