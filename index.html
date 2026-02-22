@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>뚠카롱 길드 관리 시스템 (v8.55)</title>
+    <title>뚠카롱 길드 관리 시스템 (v8.59)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -80,11 +80,10 @@
         <p id="msgText" class="text-sm font-bold"></p>
     </div>
 
-    <!-- 사이드바 z-index 유지 -->
     <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-[1000] w-64 bg-white border-r border-gray-100 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col shadow-sm">
         <div class="p-6 border-b border-gray-100 flex items-center gap-3">
             <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-400 to-rose-400 flex items-center justify-center text-white font-bold shadow-lg shadow-pink-100 text-xl">뚠</div>
-            <div><h1 class="text-lg font-bold text-gray-800 tracking-tight">뚠카롱 길드 관리</h1><p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">v8.55 UPDATE</p></div>
+            <div><h1 class="text-lg font-bold text-gray-800 tracking-tight">뚠카롱 길드 관리</h1><p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">v8.59 UPDATE</p></div>
             <button id="closeSidebar" class="lg:hidden ml-auto text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
         </div>
         <nav class="p-4 space-y-2 flex-1 overflow-y-auto no-scrollbar">
@@ -188,7 +187,7 @@
             events: [],
             penaltyHistory: [],
             filters: { guild: 'all', search: '', sortField: 'name', sortOrder: 'asc' },
-            analysisFilters: { sortField: 'avg', sortOrder: 'desc' },
+            analysisFilters: { sortField: 'avg', sortOrder: 'desc', search: '' },
             analysisGuild: '뚠카롱',
             isBatchMode: false, pendingUpdates: {},
             isKickMode: false, kickSelection: new Set(),
@@ -227,7 +226,7 @@
             const lastHeader = appState.suroHeaders[appState.suroHeaders.length - 1];
             return appState.members
                 .filter(m => (m.guild || '').trim() === guildName.trim())
-                .reduce((s, m) => s + (Number(m.suro?.[lastHeader]) || 0), 0);
+                .reduce((s, m) => s + (Math.round(Number(m.suro?.[lastHeader])) || 0), 0);
         };
 
         window.getAdminBailStats = () => {
@@ -325,8 +324,7 @@
                         const response = await fetch(appState.scriptUrl, { 
                             method: 'POST', 
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                            body: JSON.stringify({ action: 'update', data: payload }),
-                            redirect: 'follow'
+                            body: JSON.stringify({ action: 'update', data: payload }), 
                         });
                         const res = await response.json();
                         if (res.status === "success") successCount++;
@@ -374,7 +372,6 @@
             document.getElementById('deleteModal').classList.remove('hidden');
         };
 
-        // ★ Failed to fetch 방지: 통신 옵션을 복구하고 예외처리를 강화하여 흰 화면 방지
         window.fetchMembers = async () => {
             window.showLoading(true);
             try {
@@ -382,7 +379,7 @@
                 const response = await fetch(targetUrl, { redirect: 'follow' }); 
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`HTTP 에러 발생! 상태코드: ${response.status}`);
                 }
                 
                 const text = await response.text();
@@ -390,7 +387,7 @@
                 try {
                     json = JSON.parse(text);
                 } catch(e) {
-                    throw new Error("데이터를 읽을 수 없습니다. 앱스크립트 권한을 '모든 사용자'로 설정했는지 확인하세요.");
+                    throw new Error("데이터를 읽을 수 없습니다. (CORS 또는 권한 문제). 앱스크립트 배포 시 '모든 사용자'로 설정했는지 확인하세요.");
                 }
 
                 if (json.status === "success") {
@@ -430,10 +427,9 @@
                 }
             } catch (e) { 
                 console.error("Fetch Error:", e); 
-                window.showMsg("통신 에러. 앱스크립트 배포 시 액세스 권한을 '모든 사용자'로 설정했는지 확인해주세요.", "error"); 
+                alert("🚨 서버 통신 실패 (Failed to fetch)\n\n구글 앱스크립트 권한 문제일 가능성이 높습니다.\n앱스크립트 [새 배포] 시 액세스 권한을 반드시 [모든 사용자]로 설정해주세요.");
             } finally {
                 window.showLoading(false);
-                // 에러가 나도 빈 껍데기라도 화면에 그려서 하얀 화면 방지
                 window.router(appState.activeTab);
             }
         };
@@ -493,66 +489,63 @@
             const adminBailStats = window.getAdminBailStats();
             const adminBailHtml = adminBailStats.map(([name, count]) => `<div class="flex justify-between items-center py-2 border-b border-gray-50 last:border-0"><span class="text-[11px] font-bold text-gray-600">${name}</span><span class="text-[11px] font-black text-pink-500">${count}개</span></div>`).join('') || '<p class="text-[10px] text-gray-300 italic text-center py-4">보석금 내역 없음</p>';
             
-            // ★ 안정적이었던 이전 버전의 그리드/flex 레이아웃 롤백 적용 (캘린더 짤림 방지)
             container.innerHTML = `
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8 mb-6 lg:mb-8 fade-in shrink-0">
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8 fade-in shrink-0">
                 <div class="flex flex-col gap-6">
-                    <div class="flex flex-col sm:flex-row gap-4 lg:gap-6 shrink-0 h-auto sm:h-40">
-                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚠카롱')" class="flex-1 bg-gradient-to-br from-pink-500 to-rose-500 rounded-[2rem] p-6 lg:p-8 shadow-lg text-white cursor-pointer hover:scale-[1.02] transition-transform relative overflow-hidden flex flex-col justify-center border-none min-h-[110px]">
+                    <div class="flex gap-6 h-40">
+                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚠카롱')" class="flex-1 bg-gradient-to-br from-pink-500 to-rose-500 rounded-[2.5rem] p-8 shadow-lg text-white cursor-pointer hover:scale-[1.02] transition-transform relative overflow-hidden flex flex-col justify-center border-none">
                             <div class="absolute top-0 right-0 p-4 opacity-20 text-5xl"><i class="fas fa-crown"></i></div>
-                            <h3 class="text-xs lg:text-sm font-bold opacity-80 uppercase tracking-widest text-center">뚠카롱 수로 총점</h3>
-                            <p class="text-2xl lg:text-3xl font-black tracking-tighter text-center">${ddunT.toLocaleString()}</p>
+                            <h3 class="text-sm font-bold opacity-80 uppercase tracking-widest text-center">뚠카롱 수로 총점</h3>
+                            <p class="text-3xl font-black tracking-tighter text-center">${ddunT.toLocaleString()}</p>
                         </div>
-                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚱카롱')" class="flex-1 bg-white border border-gray-100 rounded-[2rem] p-6 lg:p-8 shadow-sm text-gray-800 cursor-pointer hover:border-pink-200 transition-all flex flex-col justify-center relative overflow-hidden min-h-[110px]">
-                            <h3 class="text-xs lg:text-sm font-bold text-gray-400 uppercase tracking-widest text-center">뚱카롱 수로 총점</h3>
-                            <p class="text-2xl lg:text-3xl font-black tracking-tighter text-pink-500 text-center">${ddungT.toLocaleString()}</p>
+                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚱카롱')" class="flex-1 bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm text-gray-800 cursor-pointer hover:border-pink-200 transition-all flex flex-col justify-center relative overflow-hidden">
+                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest text-center">뚱카롱 수로 총점</h3>
+                            <p class="text-3xl font-black tracking-tighter text-pink-500 text-center">${ddungT.toLocaleString()}</p>
                         </div>
                     </div>
-                    <div class="bg-white p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] border border-gray-100 flex-1 shadow-sm flex flex-col min-h-[340px]">
-                        <div class="flex justify-between items-center mb-4 lg:mb-6 shrink-0">
-                            <div class="flex items-center gap-2 lg:gap-3">
-                                <span class="text-xl">📅</span>
-                                <h3 class="text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest">Guild Calendar</h3>
+                    <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col">
+                        <div class="flex justify-between items-center mb-6">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">📅</span>
+                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Guild Calendar</h3>
                             </div>
-                            <div class="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-2xl border border-gray-100">
-                                <button onclick="moveMonth(-1)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-white hover:text-pink-500 transition-all text-gray-400"><i class="fas fa-chevron-left text-[10px]"></i></button>
-                                <span class="text-[10px] lg:text-[11px] font-bold text-gray-600 w-14 lg:w-16 text-center">${appState.calendarView.year}.${String(appState.calendarView.month + 1).padStart(2, '0')}</span>
-                                <button onclick="moveMonth(1)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-white hover:text-pink-500 transition-all text-gray-400"><i class="fas fa-chevron-right text-[10px]"></i></button>
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-2xl border border-gray-100">
+                                    <button onclick="moveMonth(-1)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-white hover:text-pink-500 transition-all text-gray-400"><i class="fas fa-chevron-left text-[10px]"></i></button>
+                                    <span class="text-[11px] font-bold text-gray-600 w-16 text-center">${appState.calendarView.year}.${String(appState.calendarView.month + 1).padStart(2, '0')}</span>
+                                    <button onclick="moveMonth(1)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-white hover:text-pink-500 transition-all text-gray-400"><i class="fas fa-chevron-right text-[10px]"></i></button>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex-1 flex flex-col overflow-hidden">
-                            ${window.renderCalendar()}
-                        </div>
+                        ${window.renderCalendar()}
                     </div>
                 </div>
-                
-                <div class="flex flex-col gap-6 lg:gap-8 h-full min-h-0">
-                    <div class="bg-white p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col flex-1 min-h-[300px] overflow-hidden shrink-0">
+                <div class="flex flex-col gap-8 h-full">
+                    <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100 flex flex-col min-h-[300px] overflow-hidden shrink-0">
                         <div class="flex justify-between items-center mb-4 shrink-0">
-                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">직업 분포도</h3>
-                            <select onchange="window.updateJobChart(this.value)" class="bg-gray-50 rounded-xl px-3 py-1.5 text-[10px] font-bold outline-none cursor-pointer hover:bg-gray-100">
+                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest">직업 분포도</h3>
+                            <select onchange="window.updateJobChart(this.value)" class="bg-gray-50 rounded-xl px-3 py-1.5 text-xs font-bold outline-none cursor-pointer hover:bg-gray-100">
                                 <option value="all">전체</option>${appState.guilds.map(g => `<option value="${g.name}">${g.name}</option>`).join('')}
                             </select>
                         </div>
-                        <div class="flex-1 overflow-y-auto no-scrollbar relative w-full h-full">
-                            <div id="jobChartContainer" style="min-height: 100%;"><canvas id="jobChart"></canvas></div>
+                        <div class="flex-1 overflow-y-auto no-scrollbar relative">
+                            <div id="jobChartContainer" style="min-height: 250px;"><canvas id="jobChart"></canvas></div>
                         </div>
                     </div>
-                    <div class="bg-white p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col shrink-0 min-h-[180px] overflow-hidden">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">간부진 보석금 현황</h3>
+                    <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100 flex flex-col flex-1 min-h-[200px] overflow-hidden">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest">간부진 보석금 현황</h3>
                             <i class="fas fa-gem text-pink-300"></i>
                         </div>
                         <div class="flex-1 overflow-y-auto no-scrollbar pr-2">${adminBailHtml}</div>
                     </div>
                 </div>
             </div>
-            
-            <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6 fade-in shrink-0">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 fade-in shrink-0">
                 ${appState.guilds.map(g => { 
                     const count = appState.members.filter(m => m.guild === g.name).length; 
                     const pct = Math.min((count / g.max) * 100, 100); 
-                    return `<div class="bg-white p-4 lg:p-6 rounded-[1.5rem] lg:rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group" onclick="filterByGuild('${g.name}')"><div class="flex justify-between items-start mb-4 lg:mb-6"><div class="flex flex-col sm:flex-row items-center sm:items-start gap-2 lg:gap-3 text-center sm:text-left"><div class="w-8 h-8 lg:w-10 lg:h-10 mx-auto sm:mx-0 bg-gray-50 rounded-xl lg:rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-pink-50 group-hover:text-pink-500 transition-colors"><i class="fas ${g.icon} text-sm lg:text-base"></i></div><div><span class="block font-bold text-sm lg:text-lg text-gray-800 group-hover:text-pink-500">${g.name}</span><span class="text-[9px] lg:text-[10px] text-gray-400 font-bold">${g.type}</span></div></div></div><div class="w-full bg-gray-50 rounded-full h-1.5 overflow-hidden"><div class="h-full bg-pink-500 transition-all duration-1000" style="width:${pct}%"></div></div><p class="text-[9px] lg:text-[10px] text-gray-400 font-bold mt-2 text-center sm:text-right">${count} / ${g.max}</p></div>`; 
+                    return `<div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group" onclick="filterByGuild('${g.name}')"><div class="flex justify-between items-start mb-6"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-pink-50 group-hover:text-pink-500 transition-colors"><i class="fas ${g.icon}"></i></div><div><span class="block font-bold text-lg text-gray-800 group-hover:text-pink-500">${g.name}</span><span class="text-[10px] text-gray-400 font-bold">${g.type}</span></div></div></div><div class="w-full bg-gray-50 rounded-full h-1.5 overflow-hidden"><div class="h-full bg-pink-500 transition-all duration-1000" style="width:${pct}%"></div></div><p class="text-[10px] text-gray-400 font-bold mt-2 text-right">${count} / ${g.max}</p></div>`; 
                 }).join('')}
             </div>`;
             setTimeout(() => window.updateJobChart('all'), 0);
@@ -703,10 +696,18 @@
             if (type === 'members') window.updateMemberTable();
         };
 
+        window.setAnalysisSearch = (val) => {
+            appState.analysisFilters.search = val;
+            window.renderAnalysis(document.getElementById('contentArea'), appState.analysisGuild);
+        };
+
         // --- ANALYSIS ---
         window.renderAnalysis = (container, gName) => {
             appState.analysisGuild = gName;
-            const targets = appState.members.filter(m => m.guild === gName);
+            
+            const guildTargets = appState.members.filter(m => m.guild === gName);
+            const searchToken = (appState.analysisFilters.search || '').toLowerCase().trim();
+            const displayTargets = searchToken ? guildTargets.filter(m => m.name.toLowerCase().includes(searchToken)) : guildTargets;
             
             const getWedStr = (h) => {
                 if (!h) return '';
@@ -722,42 +723,65 @@
             const recentHeaders = [...appState.suroHeaders]; 
             const currentHeader = recentHeaders.length > 0 ? recentHeaders[recentHeaders.length - 1] : null;
 
-            const displayTotal = currentHeader ? targets.reduce((s, m) => s + (Number(m.suro?.[currentHeader]) || 0), 0) : 0;
-            const zeroPointMembers = currentHeader ? targets.filter(m => (Number(m.suro?.[currentHeader]) || 0) === 0) : [];
+            const displayTotal = currentHeader ? guildTargets.reduce((s, m) => s + (Math.round(Number(m.suro?.[currentHeader])) || 0), 0) : 0;
+            const zeroPointMembers = currentHeader ? guildTargets.filter(m => (Math.round(Number(m.suro?.[currentHeader])) || 0) === 0) : [];
             
-            const processedList = targets.map(m => {
-                const scores = recentHeaders.map(h => Number(m.suro?.[h]) || 0);
+            const processedList = displayTargets.map(m => {
+                const scores = recentHeaders.map(h => Math.round(Number(m.suro?.[h])) || 0);
                 const validScores = scores.filter(s => s > 0);
-                const avg = validScores.length > 0 ? (validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(1) : 0;
-                return { ...m, avg: Number(avg), recentScores: scores };
+                const avg = validScores.length > 0 ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length) : 0;
+                return { ...m, avg: avg, recentScores: scores };
             });
 
-            let mvp = null;
-            let maxIncrease = 0;
-            let mvpPct = null;
-            let maxIncreasePct = 0;
+            // ★ 4가지 MVP 항목 계산 (이번주 최고 득점자 추가)
+            let topScores = [];
+            let scoreIncreases = [];
+            let pctIncreases = [];
+            let avgIncreases = [];
 
             if (recentHeaders.length >= 2 && currentHeader) {
                 const prevHeader = recentHeaders[recentHeaders.length - 2];
-                targets.forEach(m => {
-                    const currScore = Number(m.suro?.[currentHeader]) || 0;
-                    const prevScore = Number(m.suro?.[prevHeader]) || 0;
+                guildTargets.forEach(m => {
+                    const currScore = Math.round(Number(m.suro?.[currentHeader])) || 0;
+                    const prevScore = Math.round(Number(m.suro?.[prevHeader])) || 0;
+                    
+                    const pastScores = recentHeaders.slice(0, -1).map(h => Math.round(Number(m.suro?.[h])) || 0).filter(s => s > 0);
+                    const pastAvg = pastScores.length > 0 ? Math.round(pastScores.reduce((a,b)=>a+b,0) / pastScores.length) : 0;
+
+                    if (currScore > 0) {
+                        topScores.push({ name: m.name, val: currScore, role: m.role });
+                    }
+
                     if (prevScore > 0 && currScore > prevScore) {
                         const increase = currScore - prevScore;
                         const increasePct = (increase / prevScore) * 100;
-                        
-                        if (increase > maxIncrease) {
-                            maxIncrease = increase;
-                            mvp = { name: m.name, increase: increase, role: m.role };
-                        }
-                        
-                        if (increasePct > maxIncreasePct) {
-                            maxIncreasePct = increasePct;
-                            mvpPct = { name: m.name, increasePct: increasePct, role: m.role };
-                        }
+                        scoreIncreases.push({ name: m.name, val: increase, role: m.role });
+                        pctIncreases.push({ name: m.name, val: increasePct, role: m.role });
+                    }
+                    
+                    if (pastAvg > 0 && currScore > pastAvg) {
+                        const aboveAvg = currScore - pastAvg;
+                        avgIncreases.push({ name: m.name, val: aboveAvg, role: m.role });
+                    }
+                });
+            } else if (currentHeader) { // 과거 데이터가 없어도 고득점자는 계산
+                guildTargets.forEach(m => {
+                    const currScore = Math.round(Number(m.suro?.[currentHeader])) || 0;
+                    if (currScore > 0) {
+                        topScores.push({ name: m.name, val: currScore, role: m.role });
                     }
                 });
             }
+
+            topScores.sort((a,b) => b.val - a.val);
+            scoreIncreases.sort((a,b) => b.val - a.val);
+            pctIncreases.sort((a,b) => b.val - a.val);
+            avgIncreases.sort((a,b) => b.val - a.val);
+
+            const topScoreHighMVP = topScores.slice(0, 3);
+            const topScoreMVP = scoreIncreases.slice(0, 3);
+            const topPctMVP = pctIncreases.slice(0, 3);
+            const topAvgMVP = avgIncreases.slice(0, 3);
 
             processedList.sort((a, b) => {
                 const f = appState.analysisFilters.sortField;
@@ -769,9 +793,9 @@
                     const prevHeader = headerIdx > 0 ? recentHeaders[headerIdx - 1] : null;
 
                     const getIncRate = (m) => {
-                        const curr = Number(m.suro?.[targetHeader]) || 0;
+                        const curr = Math.round(Number(m.suro?.[targetHeader])) || 0;
                         if (!prevHeader) return curr > 0 ? -500 : -1000;
-                        const prev = Number(m.suro?.[prevHeader]) || 0;
+                        const prev = Math.round(Number(m.suro?.[prevHeader])) || 0;
                         if (curr === 0 && prev === 0) return -1000; 
                         if (prev === 0 && curr > 0) return -500; 
                         return ((curr - prev) / prev) * 100;
@@ -781,8 +805,8 @@
                     const rateB = getIncRate(b);
                     
                     if (rateA === rateB) {
-                        const currA = Number(a.suro?.[targetHeader]) || 0;
-                        const currB = Number(b.suro?.[targetHeader]) || 0;
+                        const currA = Math.round(Number(a.suro?.[targetHeader])) || 0;
+                        const currB = Math.round(Number(b.suro?.[targetHeader])) || 0;
                         return o === 'asc' ? currA - currB : currB - currA;
                     }
                     return o === 'asc' ? rateA - rateB : rateB - rateA;
@@ -790,8 +814,8 @@
 
                 if (f === 'avg') return o === 'asc' ? a.avg - b.avg : b.avg - a.avg;
                 if (f === 'score') {
-                    const vA = Number(a.suro?.[currentHeader]) || 0;
-                    const vB = Number(b.suro?.[currentHeader]) || 0;
+                    const vA = Math.round(Number(a.suro?.[currentHeader])) || 0;
+                    const vB = Math.round(Number(b.suro?.[currentHeader])) || 0;
                     return o === 'asc' ? vA - vB : vB - vA;
                 }
                 return smartCompare(a, b, f, o);
@@ -800,63 +824,112 @@
             const sortIcon = (f) => appState.analysisFilters.sortField === f ? (appState.analysisFilters.sortOrder === 'asc' ? ' <i class="fas fa-sort-up"></i>' : ' <i class="fas fa-sort-down"></i>') : '';
             const analysisGuildsOptions = ['뚠카롱', '뚱카롱'];
             
+            // ★ 타입별로 텍스트 포맷팅을 다르게 해주는 렌더러
+            const renderMvpList = (list, type) => {
+                if(list.length === 0) return `<div class="flex items-center justify-center h-full pb-2"><span class="text-[10px] text-gray-400 font-bold">데이터 부족</span></div>`;
+                
+                let colorBase = '';
+                if(type === 'high') colorBase = 'blue';
+                else if(type === 'score') colorBase = 'orange';
+                else if(type === 'pct') colorBase = 'emerald';
+                else if(type === 'avg') colorBase = 'purple';
+
+                return `<div class="flex flex-col gap-1.5 z-10 w-full mt-2">
+                    ${list.map((m, idx) => {
+                        let displayVal = '';
+                        if(type === 'high') displayVal = Math.round(m.val).toLocaleString();
+                        else if(type === 'score') displayVal = '+' + Math.round(m.val).toLocaleString();
+                        else if(type === 'pct') displayVal = '▲' + m.val.toFixed(1) + '%';
+                        else if(type === 'avg') displayVal = '+' + Math.round(m.val).toLocaleString();
+
+                        return `<div class="flex justify-between items-center text-[10px] leading-none bg-white/40 rounded px-1.5 py-1">
+                            <div class="flex items-center gap-1.5 overflow-hidden">
+                                <span class="font-black text-${colorBase}-500 inline-block w-2.5 text-center">${idx+1}</span>
+                                <span class="font-bold text-gray-800 truncate" style="max-width: 60px;" title="${m.name}">${m.name}</span>
+                            </div>
+                            <span class="font-black text-${colorBase}-600 shrink-0">${displayVal}</span>
+                        </div>`;
+                    }).join('')}
+                </div>`;
+            };
+
             container.innerHTML = `
             <div class="flex flex-col gap-4 fade-in h-full">
-                <div class="flex gap-2 overflow-x-auto no-scrollbar shrink-0">
-                    ${analysisGuildsOptions.map(gNameOption => `<button onclick="window.renderAnalysis(document.getElementById('contentArea'), '${gNameOption}')" class="px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${gNameOption === gName ? 'bg-pink-500 text-white shadow-lg' : 'bg-white text-gray-500 border border-gray-100'}">${gNameOption}</button>`).join('')}
-                </div>
-
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 shrink-0 font-bold">
-                    <div class="bg-white py-3 px-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center items-center">
-                        <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">전체 총점</p>
-                        <h4 class="text-lg font-black text-gray-800 tracking-tighter">${displayTotal.toLocaleString()}</h4>
+                <!-- 상단 컨트롤 영역 -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shrink-0">
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar shrink-0 w-full sm:w-auto">
+                        ${analysisGuildsOptions.map(gNameOption => `<button onclick="window.renderAnalysis(document.getElementById('contentArea'), '${gNameOption}')" class="px-6 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${gNameOption === gName ? 'bg-pink-500 text-white shadow-lg' : 'bg-white text-gray-500 border border-gray-100'}">${gNameOption}</button>`).join('')}
                     </div>
-                    <div class="bg-red-50 py-3 px-4 rounded-xl border border-red-100 shadow-sm flex flex-col justify-center items-center">
-                        <p class="text-[9px] text-red-500 font-bold uppercase tracking-widest mb-0.5">🚨 미참여</p>
-                        <h4 class="text-lg font-black text-red-600 tracking-tighter">${zeroPointMembers.length}명</h4>
-                    </div>
-                    <div class="bg-white py-3 px-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center items-center">
-                        <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">최근 데이터 주차</p>
-                        <h4 class="text-xs font-bold text-gray-700">${currentHeader ? getWedStr(currentHeader) : '데이터 없음'}</h4>
-                    </div>
-                    <div class="bg-gradient-to-br from-yellow-50 to-orange-50 py-3 px-4 rounded-xl border border-orange-100 shadow-sm flex flex-col justify-center items-center relative overflow-hidden">
-                        <div class="absolute -right-1 -top-1 opacity-20 text-3xl text-orange-400"><i class="fas fa-trophy"></i></div>
-                        <p class="text-[9px] text-orange-600 font-bold uppercase tracking-widest mb-0.5 z-10">점수 떡상 MVP</p>
-                        <h4 class="text-sm font-black text-gray-800 tracking-tighter z-10 flex items-center gap-1">${mvp ? `${window.getNicknameIcon(mvp.role).replace('mr-2', 'mr-1')}${mvp.name}` : '-'}</h4>
-                        <p class="text-[9px] font-bold text-orange-500 mt-0.5 z-10">${mvp ? `+${mvp.increase.toLocaleString()}점` : '데이터 부족'}</p>
-                    </div>
-                    <div class="bg-gradient-to-br from-emerald-50 to-teal-50 py-3 px-4 rounded-xl border border-emerald-100 shadow-sm flex flex-col justify-center items-center relative overflow-hidden">
-                        <div class="absolute -right-1 -top-1 opacity-20 text-3xl text-emerald-400"><i class="fas fa-chart-line"></i></div>
-                        <p class="text-[9px] text-emerald-600 font-bold uppercase tracking-widest mb-0.5 z-10">최고 상승률 MVP</p>
-                        <h4 class="text-sm font-black text-gray-800 tracking-tighter z-10 flex items-center gap-1">${mvpPct ? `${window.getNicknameIcon(mvpPct.role).replace('mr-2', 'mr-1')}${mvpPct.name}` : '-'}</h4>
-                        <p class="text-[9px] font-bold text-emerald-500 mt-0.5 z-10">${mvpPct ? `▲ ${mvpPct.increasePct.toFixed(1)}%` : '데이터 부족'}</p>
+                    <div class="relative w-full sm:w-64 shrink-0">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                        <input type="text" oninput="window.setAnalysisSearch(this.value)" value="${appState.analysisFilters.search || ''}" class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-100 rounded-xl outline-none text-xs font-bold shadow-sm focus:ring-2 focus:ring-pink-50 transition-all" placeholder="닉네임 검색">
                     </div>
                 </div>
 
-                <div class="flex flex-col lg:flex-row gap-5 flex-1 min-h-0">
-                    <div class="w-full lg:w-[30%] bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden shrink-0 min-h-[200px] lg:min-h-0">
+                <!-- ★ 2단 분리 레이아웃: 기본 정보 3개 -> MVP 4개 -->
+                <div class="flex flex-col gap-3 shrink-0">
+                    <div class="grid grid-cols-3 gap-3 font-bold">
+                        <div class="bg-white py-3 lg:py-4 px-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center items-center h-full min-h-[80px]">
+                            <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1.5">전체 총점</p>
+                            <h4 class="text-base lg:text-xl font-black text-gray-800 tracking-tighter">${displayTotal.toLocaleString()}</h4>
+                        </div>
+                        <div class="bg-red-50 py-3 lg:py-4 px-4 rounded-2xl border border-red-100 shadow-sm flex flex-col justify-center items-center h-full min-h-[80px]">
+                            <p class="text-[9px] text-red-500 font-bold uppercase tracking-widest mb-1.5">🚨 미참여</p>
+                            <h4 class="text-base lg:text-xl font-black text-red-600 tracking-tighter">${zeroPointMembers.length}명</h4>
+                        </div>
+                        <div class="bg-white py-3 lg:py-4 px-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center items-center h-full min-h-[80px]">
+                            <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1.5">최근 데이터 주차</p>
+                            <h4 class="text-xs lg:text-sm font-bold text-gray-700">${currentHeader ? getWedStr(currentHeader) : '데이터 없음'}</h4>
+                        </div>
+                    </div>
+                    
+                    <!-- MVP 정보 4개 카드 -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 font-bold">
+                        <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-3.5 rounded-2xl border border-blue-100 shadow-sm flex flex-col relative overflow-hidden h-full min-h-[100px]">
+                            <div class="absolute -right-2 -bottom-2 opacity-[0.05] text-6xl text-blue-500"><i class="fas fa-crown"></i></div>
+                            <p class="text-[9px] text-blue-600 font-bold uppercase tracking-widest z-10 flex items-center gap-1"><i class="fas fa-star"></i> 이번 주 고득점 MVP</p>
+                            ${renderMvpList(topScoreHighMVP, 'high')}
+                        </div>
+                        <div class="bg-gradient-to-br from-yellow-50 to-orange-50 p-3.5 rounded-2xl border border-orange-100 shadow-sm flex flex-col relative overflow-hidden h-full min-h-[100px]">
+                            <div class="absolute -right-2 -bottom-2 opacity-[0.05] text-6xl text-orange-500"><i class="fas fa-trophy"></i></div>
+                            <p class="text-[9px] text-orange-600 font-bold uppercase tracking-widest z-10 flex items-center gap-1"><i class="fas fa-arrow-trend-up"></i> 주간 점수 떡상 MVP</p>
+                            ${renderMvpList(topScoreMVP, 'score')}
+                        </div>
+                        <div class="bg-gradient-to-br from-emerald-50 to-teal-50 p-3.5 rounded-2xl border border-emerald-100 shadow-sm flex flex-col relative overflow-hidden h-full min-h-[100px]">
+                            <div class="absolute -right-2 -bottom-2 opacity-[0.05] text-6xl text-emerald-500"><i class="fas fa-chart-line"></i></div>
+                            <p class="text-[9px] text-emerald-600 font-bold uppercase tracking-widest z-10 flex items-center gap-1"><i class="fas fa-percent"></i> 주간 상승률 MVP</p>
+                            ${renderMvpList(topPctMVP, 'pct')}
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-50 to-fuchsia-50 p-3.5 rounded-2xl border border-purple-100 shadow-sm flex flex-col relative overflow-hidden h-full min-h-[100px]">
+                            <div class="absolute -right-2 -bottom-2 opacity-[0.05] text-6xl text-purple-500"><i class="fas fa-bolt"></i></div>
+                            <p class="text-[9px] text-purple-600 font-bold uppercase tracking-widest z-10 flex items-center gap-1"><i class="fas fa-balance-scale"></i> 주간 평균대비 떡상</p>
+                            ${renderMvpList(topAvgMVP, 'avg')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col lg:flex-row gap-5 flex-1 min-h-[400px] lg:min-h-0">
+                    <div class="w-full lg:w-[30%] bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden shrink-0 lg:h-full">
                         <h3 class="text-xs font-bold text-gray-400 mb-4 uppercase tracking-widest">주간 총점 추이</h3>
-                        <div class="flex-1 w-full h-full relative">
+                        <div class="flex-1 w-full min-h-[150px] relative">
                             <canvas id="analysisChart"></canvas>
                         </div>
                     </div>
 
-                    <div class="w-full lg:w-[70%] bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden relative min-h-[450px] lg:min-h-0">
-                        <div class="p-4 border-b border-gray-50 flex justify-between items-center shrink-0 bg-white relative">
+                    <div class="w-full lg:w-[70%] bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden shrink-0 lg:h-full relative">
+                        <div class="p-4 border-b border-gray-50 flex justify-between items-center shrink-0 bg-white relative z-40">
                             <h3 class="text-xs font-bold text-gray-800 uppercase tracking-widest">전체 데이터 (누적)</h3>
                         </div>
-                        <div id="analysisTableWrapper" class="flex-1 overflow-auto bg-white relative min-h-0 scroll-smooth">
-                            <!-- ★ 테이블 Sticky 완전 제거: 일반적인 테이블 렌더링으로 롤백하여 버그 원천 차단 -->
+                        <div id="analysisTableWrapper" class="flex-1 overflow-auto bg-white scroll-smooth relative">
                             <table class="w-full text-left text-xs whitespace-nowrap">
-                                <thead class="text-[10px] text-gray-500 uppercase bg-gray-50">
+                                <thead class="text-[10px] text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                                     <tr>
-                                        <!-- 고정(sticky) 설정 및 하드코딩 넓이 모두 삭제, 자연스럽게 늘어나게 허용 -->
-                                        <th class="p-3 text-center border-b border-gray-200 min-w-[50px]">RANK</th>
-                                        <th class="p-3 sortable border-b border-gray-200 cursor-pointer hover:bg-gray-200 min-w-[140px]" onclick="window.setAnalysisSort('name')">캐릭터명${sortIcon('name')}</th>
-                                        <th class="p-3 text-center sortable bg-pink-100 text-pink-600 border-b border-pink-200 cursor-pointer min-w-[110px]" onclick="window.setAnalysisSort('avg')">평균 (참여)${sortIcon('avg')}</th>
+                                        <th class="p-3 text-center min-w-[50px]">RANK</th>
+                                        <th class="p-3 sortable cursor-pointer hover:bg-gray-200 min-w-[140px]" onclick="window.setAnalysisSort('name')">캐릭터명${sortIcon('name')}</th>
+                                        <th class="p-3 text-center sortable bg-pink-50 text-pink-600 cursor-pointer min-w-[110px]" onclick="window.setAnalysisSort('avg')">평균 (참여)${sortIcon('avg')}</th>
                                         ${recentHeaders.map((h, idx) => {
                                             const displayStr = getWedStr(h);
-                                            return `<th class="p-3 min-w-[100px] text-right font-medium cursor-pointer hover:bg-gray-200 transition-colors select-none border-b border-gray-200" onclick="window.setAnalysisSort('date_${h}')" title="클릭하여 상승률 순으로 정렬">${displayStr}${sortIcon('date_'+h)}</th>`;
+                                            return `<th class="p-3 min-w-[100px] text-right font-medium cursor-pointer hover:bg-gray-200 transition-colors select-none" onclick="window.setAnalysisSort('date_${h}')" title="클릭하여 상승률 순으로 정렬">${displayStr}${sortIcon('date_'+h)}</th>`;
                                         }).join('')}
                                     </tr>
                                 </thead>
@@ -865,14 +938,13 @@
                                         const globalIndex = i + 1;
                                         return `
                                         <tr class="group h-11 hover:bg-gray-50 transition-colors border-b border-gray-50">
-                                            <!-- 고정(sticky) 속성 제거 -->
                                             <td class="p-3 text-center text-gray-400 group-hover:bg-gray-50 border-r border-gray-50">${globalIndex}</td>
                                             <td class="p-3 text-gray-800 group-hover:bg-gray-50 border-r border-gray-50">
                                                 <div class="flex items-center leading-none overflow-hidden text-ellipsis">
                                                     ${window.getNicknameIcon(m.role)}<span class="truncate">${m.name}</span>
                                                 </div>
                                             </td>
-                                            <td class="p-3 text-center text-pink-600 bg-pink-50/50 group-hover:bg-pink-100 border-r border-pink-100">${m.avg.toLocaleString()}</td>
+                                            <td class="p-3 text-center text-pink-600 bg-pink-50/30 group-hover:bg-pink-100 border-r border-pink-50">${m.avg.toLocaleString()}</td>
                                             ${m.recentScores.map((s, scoreIdx) => {
                                                 let diffHtml = '';
                                                 let prevScore = 0;
@@ -883,11 +955,11 @@
 
                                                 if (s > 0 || (s === 0 && prevScore > 0)) {
                                                     if (prevScore > 0) {
-                                                        const diffPct = ((s - prevScore) / prevScore * 100).toFixed(1);
+                                                        const diffPct = ((s - prevScore) / prevScore * 100);
                                                         if (s > prevScore) {
-                                                            diffHtml = `<span class="text-[9px] text-red-500 font-bold tracking-tighter block mt-0.5">▲ ${diffPct}%</span>`;
+                                                            diffHtml = `<span class="text-[9px] text-red-500 font-bold tracking-tighter block mt-0.5">▲ ${diffPct.toFixed(1)}%</span>`;
                                                         } else if (s < prevScore) {
-                                                            diffHtml = `<span class="text-[9px] text-blue-500 font-bold tracking-tighter block mt-0.5">▼ ${Math.abs(diffPct)}%</span>`;
+                                                            diffHtml = `<span class="text-[9px] text-blue-500 font-bold tracking-tighter block mt-0.5">▼ ${Math.abs(diffPct).toFixed(1)}%</span>`;
                                                         } else {
                                                             diffHtml = `<span class="text-[9px] text-gray-400 font-bold tracking-tighter block mt-0.5">- 0.0%</span>`;
                                                         }
@@ -897,7 +969,7 @@
                                                 }
 
                                                 return `
-                                                <td class="p-3 min-w-[100px] text-right font-mono align-middle ${s === 0 ? 'bg-red-50 text-red-400 group-hover:bg-red-100' : 'bg-white text-gray-700 group-hover:bg-gray-50'}">
+                                                <td class="p-3 min-w-[100px] text-right font-mono align-middle ${s === 0 ? 'bg-red-50/20 text-red-400 group-hover:bg-red-50/50' : 'bg-white text-gray-700 group-hover:bg-gray-50'} relative z-10">
                                                     <div class="flex flex-col justify-center items-end leading-tight min-h-[28px]">
                                                         <span class="${s > 0 ? 'text-xs' : 'text-gray-400'}">${s > 0 ? s.toLocaleString() : '0'}</span>
                                                         ${diffHtml}
@@ -914,7 +986,6 @@
                 </div>
             </div>`;
 
-            // ★ 최신 데이터를 바로 볼 수 있게 스크롤을 맨 우측으로 자동 이동
             setTimeout(() => {
                 const tableWrapper = document.getElementById('analysisTableWrapper');
                 if (tableWrapper) {
@@ -931,7 +1002,7 @@
                     labels: recentHeaders.map(h => getShortWedStr(h)), 
                     datasets: [{ 
                         label: '길드 총점', 
-                        data: recentHeaders.map(h => targets.reduce((s, m) => s + (Number(m.suro?.[h]) || 0), 0)), 
+                        data: recentHeaders.map(h => guildTargets.reduce((s, m) => s + (Math.round(Number(m.suro?.[h])) || 0), 0)), 
                         borderColor: '#ec4899', 
                         borderWidth: 3, 
                         pointRadius: 4, 
@@ -1010,7 +1081,6 @@
             });
         };
 
-        // --- MEMBERS MANAGEMENT ---
         window.renderMembers = (container) => {
             container.innerHTML = `
             <div class="flex flex-col gap-3 fade-in h-full">
@@ -1143,7 +1213,6 @@
             container.innerHTML = html;
         };
 
-        // --- BAIL MANAGEMENT ---
         window.renderBail = (container) => {
             const receivers = appState.members.filter(m => m.guild === '뚠카롱' && ['마카롱', '다쿠아즈'].includes(m.role)).sort((a,b) => smartCompare(a, b, 'name', 'asc'));
             const adminStats = window.getAdminBailStats();
@@ -1161,7 +1230,6 @@
             else if (btn) { btn.disabled = false; btn.innerText = "납부 확인 및 저장"; }
         };
 
-        // --- PENALTY MANAGEMENT ---
         window.renderPenalty = (container) => {
             const memberOptions = appState.members.map(m => `<option value="${m.name}">${m.name} (${m.guild})</option>`).sort();
             
@@ -1280,7 +1348,6 @@
             }
         };
 
-        // --- OTHER TABS ---
         window.renderSheet = (container) => { const embedUrl = appState.sheetUrl.includes('/edit') ? appState.sheetUrl.split('/edit')[0] + '/preview' : appState.sheetUrl; container.innerHTML = `<div class="h-full flex flex-col gap-6 fade-in"><div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 shrink-0"><div><h3 class="text-lg font-bold text-gray-800 tracking-tight">구글 스프레드시트 뷰어</h3><p class="text-xs text-gray-400 mt-1">원본 시트를 즉시 연결하거나 실시간으로 확인합니다.</p></div><button onclick="window.open('${appState.sheetUrl}', '_blank')" class="px-10 py-4 bg-gray-900 text-white text-xs font-bold rounded-2xl shadow-xl hover:bg-black transition-all flex items-center gap-2"><i class="fas fa-external-link-alt"></i> 원본 시트 바로가기</button></div><div class="flex-1 bg-white rounded-[3rem] border border-gray-100 overflow-hidden shadow-sm relative"><iframe src="${embedUrl}" class="w-full h-full border-none"></iframe></div></div>`; };
         window.renderHistory = (container) => { container.innerHTML = `<div class="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden h-full flex flex-col"><div class="p-8 border-b font-bold text-gray-800 shrink-0 relative z-20 bg-white">운영 이력</div><div class="flex-1 overflow-y-auto no-scrollbar"><table class="w-full text-left text-xs whitespace-nowrap"><thead class="bg-gray-50 text-[10px] font-bold text-gray-500 uppercase sticky top-0 z-10"><tr><th class="p-6">DATE</th><th class="p-6">TYPE</th><th class="p-6">NAME</th><th class="p-6">CONTENT</th></tr></thead><tbody class="divide-y divide-gray-100 relative z-0">${appState.history.length === 0 ? `<tr><td colspan="4" class="p-20 text-center text-gray-300 font-bold">기록 없음</td></tr>` : [...appState.history].reverse().map(l => `<tr class="hover:bg-gray-50 transition-colors h-12 leading-none font-bold"><td class="p-6 text-gray-400 font-mono text-[10px]">${l.date}</td><td class="p-6"><span class="px-2 py-1 rounded-lg bg-gray-100 text-[9px] font-bold">${l.category}</span></td><td class="p-6 text-gray-700">${l.name}</td><td class="p-6 text-gray-500">${l.content}</td></tr>`).join('')}</tbody></table></div></div>`; };
         window.renderSettings = (container) => { container.innerHTML = `<div class="bg-white p-12 rounded-[3rem] border border-gray-100 shadow-sm max-w-4xl font-bold h-fit"><h3 class="text-xl mb-10 text-gray-800">시스템 설정</h3><div class="space-y-8"><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 uppercase font-bold">Apps Script WebApp URL</label><input type="text" id="settingScriptUrl" value="${localStorage.getItem('macaron_script_url') || appState.scriptUrl}" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-5 text-xs font-mono outline-none shadow-inner focus:ring-4 focus:ring-gray-100 transition-all"></div><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 uppercase font-bold">Google Sheet URL</label><input type="text" id="settingSheetUrl" value="${localStorage.getItem('macaron_sheet_url') || appState.sheetUrl}" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-5 text-xs font-mono outline-none shadow-inner focus:ring-4 focus:ring-gray-100 transition-all"></div><button onclick="window.saveSettings()" class="w-full py-6 bg-gray-900 text-white rounded-3xl font-bold shadow-xl active:scale-[0.98] transition-all">설정 저장 및 시스템 재시작</button></div></div>`; };
