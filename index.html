@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>뚠카롱 길드 관리 시스템 (v8.36)</title>
+    <title>뚠카롱 길드 관리 시스템 (v8.50)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -81,13 +81,12 @@
     <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col shadow-sm">
         <div class="p-6 border-b border-gray-100 flex items-center gap-3">
             <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-400 to-rose-400 flex items-center justify-center text-white font-bold shadow-lg shadow-pink-100 text-xl">뚠</div>
-            <div><h1 class="text-lg font-bold text-gray-800 tracking-tight">뚠카롱 길드 관리</h1><p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">v8.36 Multi-Search</p></div>
+            <div><h1 class="text-lg font-bold text-gray-800 tracking-tight">뚠카롱 길드 관리</h1><p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">v8.50 Update</p></div>
             <button id="closeSidebar" class="lg:hidden ml-auto text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
         </div>
         <nav class="p-4 space-y-2 flex-1 overflow-y-auto no-scrollbar">
             <button onclick="router('dashboard')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="dashboard"><i class="fas fa-columns w-5 text-center"></i><span>대시보드</span></button>
             <button onclick="router('members')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="members"><i class="fas fa-users w-5 text-center"></i><span>길드원 관리</span></button>
-            <button onclick="router('suro')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="suro"><i class="fas fa-edit w-5 text-center"></i><span>수로 점수 입력</span></button>
             <button onclick="router('analysis')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="analysis"><i class="fas fa-chart-line w-5 text-center"></i><span>수로 점수 분석</span></button>
             <button onclick="router('bail')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="bail"><i class="fas fa-gem w-5 text-center"></i><span>보석금 관리</span></button>
             <button onclick="router('penalty')" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-pink-50 font-bold" data-target="penalty"><i class="fas fa-exclamation-triangle w-5 text-center"></i><span>벌점 관리</span></button>
@@ -113,7 +112,6 @@
                 <button id="refreshBtn" onclick="fetchMembers()" class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-400 transition-all border border-gray-100 shadow-sm"><i class="fas fa-sync-alt"></i></button>
             </div>
         </header>
-        <!-- Modified Content Area Padding for wider view -->
         <div id="contentArea" class="flex-1 overflow-y-auto p-3 lg:p-6 relative bg-gray-50 flex flex-col min-h-0"></div>
     </main>
 
@@ -122,7 +120,7 @@
     
     <div id="deleteModal" class="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm hidden fade-in font-bold"><div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 text-center border border-gray-50"><div class="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-5 shadow-inner"><i class="fas fa-user-minus"></i></div><p class="text-gray-800 font-bold text-lg mb-6 leading-tight"><span id="deleteTargetName" class="text-red-500"></span> 제거 확정</p><div class="space-y-4 text-left mb-8"><div class="flex gap-2"><button onclick="setDeleteType('leave')" id="btnLeave" class="flex-1 py-3 rounded-xl font-bold text-xs bg-gray-800 text-white shadow-sm transition-all">자진탈퇴</button><button onclick="setDeleteType('kick')" id="btnKick" class="flex-1 py-3 rounded-xl font-bold text-xs bg-gray-100 text-gray-400 transition-all">추방</button></div><input type="text" id="deleteReason" class="w-full border border-gray-100 bg-gray-50 rounded-xl p-3 text-xs font-bold outline-none shadow-inner" placeholder="사유를 입력하세요 (이력용)"></div><div class="grid grid-cols-2 gap-4"><button onclick="closeModal('deleteModal')" class="py-4 bg-gray-50 rounded-2xl font-bold text-xs text-gray-500 hover:bg-gray-100 transition-all">취소</button><button onclick="confirmDelete()" class="py-4 bg-red-500 text-white rounded-2xl font-bold text-xs shadow-xl hover:bg-red-600 transition-all">삭제 확정</button></div></div></div>
 
-    <!-- Event Detail Modal (Simple & No ID) -->
+    <!-- Event Detail Modal -->
     <div id="eventDetailModal" class="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm hidden fade-in font-bold">
         <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 border border-gray-50 relative flex flex-col max-h-[85vh]">
             <div class="flex justify-between items-center mb-6 shrink-0">
@@ -130,9 +128,7 @@
                 <button onclick="closeModal('eventDetailModal')" class="text-gray-400 hover:text-gray-600 text-xl"><i class="fas fa-times"></i></button>
             </div>
             
-            <!-- Event List Container -->
             <div id="eventListForDate" class="flex flex-col gap-2 mb-6 overflow-y-auto no-scrollbar shrink-0 max-h-[150px]">
-                <!-- Dynamic list items -->
             </div>
 
             <div class="space-y-6 flex-1 overflow-y-auto no-scrollbar">
@@ -151,8 +147,8 @@
             </div>
 
             <div class="grid grid-cols-2 gap-4 mt-8 shrink-0">
-                <button onclick="deleteEvent()" id="btnDeleteEvent" class="py-4 bg-rose-50 text-rose-500 rounded-[1.5rem] font-bold text-sm hover:bg-rose-100 transition-all">삭제</button>
-                <button onclick="saveEvent()" class="py-4 bg-[#1e232d] text-white rounded-[1.5rem] font-bold text-sm shadow-xl hover:bg-black transition-all">저장</button>
+                <button onclick="deleteEvent()" id="btnDeleteEvent" class="py-4 bg-rose-50 text-rose-500 rounded-[1.5rem] font-bold text-sm hover:bg-rose-100 transition-all hidden">삭제</button>
+                <button onclick="saveEvent()" id="btnSaveEvent" class="col-span-2 py-4 bg-[#1e232d] text-white rounded-[1.5rem] font-bold text-sm shadow-xl hover:bg-black transition-all">저장</button>
             </div>
         </div>
     </div>
@@ -160,7 +156,10 @@
     <script>
         // --- CONSTANTS ---
         const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/19V1FFMz9M3gQof6T89nwLSGHEK_OriOint2adLINlY0/edit?gid=1890518105#gid=1890518105";
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwggYNNELvf6Onk9EQoYJPLXWMAtchkRpoNuOtHyp_Scjo3mqj2TQOBvvdR4yEnXoGVTw/exec";
+        
+        // ★ 최신 URL 연결
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx6KiDSRROnH-EgKBmqpWw5eYNOtnY_hr_vBKS337Q0tzR4g7ylc5ce8OwxCMikKQcWCA/exec";
+        
         const GUILD_START_DATE = new Date('2020-03-17');
         const MAPLE_JOBS = ["히어로", "다크나이트", "팔라딘", "불독", "썬콜", "비숍", "보우마스터", "신궁", "패스파인더","나이트로드", "섀도어", "듀얼블레이드", "캡틴", "바이퍼", "캐논마스터","미하일", "소울마스터", "플레임위자드", "윈드브레이커", "나이트워커", "스트라이커","아란", "에반", "루미너스", "메르세데스", "팬텀", "은월","데몬 슬레이어", "데몬 어벤져", "블래스터", "배틀메이지", "와일드헌터", "메카닉", "제논","카이저", "카인", "카데나", "엔젤릭버스터","라라", "호영", "아델", "일리움", "아크", "칼리","제로", "키네시스", "렌"];
         const baseRanks = ['마카롱', '다쿠아즈'];
@@ -192,7 +191,6 @@
             events: [],
             penaltyHistory: [],
             filters: { guild: 'all', search: '', sortField: 'name', sortOrder: 'asc' },
-            suroFilters: { guild: 'all', search: '', sortField: 'name', sortOrder: 'asc' },
             analysisFilters: { sortField: 'avg', sortOrder: 'desc' },
             analysisGuild: '뚠카롱',
             isBatchMode: false, pendingUpdates: {},
@@ -201,10 +199,9 @@
             scriptUrl: APPS_SCRIPT_URL,
             sheetUrl: DEFAULT_SHEET_URL,
             guildRanks: initialGuildRanks,
-            currentSuroInputs: {},
             currentSelectedDate: null,
-            currentEditingEvent: null, // NO ID: Stores {date, title, content} of the event being edited
-            pagination: { members: 1, suro: 1, analysis: 1 } 
+            currentEditingEvent: null,
+            pagination: { members: 1, analysis: 1 } 
         };
 
         // --- HELPER FUNCTIONS ---
@@ -232,7 +229,9 @@
         window.calculateTotalSuro = (guildName) => {
             if (!appState.suroHeaders || appState.suroHeaders.length === 0) return 0;
             const lastHeader = appState.suroHeaders[appState.suroHeaders.length - 1];
-            return appState.members.filter(m => m.guild === guildName).reduce((s, m) => s + (Number(m.suro?.[lastHeader]) || 0), 0);
+            return appState.members
+                .filter(m => (m.guild || '').trim() === guildName.trim())
+                .reduce((s, m) => s + (Number(m.suro?.[lastHeader]) || 0), 0);
         };
 
         window.getAdminBailStats = () => {
@@ -269,9 +268,17 @@
         }
 
         window.getSuroPeriodHeader = (dateObj) => { 
-            const now = dateObj || new Date(); const day = now.getDay(); let diff = day - 4; if (diff < 0) diff += 7; 
-            const startDate = new Date(now); startDate.setDate(now.getDate() - diff - 7); 
-            const endDate = new Date(startDate); endDate.setDate(startDate.getDate() + 6); 
+            const now = dateObj || new Date(); 
+            const day = now.getDay(); 
+            let daysSinceWed = day - 3; 
+            if (daysSinceWed < 0) daysSinceWed += 7; 
+            
+            const endDate = new Date(now); 
+            endDate.setDate(now.getDate() - daysSinceWed); 
+            
+            const startDate = new Date(endDate); 
+            startDate.setDate(endDate.getDate() - 6); 
+            
             const f = (d) => { 
                 const yy = d.getFullYear().toString().slice(-2);
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -284,7 +291,6 @@
         // --- BATCH MODE FUNCTIONS ---
         window.toggleBatchMode = () => { 
             appState.isBatchMode = !appState.isBatchMode; 
-            // If batch mode ON, turn off kick mode
             if(appState.isBatchMode) {
                 appState.isKickMode = false;
                 appState.kickSelection.clear();
@@ -329,7 +335,6 @@
                             method: 'POST', 
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                             body: JSON.stringify({ action: 'update', data: payload }), 
-                            redirect: 'follow' 
                         });
                         const res = await response.json();
                         if (res.status === "success") successCount++;
@@ -355,7 +360,6 @@
         // --- KICK MODE FUNCTIONS ---
         window.toggleKickMode = () => {
             appState.isKickMode = !appState.isKickMode;
-            // If kick mode ON, turn off batch mode
             if(appState.isKickMode) {
                 appState.isBatchMode = false;
                 appState.pendingUpdates = {};
@@ -367,22 +371,18 @@
         window.handleKickSelect = (id) => {
             if(appState.kickSelection.has(id)) appState.kickSelection.delete(id);
             else appState.kickSelection.add(id);
-            // Re-render only buttons/header would be efficient, but simple re-render is safer
             window.renderMembers(document.getElementById('contentArea'));
         };
 
         window.openBulkKickModal = () => {
             if(appState.kickSelection.size === 0) return window.showMsg("선택된 인원이 없습니다.", "error");
-            appState.deleteType = 'kick'; // Force kick type for bulk
+            appState.deleteType = 'kick'; 
             
-            // Set modal text for bulk
             document.getElementById('deleteTargetName').innerText = `'${appState.kickSelection.size}명'`;
             
-            // Hide single user buttons since it is always kick
             document.getElementById('btnLeave').classList.add('hidden');
             document.getElementById('btnKick').classList.add('hidden');
             
-            // Show custom title or adjust logic
             document.getElementById('deleteReason').value = '';
             document.getElementById('deleteModal').classList.remove('hidden');
         };
@@ -391,24 +391,26 @@
         window.fetchMembers = async () => {
             window.showLoading(true);
             try {
+                // ★ Failed to fetch 방지: mode, cache 설정 제거하여 단순한 GET 요청으로 변경
                 const targetUrl = appState.scriptUrl + "?t=" + new Date().getTime();
-                const response = await fetch(targetUrl, { 
-                    method: 'GET', 
-                    mode: 'cors', 
-                    cache: 'no-cache',
-                    redirect: 'follow'
-                });
+                const response = await fetch(targetUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const json = await response.json();
                 if (json.status === "success") {
+                    console.log("🔥서버에서 성공적으로 가져온 헤더 목록:", json.data.suroHeaders); 
+                    
                     appState.members = (json.data.members || []).map(m => ({...m, id: String(m.id)})).filter(m => m.name && m.name.trim() !== "");
                     appState.history = json.data.history || [];
                     appState.suroHeaders = json.data.suroHeaders || [];
                     appState.bailHistory = json.data.bailHistory || [];
                     
-                    // Parse events, checking for ID if present
                     appState.events = (json.data.events || []).map(e => ({
-                        id: e.id, // Store ID if returned from server
-                        date: (e.date || '').split('T')[0].trim(), // Remove time if present
+                        id: e.id,
+                        date: (e.date || '').split('T')[0].trim(),
                         title: e.title,
                         content: e.content
                     }));
@@ -439,21 +441,27 @@
                 }
             } catch (e) { 
                 console.error("Fetch Error:", e); 
-                window.showMsg("데이터 연동 실패. 네트워크 상태를 확인하세요.", "error"); 
+                window.showMsg("데이터 연동 실패. 네트워크 상태나 스크립트 URL을 확인하세요.", "error"); 
+            } finally {
+                window.showLoading(false);
             }
-            window.showLoading(false);
         };
 
         window.sendAction = async (action, data, skipRefresh = false) => {
             if(!skipRefresh) window.showMsg("데이터 처리 중...", "info");
             try {
                 const targetUrl = appState.scriptUrl;
+                // ★ Failed to fetch 방지: mode 설정 제거
                 const response = await fetch(targetUrl, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                    body: JSON.stringify({ action, data }), 
-                    redirect: 'follow' 
+                    body: JSON.stringify({ action, data })
                 });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const res = await response.json();
                 if (res.status === "success") { 
                     if(!skipRefresh) {
@@ -465,7 +473,7 @@
                 else { window.showMsg(res.message || "오류 발생", "error"); return false; }
             } catch (e) { 
                 console.error("Post Error:", e); 
-                window.showMsg("서버 전송 실패", "error"); 
+                window.showMsg("서버 전송 실패. 스크립트 URL을 확인해주세요.", "error"); 
                 return false; 
             }
         };
@@ -476,11 +484,10 @@
             const content = document.getElementById('contentArea'); if(!content) return;
             content.innerHTML = '';
             document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.target === tab));
-            const titles = { dashboard: '길드 현황판', members: '길드원 관리', suro: '수로 점수 입력', analysis: '수로 분석', bail: '보석금 관리', penalty: '벌점 관리 시스템', sheet: '시트 보기', history: '운영 이력', settings: '설정' };
+            const titles = { dashboard: '길드 현황판', members: '길드원 관리', analysis: '수로 분석', bail: '보석금 관리', penalty: '벌점 관리 시스템', sheet: '시트 보기', history: '운영 이력', settings: '설정' };
             document.getElementById('pageTitle').innerText = titles[tab] || '';
             if (tab === 'dashboard') window.renderDashboard(content);
             else if (tab === 'members') window.renderMembers(content);
-            else if (tab === 'suro') window.renderSuro(content);
             else if (tab === 'analysis') window.renderAnalysis(content, appState.analysisGuild);
             else if (tab === 'bail') window.renderBail(content);
             else if (tab === 'penalty') window.renderPenalty(content);
@@ -491,7 +498,8 @@
 
         // --- DASHBOARD ---
         window.renderDashboard = (container) => {
-            const anniv = window.getAnniversaryInfo(); const ddunT = window.calculateTotalSuro('뚠카롱'); const ddungT = window.calculateTotalSuro('뚱카롱');
+            const ddunT = window.calculateTotalSuro('뚠카롱'); 
+            const ddungT = window.calculateTotalSuro('뚱카롱');
             const adminBailStats = window.getAdminBailStats();
             const adminBailHtml = adminBailStats.map(([name, count]) => `<div class="flex justify-between items-center py-2 border-b border-gray-50 last:border-0"><span class="text-[11px] font-bold text-gray-600">${name}</span><span class="text-[11px] font-black text-pink-500">${count}개</span></div>`).join('') || '<p class="text-[10px] text-gray-300 italic text-center py-4">보석금 내역 없음</p>';
             
@@ -504,7 +512,7 @@
                             <h3 class="text-sm font-bold opacity-80 uppercase tracking-widest text-center">뚠카롱 수로 총점</h3>
                             <p class="text-3xl font-black tracking-tighter text-center">${ddunT.toLocaleString()}</p>
                         </div>
-                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚱카롱')" class="flex-1 bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm text-gray-800 cursor-pointer hover:border-pink-200 transition-all flex flex-col justify-center">
+                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚱카롱')" class="flex-1 bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm text-gray-800 cursor-pointer hover:border-pink-200 transition-all flex flex-col justify-center relative overflow-hidden">
                             <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest text-center">뚱카롱 수로 총점</h3>
                             <p class="text-3xl font-black tracking-tighter text-pink-500 text-center">${ddungT.toLocaleString()}</p>
                         </div>
@@ -583,7 +591,6 @@
 
             for(let d=1; d<=last; d++) { 
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                // 날짜 비교 로직 강화 (시간 제거 후 비교)
                 const dayEvents = appState.events.filter(e => {
                     const eDate = (e.date || '').split('T')[0].trim();
                     return eDate === dateStr;
@@ -618,15 +625,12 @@
 
         window.showEventDetail = (dateStr) => {
             appState.currentSelectedDate = dateStr;
-            appState.currentEditingEvent = null; // Clear edit state
+            appState.currentEditingEvent = null;
 
             const modal = document.getElementById('eventDetailModal');
             document.getElementById('eventDetailDate').innerText = dateStr;
             
-            // Find all events for this date based on string match
             const dayEvents = appState.events.filter(e => e.date === dateStr);
-
-            // Render list
             const listContainer = document.getElementById('eventListForDate');
             listContainer.innerHTML = '';
             
@@ -635,12 +639,9 @@
                     const item = document.createElement('div');
                     item.className = 'p-3 bg-gray-50 border border-gray-100 rounded-xl cursor-pointer hover:bg-pink-50 hover:border-pink-200 transition-all flex justify-between items-center text-xs font-bold text-gray-600';
                     item.innerHTML = `<span>${e.title}</span><i class="fas fa-chevron-right text-gray-300"></i>`;
-                    // Pass the object itself since we don't have IDs
                     item.onclick = () => window.selectEventForEdit(e);
                     listContainer.appendChild(item);
                 });
-                
-                // Auto-select first event
                 window.selectEventForEdit(dayEvents[0]);
             } else {
                 listContainer.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">등록된 일정이 없습니다.</p>`;
@@ -651,27 +652,25 @@
         };
 
         window.selectEventForEdit = (eventObj) => {
-            appState.currentEditingEvent = eventObj; // Store reference to object
-            
-            // Highlight styling
+            appState.currentEditingEvent = eventObj;
             const listContainer = document.getElementById('eventListForDate');
             Array.from(listContainer.children).forEach(child => {
                 child.classList.remove('event-item-active');
-                if (child.innerText.includes(eventObj.title)) { 
-                     child.classList.add('event-item-active');
-                }
+                if (child.innerText.includes(eventObj.title)) child.classList.add('event-item-active');
             });
 
             document.getElementById('eventTitleInput').value = eventObj.title || "";
             document.getElementById('eventContentInput').value = eventObj.content || "";
             document.getElementById('btnDeleteEvent').classList.remove('hidden');
+            document.getElementById('btnSaveEvent').classList.remove('col-span-2');
         };
 
         window.resetEventForm = () => {
-            appState.currentEditingEvent = null; // New Event Mode
+            appState.currentEditingEvent = null;
             document.getElementById('eventTitleInput').value = "";
             document.getElementById('eventContentInput').value = "";
             document.getElementById('btnDeleteEvent').classList.add('hidden'); 
+            document.getElementById('btnSaveEvent').classList.add('col-span-2');
             
             const listContainer = document.getElementById('eventListForDate');
             Array.from(listContainer.children).forEach(child => child.classList.remove('event-item-active'));
@@ -693,58 +692,111 @@
                 originalTitle: original ? original.title : null
             };
             
-            // sendAction 내부에서 fetchMembers() → router(activeTab) → renderDashboard 자동 호출
             const success = await window.sendAction('save_event', payload);
-            if (success) {
-                window.closeModal('eventDetailModal');
-            }
+            if (success) window.closeModal('eventDetailModal');
         };
         
         window.deleteEvent = async () => {
             if (!confirm("이 일정을 삭제하시겠습니까?")) return;
-            
             const target = appState.currentEditingEvent;
             if (!target) return;
 
-            const payload = {
-                date: target.date,
-                title: target.title,
-                content: target.content
-            };
-
-            // sendAction 내부에서 fetchMembers() → router(activeTab) → renderDashboard 자동 호출
+            const payload = { date: target.date, title: target.title, content: target.content };
             const success = await window.sendAction('delete_event', payload);
-            if (success) {
-                window.closeModal('eventDetailModal');
-            }
+            if (success) window.closeModal('eventDetailModal');
         };
 
         // --- PAGINATION HELPERS ---
         window.changePage = (type, delta) => {
             appState.pagination[type] += delta;
             if (type === 'members') window.updateMemberTable();
-            if (type === 'suro') window.updateSuroTable();
-            if (type === 'analysis') window.renderAnalysis(document.getElementById('contentArea'), appState.analysisGuild);
         };
 
         // --- ANALYSIS ---
         window.renderAnalysis = (container, gName) => {
             appState.analysisGuild = gName;
             const targets = appState.members.filter(m => m.guild === gName);
-            const recentHeaders = appState.suroHeaders.slice(-5);
-            const currentHeader = recentHeaders[recentHeaders.length - 1];
-            const total = window.calculateTotalSuro(gName);
+            
+            const getWedStr = (h) => {
+                if (!h) return '';
+                const p = h.split('~');
+                return p.length > 1 ? p[1].replace('수로 점수', '').trim() : h.trim();
+            };
+            const getShortWedStr = (h) => {
+                const str = getWedStr(h);
+                const p = str.split('-');
+                return p.length >= 3 ? p[1] + '-' + p[2].substring(0,2) : str;
+            };
 
-            const zeroPointMembers = targets.filter(m => (Number(m.suro?.[currentHeader]) || 0) === 0);
+            const recentHeaders = [...appState.suroHeaders]; 
+            const currentHeader = recentHeaders.length > 0 ? recentHeaders[recentHeaders.length - 1] : null;
+
+            const displayTotal = currentHeader ? targets.reduce((s, m) => s + (Number(m.suro?.[currentHeader]) || 0), 0) : 0;
+            const zeroPointMembers = currentHeader ? targets.filter(m => (Number(m.suro?.[currentHeader]) || 0) === 0) : [];
+            
             const processedList = targets.map(m => {
                 const scores = recentHeaders.map(h => Number(m.suro?.[h]) || 0);
-                const avg = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : 0;
+                const validScores = scores.filter(s => s > 0);
+                const avg = validScores.length > 0 ? (validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(1) : 0;
                 return { ...m, avg: Number(avg), recentScores: scores };
             });
+
+            let mvp = null;
+            let maxIncrease = 0;
+            let mvpPct = null;
+            let maxIncreasePct = 0;
+
+            if (recentHeaders.length >= 2 && currentHeader) {
+                const prevHeader = recentHeaders[recentHeaders.length - 2];
+                targets.forEach(m => {
+                    const currScore = Number(m.suro?.[currentHeader]) || 0;
+                    const prevScore = Number(m.suro?.[prevHeader]) || 0;
+                    if (prevScore > 0 && currScore > prevScore) {
+                        const increase = currScore - prevScore;
+                        const increasePct = (increase / prevScore) * 100;
+                        
+                        if (increase > maxIncrease) {
+                            maxIncrease = increase;
+                            mvp = { name: m.name, increase: increase, role: m.role };
+                        }
+                        
+                        if (increasePct > maxIncreasePct) {
+                            maxIncreasePct = increasePct;
+                            mvpPct = { name: m.name, increasePct: increasePct, role: m.role };
+                        }
+                    }
+                });
+            }
 
             processedList.sort((a, b) => {
                 const f = appState.analysisFilters.sortField;
                 const o = appState.analysisFilters.sortOrder;
+                
+                if (f.startsWith('date_')) {
+                    const targetHeader = f.replace('date_', '');
+                    const headerIdx = recentHeaders.indexOf(targetHeader);
+                    const prevHeader = headerIdx > 0 ? recentHeaders[headerIdx - 1] : null;
+
+                    const getIncRate = (m) => {
+                        const curr = Number(m.suro?.[targetHeader]) || 0;
+                        if (!prevHeader) return curr > 0 ? -500 : -1000;
+                        const prev = Number(m.suro?.[prevHeader]) || 0;
+                        if (curr === 0 && prev === 0) return -1000; 
+                        if (prev === 0 && curr > 0) return -500; 
+                        return ((curr - prev) / prev) * 100;
+                    };
+
+                    const rateA = getIncRate(a);
+                    const rateB = getIncRate(b);
+                    
+                    if (rateA === rateB) {
+                        const currA = Number(a.suro?.[targetHeader]) || 0;
+                        const currB = Number(b.suro?.[targetHeader]) || 0;
+                        return o === 'asc' ? currA - currB : currB - currA;
+                    }
+                    return o === 'asc' ? rateA - rateB : rateB - rateA;
+                }
+
                 if (f === 'avg') return o === 'asc' ? a.avg - b.avg : b.avg - a.avg;
                 if (f === 'score') {
                     const vA = Number(a.suro?.[currentHeader]) || 0;
@@ -754,88 +806,132 @@
                 return smartCompare(a, b, f, o);
             });
 
-            // Pagination Logic
-            const totalItems = processedList.length;
-            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-            if (appState.pagination.analysis > totalPages && totalPages > 0) appState.pagination.analysis = totalPages;
-            if (appState.pagination.analysis < 1) appState.pagination.analysis = 1;
-            
-            const pageData = processedList.slice((appState.pagination.analysis - 1) * ITEMS_PER_PAGE, appState.pagination.analysis * ITEMS_PER_PAGE);
-
             const sortIcon = (f) => appState.analysisFilters.sortField === f ? (appState.analysisFilters.sortOrder === 'asc' ? ' <i class="fas fa-sort-up"></i>' : ' <i class="fas fa-sort-down"></i>') : '';
+            const analysisGuildsOptions = ['뚠카롱', '뚱카롱'];
 
             container.innerHTML = `
-            <div class="flex flex-col gap-6 fade-in h-full overflow-hidden">
+            <div class="flex flex-col gap-4 fade-in h-full overflow-hidden">
                 <div class="flex gap-2 overflow-x-auto no-scrollbar shrink-0">
-                    ${appState.guilds.map(g => `<button onclick="window.renderAnalysis(document.getElementById('contentArea'), '${g.name}')" class="px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${g.name === gName ? 'bg-pink-500 text-white shadow-lg' : 'bg-white text-gray-500 border border-gray-100'}">${g.name}</button>`).join('')}
+                    ${analysisGuildsOptions.map(gNameOption => `<button onclick="window.renderAnalysis(document.getElementById('contentArea'), '${gNameOption}')" class="px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${gNameOption === gName ? 'bg-pink-500 text-white shadow-lg' : 'bg-white text-gray-500 border border-gray-100'}">${gNameOption}</button>`).join('')}
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0 font-bold">
-                    <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col justify-center items-center">
-                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">전체 총점</p>
-                        <h4 class="text-3xl font-black text-gray-800 tracking-tighter">${total.toLocaleString()}</h4>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 shrink-0 font-bold">
+                    <div class="bg-white py-3 px-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center items-center">
+                        <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">전체 총점</p>
+                        <h4 class="text-lg font-black text-gray-800 tracking-tighter">${displayTotal.toLocaleString()}</h4>
                     </div>
-                    <div class="bg-red-50 p-6 rounded-[2rem] border border-red-100 shadow-sm flex flex-col justify-center items-center">
-                        <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest mb-1">🚨 중요 알림 (미참여)</p>
-                        <h4 class="text-3xl font-black text-red-600 tracking-tighter">${zeroPointMembers.length}명</h4>
+                    <div class="bg-red-50 py-3 px-4 rounded-xl border border-red-100 shadow-sm flex flex-col justify-center items-center">
+                        <p class="text-[9px] text-red-500 font-bold uppercase tracking-widest mb-0.5">🚨 미참여</p>
+                        <h4 class="text-lg font-black text-red-600 tracking-tighter">${zeroPointMembers.length}명</h4>
                     </div>
-                    <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col justify-center items-center">
-                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">최근 데이터 주차</p>
-                        <h4 class="text-sm font-bold text-gray-700">${currentHeader ? currentHeader.split(' ')[0] : '데이터 없음'}</h4>
+                    <div class="bg-white py-3 px-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center items-center">
+                        <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">최근 데이터 주차</p>
+                        <h4 class="text-xs font-bold text-gray-700">${currentHeader ? getWedStr(currentHeader) : '데이터 없음'}</h4>
+                    </div>
+                    <div class="bg-gradient-to-br from-yellow-50 to-orange-50 py-3 px-4 rounded-xl border border-orange-100 shadow-sm flex flex-col justify-center items-center relative overflow-hidden">
+                        <div class="absolute -right-1 -top-1 opacity-20 text-3xl text-orange-400"><i class="fas fa-trophy"></i></div>
+                        <p class="text-[9px] text-orange-600 font-bold uppercase tracking-widest mb-0.5 z-10">점수 떡상 MVP</p>
+                        <h4 class="text-sm font-black text-gray-800 tracking-tighter z-10 flex items-center gap-1">${mvp ? `${window.getNicknameIcon(mvp.role).replace('mr-2', 'mr-1')}${mvp.name}` : '-'}</h4>
+                        <p class="text-[9px] font-bold text-orange-500 mt-0.5 z-10">${mvp ? `+${mvp.increase.toLocaleString()}점` : '데이터 부족'}</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-emerald-50 to-teal-50 py-3 px-4 rounded-xl border border-emerald-100 shadow-sm flex flex-col justify-center items-center relative overflow-hidden">
+                        <div class="absolute -right-1 -top-1 opacity-20 text-3xl text-emerald-400"><i class="fas fa-chart-line"></i></div>
+                        <p class="text-[9px] text-emerald-600 font-bold uppercase tracking-widest mb-0.5 z-10">최고 상승률 MVP</p>
+                        <h4 class="text-sm font-black text-gray-800 tracking-tighter z-10 flex items-center gap-1">${mvpPct ? `${window.getNicknameIcon(mvpPct.role).replace('mr-2', 'mr-1')}${mvpPct.name}` : '-'}</h4>
+                        <p class="text-[9px] font-bold text-emerald-500 mt-0.5 z-10">${mvpPct ? `▲ ${mvpPct.increasePct.toFixed(1)}%` : '데이터 부족'}</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
-                    <div class="lg:col-span-1 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col overflow-hidden">
-                        <h3 class="text-xs font-bold text-gray-400 mb-6 uppercase tracking-widest">주간 총점 추이</h3>
-                        <div class="flex-1 min-h-[200px]">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 flex-1 min-h-0">
+                    <div class="lg:col-span-1 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
+                        <h3 class="text-xs font-bold text-gray-400 mb-4 uppercase tracking-widest">주간 총점 추이</h3>
+                        <div class="flex-1 w-full relative">
+                            <!-- ★ 가로 스크롤 없이 차트가 박스에 꽉 차게 렌더링되도록 수정 -->
                             <canvas id="analysisChart"></canvas>
                         </div>
                     </div>
 
-                    <div class="lg:col-span-2 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-                        <div class="p-6 border-b border-gray-50 flex justify-between items-center shrink-0">
-                            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">인터랙티브 데이터 테이블</h3>
+                    <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col relative">
+                        <div class="p-4 border-b border-gray-50 flex justify-between items-center shrink-0 bg-white z-40 relative">
+                            <h3 class="text-xs font-bold text-gray-800 uppercase tracking-widest">전체 데이터 (누적)</h3>
                         </div>
-                        <div class="flex-1 overflow-auto no-scrollbar">
-                            <table class="w-full text-left text-xs whitespace-nowrap">
-                                <thead class="bg-gray-50 font-bold text-[10px] text-gray-500 uppercase sticky top-0 z-10 border-b border-gray-100">
+                        <div id="analysisTableWrapper" class="flex-1 overflow-auto no-scrollbar relative bg-white">
+                            <!-- ★ UI 버그 완전 해결: border-collapse 적용 및 inset box-shadow로 빈틈 차단 -->
+                            <table class="w-full text-left text-xs whitespace-nowrap" style="border-collapse: collapse;">
+                                <thead class="text-[10px] text-gray-500 uppercase bg-gray-50">
                                     <tr>
-                                        <th class="p-4 w-12 text-center">RANK</th>
-                                        <th class="p-4 sortable" onclick="window.setAnalysisSort('name')">캐릭터명${sortIcon('name')}</th>
-                                        <th class="p-4 text-center sortable bg-pink-50/50" onclick="window.setAnalysisSort('avg')">평균${sortIcon('avg')}</th>
-                                        ${recentHeaders.map(h => `<th class="p-4 text-right font-medium">${h.split('~')[0].trim()}</th>`).join('')}
+                                        <!-- 인라인 스타일로 너비와 위치를 픽셀 단위로 완전 고정, 그림자로 빈틈 메움 -->
+                                        <th class="p-3 text-center sticky top-0 left-0 bg-gray-100 z-50 shadow-[inset_-1px_0_0_#e5e7eb,inset_0_-1px_0_#e5e7eb]" style="width: 60px; min-width: 60px; max-width: 60px;">RANK</th>
+                                        <th class="p-3 sticky top-0 left-[60px] bg-gray-100 z-50 shadow-[inset_-1px_0_0_#e5e7eb,inset_0_-1px_0_#e5e7eb] cursor-pointer hover:bg-gray-200" style="width: 140px; min-width: 140px; max-width: 140px;" onclick="window.setAnalysisSort('name')">캐릭터명${sortIcon('name')}</th>
+                                        <th class="p-3 text-center sticky top-0 left-[200px] bg-pink-100 text-pink-600 z-50 shadow-[inset_-1px_0_0_#fbcfe8,inset_0_-1px_0_#fbcfe8,2px_0_5px_-2px_rgba(0,0,0,0.1)] cursor-pointer" style="width: 110px; min-width: 110px; max-width: 110px;" onclick="window.setAnalysisSort('avg')">평균 (참여)${sortIcon('avg')}</th>
+                                        ${recentHeaders.map((h, idx) => {
+                                            const displayStr = getWedStr(h);
+                                            return `<th class="p-3 min-w-[100px] text-right font-medium cursor-pointer hover:bg-gray-200 transition-colors select-none sticky top-0 bg-gray-50 z-30 shadow-[inset_0_-1px_0_#e5e7eb]" onclick="window.setAnalysisSort('date_${h}')" title="클릭하여 상승률 순으로 정렬">${displayStr}${sortIcon('date_'+h)}</th>`;
+                                        }).join('')}
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-gray-50 font-bold">
-                                    ${pageData.map((m, i) => {
-                                        const globalIndex = (appState.pagination.analysis - 1) * ITEMS_PER_PAGE + i + 1;
+                                <tbody class="font-bold text-gray-700">
+                                    ${processedList.map((m, i) => {
+                                        const globalIndex = i + 1;
                                         return `
-                                        <tr class="hover:bg-gray-50 transition-colors h-12">
-                                            <td class="p-4 text-center text-gray-300">${globalIndex}</td>
-                                            <td class="p-4 text-gray-800 flex items-center leading-none">
-                                                ${window.getNicknameIcon(m.role)}${m.name}
+                                        <tr class="group h-11 hover:bg-gray-50 transition-colors">
+                                            <!-- 바디 데이터 고정열: 배경색 완전 불투명(bg-white), 그림자로 테두리 및 틈새 메움 -->
+                                            <td class="p-3 text-center text-gray-400 sticky left-0 z-40 bg-white group-hover:bg-gray-50 shadow-[inset_-1px_0_0_#e5e7eb,inset_0_-1px_0_#e5e7eb]" style="width: 60px; min-width: 60px; max-width: 60px;">${globalIndex}</td>
+                                            <td class="p-3 text-gray-800 sticky left-[60px] z-40 bg-white group-hover:bg-gray-50 shadow-[inset_-1px_0_0_#e5e7eb,inset_0_-1px_0_#e5e7eb]" style="width: 140px; min-width: 140px; max-width: 140px;">
+                                                <div class="flex items-center leading-none overflow-hidden text-ellipsis">
+                                                    ${window.getNicknameIcon(m.role)}<span class="truncate">${m.name}</span>
+                                                </div>
                                             </td>
-                                            <td class="p-4 text-center text-pink-500 bg-pink-50/20">${m.avg.toLocaleString()}</td>
-                                            ${m.recentScores.map(s => `
-                                                <td class="p-4 text-right font-mono score-cell ${s === 0 ? 'score-zero' : 'text-gray-400'}">
-                                                    ${s > 0 ? s.toLocaleString() : '0'}
+                                            <td class="p-3 text-center text-pink-600 sticky left-[200px] z-40 bg-pink-50 group-hover:bg-pink-100 shadow-[inset_-1px_0_0_#fbcfe8,inset_0_-1px_0_#e5e7eb,2px_0_5px_-2px_rgba(0,0,0,0.05)]" style="width: 110px; min-width: 110px; max-width: 110px;">${m.avg.toLocaleString()}</td>
+                                            <!-- 스크롤 데이터 -->
+                                            ${m.recentScores.map((s, scoreIdx) => {
+                                                let diffHtml = '';
+                                                let prevScore = 0;
+                                                
+                                                if (scoreIdx > 0) {
+                                                    prevScore = m.recentScores[scoreIdx - 1];
+                                                }
+
+                                                if (s > 0 || (s === 0 && prevScore > 0)) {
+                                                    if (prevScore > 0) {
+                                                        const diffPct = ((s - prevScore) / prevScore * 100).toFixed(1);
+                                                        if (s > prevScore) {
+                                                            diffHtml = `<span class="text-[9px] text-red-500 font-bold tracking-tighter block mt-0.5">▲ ${diffPct}%</span>`;
+                                                        } else if (s < prevScore) {
+                                                            diffHtml = `<span class="text-[9px] text-blue-500 font-bold tracking-tighter block mt-0.5">▼ ${Math.abs(diffPct)}%</span>`;
+                                                        } else {
+                                                            diffHtml = `<span class="text-[9px] text-gray-400 font-bold tracking-tighter block mt-0.5">- 0.0%</span>`;
+                                                        }
+                                                    } else if (s > 0) {
+                                                        diffHtml = `<span class="text-[9px] text-red-500 font-bold tracking-tighter block mt-0.5">▲ NEW</span>`;
+                                                    }
+                                                }
+
+                                                return `
+                                                <td class="p-3 min-w-[100px] text-right font-mono align-middle shadow-[inset_0_-1px_0_#e5e7eb] ${s === 0 ? 'bg-red-50 text-red-400 group-hover:bg-red-100' : 'bg-white text-gray-700 group-hover:bg-gray-50'}" style="position: relative; z-index: 10;">
+                                                    <div class="flex flex-col justify-center items-end leading-tight min-h-[28px]">
+                                                        <span class="${s > 0 ? 'text-xs' : 'text-gray-400'}">${s > 0 ? s.toLocaleString() : '0'}</span>
+                                                        ${diffHtml}
+                                                    </div>
                                                 </td>
-                                            `).join('')}
+                                                `;
+                                            }).join('')}
                                         </tr>`;
                                     }).join('')}
                                 </tbody>
                             </table>
                         </div>
-                        <!-- Pagination Controls -->
-                        <div class="p-3 border-t border-gray-100 flex justify-center items-center gap-4 bg-gray-50/50">
-                            <button onclick="changePage('analysis', -1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-pink-50 hover:text-pink-500 hover:border-pink-200 disabled:opacity-30 disabled:hover:bg-white" ${appState.pagination.analysis <= 1 ? 'disabled' : ''}><i class="fas fa-chevron-left text-[10px]"></i></button>
-                            <span class="text-xs font-bold text-gray-500">${appState.pagination.analysis} / ${totalPages || 1}</span>
-                            <button onclick="changePage('analysis', 1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-pink-50 hover:text-pink-500 hover:border-pink-200 disabled:opacity-30 disabled:hover:bg-white" ${appState.pagination.analysis >= totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right text-[10px]"></i></button>
-                        </div>
                     </div>
                 </div>
             </div>`;
+
+            // ★ 최신 데이터를 바로 볼 수 있게, 표 렌더링 즉시 무조건 우측 끝으로 스크롤 넘김
+            setTimeout(() => {
+                const tableWrapper = document.getElementById('analysisTableWrapper');
+                if (tableWrapper) {
+                    tableWrapper.scrollLeft = tableWrapper.scrollWidth;
+                }
+            }, 50);
 
             const ctx = document.getElementById('analysisChart');
             if(!ctx) return;
@@ -843,14 +939,10 @@
             analysisChartInstance = new Chart(ctx, { 
                 type: 'line', 
                 data: { 
-                    labels: recentHeaders.map(h => {
-                        const parts = h ? h.split('-') : [];
-                        if(parts.length >= 3) return parts[1] + '-' + parts[2].substring(0,2);
-                        return h;
-                    }), 
+                    labels: recentHeaders.map(h => getShortWedStr(h)), 
                     datasets: [{ 
                         label: '길드 총점', 
-                        data: recentHeaders.map(h => appState.members.filter(m => m.guild === gName).reduce((s, m) => s + (Number(m.suro?.[h]) || 0), 0)), 
+                        data: recentHeaders.map(h => targets.reduce((s, m) => s + (Number(m.suro?.[h]) || 0), 0)), 
                         borderColor: '#ec4899', 
                         borderWidth: 3, 
                         pointRadius: 4, 
@@ -873,9 +965,12 @@
         };
         
         window.setAnalysisSort = (f) => { 
-            if(appState.analysisFilters.sortField === f) appState.analysisFilters.sortOrder = appState.analysisFilters.sortOrder === 'asc' ? 'desc' : 'asc'; 
-            else { appState.analysisFilters.sortField = f; appState.analysisFilters.sortOrder = (f==='score'||f==='rank'||f==='avg') ? 'desc' : 'asc'; } 
-            appState.pagination.analysis = 1; // Reset to page 1 on sort
+            if(appState.analysisFilters.sortField === f) {
+                appState.analysisFilters.sortOrder = appState.analysisFilters.sortOrder === 'asc' ? 'desc' : 'asc'; 
+            } else { 
+                appState.analysisFilters.sortField = f; 
+                appState.analysisFilters.sortOrder = (f==='score'||f==='rank'||f==='avg'||f.startsWith('date_')) ? 'desc' : 'asc'; 
+            } 
             window.renderAnalysis(document.getElementById('contentArea'), appState.analysisGuild); 
         };
 
@@ -887,11 +982,9 @@
             const counts = {}; targets.forEach(m => { const j = m.class || '미설정'; counts[j] = (counts[j] || 0) + 1; });
             const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
             
-            // Dynamic Height Logic: Base 50px + 30px per item
             const newHeight = Math.max(250, 50 + (sorted.length * 30));
             if(container) container.style.height = newHeight + 'px';
 
-            // Custom Pastel Palette for jobs
             const jobPalette = [
                 '#FF9AA2', '#FFB7B2', '#FFDAC1', '#E2F0CB', '#B5EAD7', '#C7CEEA',
                 '#FF6F61', '#6B5B95', '#88B04B', '#F7CAC9', '#92A8D1', '#955251',
@@ -900,7 +993,6 @@
                 '#BC243C', '#C3447A', '#98B4D4'
             ];
 
-            // Assign colors cyclically
             const backgroundColors = sorted.map((_, i) => jobPalette[i % jobPalette.length]);
 
             if(jobChartInstance) jobChartInstance.destroy();
@@ -911,9 +1003,9 @@
                     datasets: [{ 
                         label: '인원', 
                         data: sorted.map(j => j[1]), 
-                        backgroundColor: backgroundColors, // Apply colorful palette
+                        backgroundColor: backgroundColors,
                         borderRadius: 4, 
-                        barThickness: 20 // Fixed thickness for better visibility
+                        barThickness: 20
                     }] 
                 }, 
                 options: { 
@@ -922,20 +1014,8 @@
                     maintainAspectRatio: false, 
                     plugins: { legend: { display: false } }, 
                     scales: { 
-                        x: { 
-                            beginAtZero: true, 
-                            ticks: { precision: 0 } 
-                        },
-                        y: {
-                            ticks: {
-                                autoSkip: false, // Force show all labels
-                                font: {
-                                    size: 11,
-                                    weight: 'bold'
-                                },
-                                color: '#4b5563' // Darker text for readability
-                            }
-                        }
+                        x: { beginAtZero: true, ticks: { precision: 0 } },
+                        y: { ticks: { autoSkip: false, font: { size: 11, weight: 'bold' }, color: '#4b5563' } }
                     } 
                 } 
             });
@@ -945,21 +1025,17 @@
         window.renderMembers = (container) => {
             container.innerHTML = `
             <div class="flex flex-col gap-3 fade-in h-full">
-                <!-- Compact Header Control Panel -->
                 <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col xl:flex-row items-center gap-4 shrink-0">
-                    <!-- Guild Tabs -->
                     <div class="flex overflow-x-auto no-scrollbar w-full xl:w-auto gap-2 shrink-0">
                         <button onclick="window.filterByGuild('all')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${appState.filters.guild === 'all' ? 'bg-gray-800 text-white shadow-md' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">전체</button>
                         ${appState.guilds.map(g => `<button onclick="window.filterByGuild('${g.name}')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${appState.filters.guild === g.name ? 'bg-pink-500 text-white shadow-md' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}">${g.name}</button>`).join('')}
                     </div>
                     
-                    <!-- Search Bar (Takes available width) -->
                     <div class="relative flex-1 w-full">
                         <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                         <input type="text" oninput="window.handleSearch(this.value)" value="${appState.filters.search}" class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none text-xs font-bold shadow-inner focus:ring-2 focus:ring-pink-50 transition-all" placeholder="닉네임 다중 검색 가능 (줄바꿈/띄어쓰기로 구분)">
                     </div>
 
-                    <!-- Action Buttons -->
                     <div class="flex gap-2 shrink-0">
                         <button onclick="window.toggleKickMode()" class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${appState.isKickMode ? 'bg-red-500 text-white shadow-md animate-pulse' : 'bg-red-50 text-red-500 hover:bg-red-100'}">
                             <i class="fas fa-user-minus mr-1"></i> 일괄 추방 ${appState.isKickMode?'ON':'OFF'}
@@ -976,7 +1052,6 @@
                     </div>
                 </div>
 
-                <!-- Table Area -->
                 <div id="memberTableContainer" class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm flex-1 min-h-0 flex flex-col"></div>
             </div>`;
             window.updateMemberTable();
@@ -985,20 +1060,14 @@
         window.updateMemberTable = () => {
             const container = document.getElementById('memberTableContainer'); if(!container) return;
             
-            // --- MODIFIED: Multi-Search Logic ---
             const rawSearchTerm = appState.filters.search.trim();
-            // Split by newline, comma, or whitespace to support copy-paste lists
             const searchTokens = rawSearchTerm.length > 0 
                 ? rawSearchTerm.toLowerCase().split(/[\s,]+/).filter(t => t.length > 0)
                 : [];
 
             const filtered = appState.members.filter(m => { 
                 const gMatch = appState.filters.guild === 'all' || m.guild === appState.filters.guild; 
-                
-                // If no search input, just return guild match
                 if (searchTokens.length === 0) return gMatch;
-
-                // Check if ANY token matches ANY field (OR logic)
                 const sMatch = searchTokens.some(token => {
                     return m.name.toLowerCase().includes(token) || 
                            (m.class||'').toLowerCase().includes(token) || 
@@ -1006,22 +1075,19 @@
                            (m.mainCharName || '').toLowerCase().includes(token) || 
                            (m.isMain && m.name.toLowerCase().includes(token)); 
                 });
-
                 return gMatch && sMatch; 
             });
-            // ------------------------------------
 
             filtered.sort((a, b) => smartCompare(a, b, appState.filters.sortField, appState.filters.sortOrder));
             
-            // Pagination Logic
             const totalItems = filtered.length;
             const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
             if (appState.pagination.members > totalPages && totalPages > 0) appState.pagination.members = totalPages;
             if (appState.pagination.members < 1) appState.pagination.members = 1;
             
             const pageData = filtered.slice((appState.pagination.members - 1) * ITEMS_PER_PAGE, appState.pagination.members * ITEMS_PER_PAGE);
-
             const sortIcon = (f) => appState.filters.sortField === f ? (appState.filters.sortOrder === 'asc' ? ' <i class="fas fa-sort-up"></i>' : ' <i class="fas fa-sort-down"></i>') : '';
+            
             let html = `<div class="overflow-y-auto flex-1"><table class="w-full text-left min-w-[900px] text-xs whitespace-nowrap"><thead class="bg-gray-50 text-[10px] font-bold text-gray-500 border-b border-gray-100 sticky top-0 z-10"><tr><th class="p-4 text-center w-16">${appState.isKickMode ? '선택' : 'No.'}</th><th class="p-4 sortable" onclick="window.handleSort('name')">닉네임${sortIcon('name')}</th><th class="p-4 sortable" onclick="window.handleSort('mainInfo')">본캐 정보${sortIcon('mainInfo')}</th><th class="p-4 sortable" onclick="window.handleSort('guild')">소속${sortIcon('guild')}</th><th class="p-4 sortable" onclick="window.handleSort('role')">직위${sortIcon('role')}</th><th class="p-4 sortable" onclick="window.handleSort('class')">직업${sortIcon('class')}</th><th class="p-4 text-right">관리</th></tr></thead><tbody class="divide-y divide-gray-50 text-gray-600 font-bold">`;
             
             pageData.forEach((m, idx) => {
@@ -1030,12 +1096,10 @@
                 const mainMem = appState.members.find(x => x.name === mainName);
                 const mainRankHtml = mainMem ? formatRankWithSuffix(mainMem.role) : '-';
                 
-                // Color logic for Main Info Cell - Modified to check Main Character's Role
                 let mainInfoStyle = "";
                 let mainInfoTextClass = "text-gray-700";
                 let subInfoTextClass = "text-gray-400";
                 
-                // 본캐 정보를 기준으로 색상 결정 (부캐일 경우 본캐의 직위를 따라감)
                 const targetRole = mainMem ? mainMem.role : (m.isMain ? m.role : '');
 
                 if (['티라미슈', '파르페', '크라운'].includes(targetRole)) {
@@ -1048,16 +1112,13 @@
                     subInfoTextClass = "text-black opacity-80";
                 }
 
-                // Batch Mode pending check
                 const pending = appState.pendingUpdates[m.id];
                 const currentGuild = pending && pending.guild ? pending.guild : m.guild;
                 const currentRole = pending && pending.role ? pending.role : m.role;
                 const currentClass = pending && pending.class ? pending.class : (m.class || '');
 
-                // Logic for Role Badge styling (Display mode only)
                 let roleHtml = `<span class="text-[10px]">${m.role}</span>`;
                 if (!appState.isBatchMode && m.role === '아인슈페너') {
-                    // Using requested color #FF99FF and White text for "Special" look
                     roleHtml = `<span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold text-white tracking-tight shadow-sm" style="background-color: #FF99FF; text-shadow: 0 1px 1px rgba(0,0,0,0.1);">${m.role}</span>`;
                 }
 
@@ -1084,7 +1145,6 @@
             });
             html += `</tbody></table></div>`;
             
-            // Add Pagination Controls
             html += `<div class="p-3 border-t border-gray-100 flex justify-center items-center gap-4 bg-gray-50/50">
                 <button onclick="changePage('members', -1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-pink-50 hover:text-pink-500 hover:border-pink-200 disabled:opacity-30 disabled:hover:bg-white" ${appState.pagination.members <= 1 ? 'disabled' : ''}><i class="fas fa-chevron-left text-[10px]"></i></button>
                 <span class="text-xs font-bold text-gray-500">${appState.pagination.members} / ${totalPages || 1}</span>
@@ -1092,83 +1152,6 @@
             </div>`;
 
             container.innerHTML = html;
-        };
-
-        // --- SURO SCORES ---
-        window.renderSuro = (container) => {
-            container.innerHTML = `
-            <div class="flex flex-col gap-3 fade-in h-full">
-                <!-- Compact Header -->
-                <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col xl:flex-row items-center gap-4 shrink-0">
-                    <div class="flex overflow-x-auto no-scrollbar w-full xl:w-auto gap-2 shrink-0">
-                        <button onclick="window.filterSuroGuild('all')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${appState.suroFilters.guild === 'all' ? 'bg-gray-800 text-white shadow-md' : 'bg-gray-50 text-gray-500'}">전체</button>
-                        ${appState.guilds.map(g => `<button onclick="window.filterSuroGuild('${g.name}')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${appState.suroFilters.guild === g.name ? 'bg-blue-500 text-white shadow-md' : 'bg-gray-50 text-gray-500'}">${g.name}</button>`).join('')}
-                    </div>
-                    
-                    <div class="relative flex-1 w-full">
-                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                        <input type="text" oninput="window.filterSuroSearch(this.value)" class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-xs shadow-inner focus:ring-2 focus:ring-blue-50 transition-all" placeholder="닉네임 다중 검색 가능 (줄바꿈/띄어쓰기로 구분)">
-                    </div>
-
-                    <button onclick="window.saveSuroInputs()" id="btnSuroSave" class="shrink-0 px-6 py-2 bg-blue-500 text-white rounded-xl font-bold shadow-md hover:bg-blue-600 transition-all text-xs">저장</button>
-                </div>
-
-                <div id="suroTableContainer" class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm flex-1 min-h-0 flex flex-col"></div>
-            </div>`;
-            window.updateSuroTable();
-        };
-
-        window.updateSuroTable = () => {
-            const container = document.getElementById('suroTableContainer'); if(!container) return;
-            const period = window.getSuroPeriodHeader(); const prevHeader = appState.suroHeaders.slice(-2)[0] || ""; 
-            
-            // --- MODIFIED: Multi-Search Logic for Suro ---
-            const rawTerm = (appState.suroFilters.search || '').trim();
-            const searchTokens = rawTerm.length > 0 ? rawTerm.toLowerCase().split(/[\s,]+/).filter(t => t.length > 0) : [];
-
-            const filtered = appState.members.filter(m => {
-                const gMatch = appState.suroFilters.guild === 'all' || m.guild === appState.suroFilters.guild;
-                if (searchTokens.length === 0) return gMatch;
-                const sMatch = searchTokens.some(token => m.name.toLowerCase().includes(token));
-                return gMatch && sMatch;
-            });
-            // ---------------------------------------------
-
-            filtered.sort((a, b) => { const f = appState.suroFilters.sortField, o = appState.suroFilters.sortOrder; if (f === 'prev') return smartCompare({prev: Number(a.suro?.[prevHeader]||0)}, {prev: Number(b.suro?.[prevHeader]||0)}, 'prev', o); if (f === 'curr') { const valA = Number(appState.currentSuroInputs[a.name] || a.suro?.[period] || 0), valB = Number(appState.currentSuroInputs[b.name] || b.suro?.[period] || 0); return o === 'asc' ? valA - valB : valB - valA; } return smartCompare(a, b, f, o); });
-            
-            // Pagination Logic
-            const totalItems = filtered.length;
-            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-            if (appState.pagination.suro > totalPages && totalPages > 0) appState.pagination.suro = totalPages;
-            if (appState.pagination.suro < 1) appState.pagination.suro = 1;
-
-            const pageData = filtered.slice((appState.pagination.suro - 1) * ITEMS_PER_PAGE, appState.pagination.suro * ITEMS_PER_PAGE);
-
-            const sortIcon = (f) => appState.suroFilters.sortField === f ? (appState.suroFilters.sortOrder === 'asc' ? ' <i class="fas fa-sort-up"></i>' : ' <i class="fas fa-sort-down"></i>') : '';
-            let html = `<div class="overflow-y-auto flex-1 p-0"><table class="w-full text-left min-w-[800px]"><thead class="bg-gray-50 text-gray-500 text-[10px] font-bold uppercase sticky top-0 z-10 border-b border-gray-100 shadow-sm"><tr><th class="p-4 cursor-pointer hover:bg-gray-100 transition-colors" onclick="window.handleSuroSort('name')">닉네임 (유니코드)${sortIcon('name')}</th><th class="p-4 cursor-pointer hover:bg-gray-100 transition-colors" onclick="window.handleSuroSort('guild')">소속${sortIcon('guild')}</th><th class="p-4 text-right cursor-pointer hover:bg-gray-100 transition-colors" onclick="window.handleSuroSort('prev')">지난 기록${sortIcon('prev')}</th><th class="p-4 text-right w-48 cursor-pointer hover:bg-gray-100 transition-colors" onclick="window.handleSuroSort('curr')">이번주 점수${sortIcon('curr')}</th></tr></thead><tbody class="divide-y divide-gray-50 font-bold">`;
-            pageData.forEach((m, idx) => {
-                const currVal = appState.currentSuroInputs[m.name] !== undefined ? appState.currentSuroInputs[m.name] : (m.suro?.[period] || ''), prevVal = Number(m.suro?.[prevHeader] || 0);
-                html += `<tr class="hover:bg-blue-50/30 transition-colors h-12"><td class="p-4 font-bold text-gray-800 flex items-center h-full text-sm leading-none">${window.getNicknameIcon(m.role)}${m.name}</td><td class="p-4 text-xs font-bold text-gray-400">${m.guild}</td><td class="p-4 text-right font-mono text-gray-300 text-xs">${prevVal > 0 ? prevVal.toLocaleString() : '-'}</td><td class="p-3"><input type="number" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-1.5 text-right font-bold outline-none focus:bg-white focus:ring-2 focus:ring-blue-100 shadow-inner" value="${currVal}" oninput="appState.currentSuroInputs['${m.name}']=this.value"></td></tr>`;
-            });
-            html += `</tbody></table></div>`;
-
-             // Add Pagination Controls
-             html += `<div class="p-3 border-t border-gray-100 flex justify-center items-center gap-4 bg-gray-50/50">
-                <button onclick="changePage('suro', -1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-blue-50 hover:text-blue-500 hover:border-blue-200 disabled:opacity-30 disabled:hover:bg-white" ${appState.pagination.suro <= 1 ? 'disabled' : ''}><i class="fas fa-chevron-left text-[10px]"></i></button>
-                <span class="text-xs font-bold text-gray-500">${appState.pagination.suro} / ${totalPages || 1}</span>
-                <button onclick="changePage('suro', 1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-blue-50 hover:text-blue-500 hover:border-blue-200 disabled:opacity-30 disabled:hover:bg-white" ${appState.pagination.suro >= totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right text-[10px]"></i></button>
-            </div>`;
-
-            container.innerHTML = html;
-        };
-
-        window.saveSuroInputs = async () => {
-            const data = Object.entries(appState.currentSuroInputs).filter(([n, s]) => s !== "" && s !== null).map(([name, score]) => ({ name, score }));
-            if(data.length === 0) return window.showMsg("입력된 점수가 없습니다.", "error");
-            if(!confirm(`${data.length}명의 정보를 저장하시겠습니까?`)) return;
-            const btn = document.getElementById('btnSuroSave'); if (btn) { btn.disabled = true; btn.innerText = "저장 중..."; }
-            if (await window.sendAction('save_suro', data)) { appState.currentSuroInputs = {}; }
-            else if (btn) { btn.disabled = false; btn.innerText = "수로 점수 저장"; }
         };
 
         // --- BAIL MANAGEMENT ---
@@ -1193,25 +1176,21 @@
         window.renderPenalty = (container) => {
             const memberOptions = appState.members.map(m => `<option value="${m.name}">${m.name} (${m.guild})</option>`).sort();
             
-            // Calculate penalty counts
             const penaltyCounts = {};
             appState.penaltyHistory.forEach(h => {
                 penaltyCounts[h.name] = (penaltyCounts[h.name] || 0) + Number(h.points);
             });
-            // Just displaying users with > 0 total points (simple logic for now)
             const activePenalties = Object.entries(penaltyCounts).filter(([name, pts]) => pts > 0);
 
             const penaltyRows = [...appState.penaltyHistory].map(h => {
-                // Ensure date format is safe
                 let displayDate = "-";
                 if(h.date) {
-                    const datePart = h.date.split(' ')[0]; // 2026-02-18
-                    if(datePart.length >= 2) displayDate = datePart.substring(2); // 26-02-18
+                    const datePart = h.date.split(' ')[0];
+                    if(datePart.length >= 2) displayDate = datePart.substring(2);
                 }
                 
                 return `
                 <tr class="hover:bg-gray-50 border-b border-gray-50 h-12 transition-colors font-bold text-xs">
-                    <!-- 날짜 형식 YY-MM-DD로 변경 -->
                     <td class="p-4 font-mono text-gray-400 text-[10px]">${displayDate}</td>
                     <td class="p-4 text-gray-700">${h.name}</td>
                     <td class="p-4 text-red-500">${h.points}점</td>
@@ -1221,7 +1200,6 @@
 
             container.innerHTML = `
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in h-full">
-                <!-- Left: Form -->
                 <div class="lg:col-span-1 bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden">
                     <div class="mb-8">
                         <h3 class="text-xl font-bold text-gray-800 tracking-tight">벌점 부여</h3>
@@ -1253,9 +1231,7 @@
                     </div>
                 </div>
 
-                <!-- Right: Status & History -->
                 <div class="lg:col-span-2 flex flex-col gap-6 h-full overflow-hidden">
-                    <!-- Current Targets Card -->
                     <div class="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm shrink-0 min-h-[160px]">
                         <div class="mb-4">
                             <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">현재 벌점 관리 대상자</h3>
@@ -1273,7 +1249,6 @@
                         </div>
                     </div>
 
-                    <!-- History Table -->
                     <div class="bg-white rounded-[3rem] border border-gray-100 shadow-sm flex flex-col flex-1 overflow-hidden">
                         <div class="p-8 border-b border-gray-50 flex justify-between items-center shrink-0">
                             <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">상세 부여 이력</h3>
@@ -1322,13 +1297,9 @@
         window.renderSettings = (container) => { container.innerHTML = `<div class="bg-white p-12 rounded-[3rem] border border-gray-100 shadow-sm max-w-4xl font-bold h-fit"><h3 class="text-xl mb-10 text-gray-800">시스템 설정</h3><div class="space-y-8"><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 uppercase font-bold">Apps Script WebApp URL</label><input type="text" id="settingScriptUrl" value="${localStorage.getItem('macaron_script_url') || appState.scriptUrl}" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-5 text-xs font-mono outline-none shadow-inner focus:ring-4 focus:ring-gray-100 transition-all"></div><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 uppercase font-bold">Google Sheet URL</label><input type="text" id="settingSheetUrl" value="${localStorage.getItem('macaron_sheet_url') || appState.sheetUrl}" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-5 text-xs font-mono outline-none shadow-inner focus:ring-4 focus:ring-gray-100 transition-all"></div><button onclick="window.saveSettings()" class="w-full py-6 bg-gray-900 text-white rounded-3xl font-bold shadow-xl active:scale-[0.98] transition-all">설정 저장 및 시스템 재시작</button></div></div>`; };
         window.saveSettings = () => { localStorage.setItem('macaron_script_url', document.getElementById('settingScriptUrl').value.trim()); localStorage.setItem('macaron_sheet_url', document.getElementById('settingSheetUrl').value.trim()); window.showMsg("저장되었습니다.", "success"); setTimeout(()=>location.reload(), 800); };
 
-        // (중복 제거 완료 - toggleBatchMode, stageUpdate, saveBatchUpdates는 위 코드 블록의 개선된 버전 사용)
         window.handleSearch = (v) => { appState.filters.search = v; appState.pagination.members = 1; window.updateMemberTable(); };
         window.filterByGuild = (g) => { appState.filters.guild = g; appState.pagination.members = 1; if(appState.activeTab === 'members') window.renderMembers(document.getElementById('contentArea')); else window.updateMemberTable(); };
         window.handleSort = (field) => { if(appState.filters.sortField === field) appState.filters.sortOrder = appState.filters.sortOrder === 'asc' ? 'desc' : 'asc'; else { appState.filters.sortField = field; appState.filters.sortOrder = 'asc'; } appState.pagination.members = 1; window.updateMemberTable(); };
-        window.handleSuroSort = (field) => { if(appState.suroFilters.sortField === field) appState.suroFilters.sortOrder = appState.suroFilters.sortOrder === 'asc' ? 'desc' : 'asc'; else { appState.suroFilters.sortField = field; appState.suroFilters.sortOrder = 'asc'; } appState.pagination.suro = 1; window.updateSuroTable(); };
-        window.filterSuroGuild = (g) => { appState.suroFilters.guild = g; appState.pagination.suro = 1; window.updateSuroTable(); window.renderSuro(document.getElementById('contentArea')); };
-        window.filterSuroSearch = (v) => { appState.suroFilters.search = v; appState.pagination.suro = 1; window.updateSuroTable(); };
         window.closeModal = (id) => { document.getElementById(id)?.classList.add('hidden'); };
         
         window.openEditModal = (id) => { 
@@ -1348,11 +1319,9 @@
         window.openDeleteModal = (id) => { appState.memberToDelete = appState.members.find(x => x.id == id); document.getElementById('deleteTargetName').innerText = appState.memberToDelete.name; document.getElementById('deleteModal').classList.remove('hidden'); };
         window.setDeleteType = (t) => { appState.deleteType = t; document.getElementById('btnLeave').className = t === 'leave' ? 'flex-1 py-3 rounded-xl font-bold text-xs bg-gray-800 text-white shadow-sm transition-all' : 'flex-1 py-3 rounded-xl font-bold text-xs bg-gray-100 text-gray-400 transition-all'; document.getElementById('btnKick').className = t === 'kick' ? 'flex-1 py-3 rounded-xl font-bold text-xs bg-red-600 text-white shadow-sm transition-all' : 'flex-1 py-3 rounded-xl font-bold text-xs bg-gray-100 text-gray-400 transition-all'; };
         
-        // Modified confirmDelete for both Single and Bulk
         window.confirmDelete = async () => { 
             const reason = document.getElementById('deleteReason').value;
             
-            // BULK KICK LOGIC
             if (appState.isKickMode && appState.kickSelection.size > 0) {
                 const ids = Array.from(appState.kickSelection);
                 window.showLoading(true);
@@ -1361,7 +1330,6 @@
                 for(const id of ids) {
                     const m = appState.members.find(x => x.id === id);
                     if(m) {
-                        // Force type 'kick' and skip auto-refresh for performance
                         const success = await window.sendAction('delete', { id: id, type: 'kick', reason: reason }, true);
                         if(success) successCount++;
                     }
@@ -1371,14 +1339,12 @@
                 window.showMsg(`${successCount}명 추방 완료.`, "success");
                 window.closeModal('deleteModal');
                 
-                // Cleanup
                 appState.isKickMode = false;
                 appState.kickSelection.clear();
                 await window.fetchMembers();
                 return;
             }
 
-            // SINGLE DELETE LOGIC (Existing)
             if(await window.sendAction('delete', { id: appState.memberToDelete.id, type: appState.deleteType, reason: reason })) {
                 window.closeModal('deleteModal'); 
             }
@@ -1394,6 +1360,8 @@
         };
 
         function initSidebar() {
+            localStorage.removeItem('macaron_script_url');
+            
             const sb = document.getElementById('sidebar'), ov = document.getElementById('sidebarOverlay');
             document.getElementById('openSidebar').onclick = () => { sb.classList.remove('-translate-x-full'); ov.classList.remove('hidden'); };
             document.getElementById('closeSidebar').onclick = () => { sb.classList.add('-translate-x-full'); ov.classList.add('hidden'); };
