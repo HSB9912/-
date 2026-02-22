@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>뚠카롱 길드 관리 시스템 (v8.50)</title>
+    <title>뚠카롱 길드 관리 시스템 (v8.51)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -26,7 +26,8 @@
         #msgBox.show { transform: translateY(0); opacity: 1; }
         .batch-modified { background-color: #fff7ed !important; } 
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.25rem; text-align: center; font-size: 0.75rem; }
-        .calendar-day { padding: 0.25rem; border-radius: 0.75rem; position: relative; transition: all 0.2s; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; aspect-ratio: 1/1; cursor: pointer; border: 1px solid transparent; }
+        .calendar-day { padding: 0.25rem; border-radius: 0.75rem; position: relative; transition: all 0.2s; min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; aspect-ratio: 1/1; cursor: pointer; border: 1px solid transparent; }
+        @media (min-width: 1024px) { .calendar-day { min-height: 56px; } }
         .calendar-day:hover { background-color: #f9fafb; border-color: #fbcfe8; }
         .calendar-day.today { background-color: #ec4899; color: white; font-weight: bold; }
         .calendar-day.thursday { color: #db2777; background-color: #fdf2f8; border: 1px solid #fbcfe8; font-weight: bold; }
@@ -36,7 +37,7 @@
         .calendar-day.today .event-dot { background-color: white; }
         
         .event-snippet { 
-            font-size: 11px; 
+            font-size: 10px; 
             color: #db2777; 
             opacity: 1; 
             white-space: nowrap; 
@@ -50,6 +51,7 @@
             border-radius: 4px;
             padding: 1px 2px;
         }
+        @media (min-width: 1024px) { .event-snippet { font-size: 11px; } }
         .calendar-day.today .event-snippet { color: white; background-color: rgba(255, 255, 255, 0.2); }
 
         .score-zero { background-color: #fee2e2 !important; color: #ef4444 !important; }
@@ -81,7 +83,7 @@
     <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col shadow-sm">
         <div class="p-6 border-b border-gray-100 flex items-center gap-3">
             <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-400 to-rose-400 flex items-center justify-center text-white font-bold shadow-lg shadow-pink-100 text-xl">뚠</div>
-            <div><h1 class="text-lg font-bold text-gray-800 tracking-tight">뚠카롱 길드 관리</h1><p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">v8.50 Update</p></div>
+            <div><h1 class="text-lg font-bold text-gray-800 tracking-tight">뚠카롱 길드 관리</h1><p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">v8.51 Update</p></div>
             <button id="closeSidebar" class="lg:hidden ml-auto text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
         </div>
         <nav class="p-4 space-y-2 flex-1 overflow-y-auto no-scrollbar">
@@ -100,55 +102,55 @@
     <div id="sidebarOverlay" class="fixed inset-0 bg-black/10 z-40 hidden lg:hidden"></div>
 
     <main class="flex-1 flex flex-col overflow-hidden bg-gray-50">
-        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shrink-0 z-10 shadow-sm">
-            <div class="flex items-center gap-4"><button id="openSidebar" class="p-2 lg:hidden rounded-lg hover:bg-gray-100 text-gray-600"><i class="fas fa-bars text-xl"></i></button><h2 id="pageTitle" class="text-xl font-bold text-gray-800 tracking-tight">대시보드</h2></div>
-            <div class="flex items-center gap-4">
-                <div class="px-4 py-1.5 bg-pink-50 text-pink-600 rounded-full text-[11px] font-bold border border-pink-100 shadow-sm">
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 shrink-0 z-10 shadow-sm">
+            <div class="flex items-center gap-2 lg:gap-4"><button id="openSidebar" class="p-2 lg:hidden rounded-lg hover:bg-gray-100 text-gray-600"><i class="fas fa-bars text-xl"></i></button><h2 id="pageTitle" class="text-lg lg:text-xl font-bold text-gray-800 tracking-tight">대시보드</h2></div>
+            <div class="flex items-center gap-3 lg:gap-4">
+                <div class="px-3 lg:px-4 py-1.5 bg-pink-50 text-pink-600 rounded-full text-[10px] lg:text-[11px] font-bold border border-pink-100 shadow-sm hidden sm:block">
                     ✨ <span id="anniversaryLabel">로딩 중...</span>
                 </div>
-                <div class="hidden md:flex px-4 py-1.5 bg-slate-50 text-slate-600 rounded-full text-[11px] font-bold border border-slate-100 shadow-sm gap-2">
+                <div class="px-3 lg:px-4 py-1.5 bg-slate-50 text-slate-600 rounded-full text-[10px] lg:text-[11px] font-bold border border-slate-100 shadow-sm flex items-center gap-2">
                     <span>👥</span> <span id="totalMembersCount">로딩 중...</span>
                 </div>
-                <button id="refreshBtn" onclick="fetchMembers()" class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-400 transition-all border border-gray-100 shadow-sm"><i class="fas fa-sync-alt"></i></button>
+                <button id="refreshBtn" onclick="fetchMembers()" class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-400 transition-all border border-gray-100 shadow-sm"><i class="fas fa-sync-alt text-xs lg:text-base"></i></button>
             </div>
         </header>
         <div id="contentArea" class="flex-1 overflow-y-auto p-3 lg:p-6 relative bg-gray-50 flex flex-col min-h-0"></div>
     </main>
 
     <!-- Modals -->
-    <div id="memberModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm hidden fade-in font-bold"><div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden border border-gray-100"><div class="p-6 bg-pink-50 border-b border-pink-100 flex justify-between items-center"><div><h3 id="modalTitle" class="text-lg font-bold text-pink-700 tracking-tight">멤버 정보 입력</h3></div><button onclick="closeModal('memberModal')"><i class="fas fa-times text-gray-400 text-lg"></i></button></div><form id="memberForm" class="p-8 space-y-5"><input type="hidden" id="editMemberId"><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">닉네임</label><input type="text" id="inputName" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 outline-none focus:ring-4 focus:ring-pink-50 text-sm font-bold shadow-inner" required placeholder="정확한 캐릭터명"></div><div class="grid grid-cols-2 gap-4"><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">소속</label><select id="inputGuild" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 text-sm font-bold outline-none" onchange="onGuildSelectChange(this.value)"></select></div><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">직위</label><select id="inputRole" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 text-sm font-bold outline-none"></select></div></div><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">직업</label><select id="inputClass" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 text-sm font-bold outline-none shadow-inner cursor-pointer"><option value="">직업을 선택하세요</option></select></div><div class="flex items-center gap-3 py-1"><input type="checkbox" id="inputIsMain" class="w-5 h-5 text-pink-500 rounded focus:ring-pink-50 shadow-sm cursor-pointer" checked onchange="toggleMainCharInput()"><label for="inputIsMain" class="text-[11px] font-bold text-gray-600 uppercase tracking-tight cursor-pointer">본캐릭터입니까?</label></div><div id="mainCharInputGroup" class="hidden animate-fade-in space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">본캐 닉네임</label><input type="text" id="inputMainCharName" class="w-full border border-gray-100 bg-gray-50 rounded-2xl p-3.5 text-sm font-bold outline-none shadow-inner" placeholder="본캐릭명 입력"></div><button type="submit" id="btnSubmitMember" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-black transition-all shadow-xl mt-2">데이터베이스에 저장</button></form></div></div>
+    <div id="memberModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm hidden fade-in font-bold p-4"><div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden border border-gray-100"><div class="p-5 lg:p-6 bg-pink-50 border-b border-pink-100 flex justify-between items-center"><div><h3 id="modalTitle" class="text-base lg:text-lg font-bold text-pink-700 tracking-tight">멤버 정보 입력</h3></div><button onclick="closeModal('memberModal')"><i class="fas fa-times text-gray-400 text-lg"></i></button></div><form id="memberForm" class="p-6 lg:p-8 space-y-4 lg:space-y-5"><input type="hidden" id="editMemberId"><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">닉네임</label><input type="text" id="inputName" class="w-full border border-gray-100 bg-gray-50 rounded-xl lg:rounded-2xl p-3 lg:p-3.5 outline-none focus:ring-4 focus:ring-pink-50 text-sm font-bold shadow-inner" required placeholder="정확한 캐릭터명"></div><div class="grid grid-cols-2 gap-3 lg:gap-4"><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">소속</label><select id="inputGuild" class="w-full border border-gray-100 bg-gray-50 rounded-xl lg:rounded-2xl p-3 lg:p-3.5 text-xs lg:text-sm font-bold outline-none" onchange="onGuildSelectChange(this.value)"></select></div><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">직위</label><select id="inputRole" class="w-full border border-gray-100 bg-gray-50 rounded-xl lg:rounded-2xl p-3 lg:p-3.5 text-xs lg:text-sm font-bold outline-none"></select></div></div><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">직업</label><select id="inputClass" class="w-full border border-gray-100 bg-gray-50 rounded-xl lg:rounded-2xl p-3 lg:p-3.5 text-xs lg:text-sm font-bold outline-none shadow-inner cursor-pointer"><option value="">직업을 선택하세요</option></select></div><div class="flex items-center gap-3 py-1"><input type="checkbox" id="inputIsMain" class="w-5 h-5 text-pink-500 rounded focus:ring-pink-50 shadow-sm cursor-pointer" checked onchange="toggleMainCharInput()"><label for="inputIsMain" class="text-[10px] lg:text-[11px] font-bold text-gray-600 uppercase tracking-tight cursor-pointer">본캐릭터입니까?</label></div><div id="mainCharInputGroup" class="hidden animate-fade-in space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">본캐 닉네임</label><input type="text" id="inputMainCharName" class="w-full border border-gray-100 bg-gray-50 rounded-xl lg:rounded-2xl p-3 lg:p-3.5 text-xs lg:text-sm font-bold outline-none shadow-inner" placeholder="본캐릭명 입력"></div><button type="submit" id="btnSubmitMember" class="w-full bg-gray-900 text-white py-3.5 lg:py-4 rounded-xl lg:rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-black transition-all shadow-xl mt-2">데이터베이스에 저장</button></form></div></div>
     
-    <div id="deleteModal" class="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm hidden fade-in font-bold"><div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 text-center border border-gray-50"><div class="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-5 shadow-inner"><i class="fas fa-user-minus"></i></div><p class="text-gray-800 font-bold text-lg mb-6 leading-tight"><span id="deleteTargetName" class="text-red-500"></span> 제거 확정</p><div class="space-y-4 text-left mb-8"><div class="flex gap-2"><button onclick="setDeleteType('leave')" id="btnLeave" class="flex-1 py-3 rounded-xl font-bold text-xs bg-gray-800 text-white shadow-sm transition-all">자진탈퇴</button><button onclick="setDeleteType('kick')" id="btnKick" class="flex-1 py-3 rounded-xl font-bold text-xs bg-gray-100 text-gray-400 transition-all">추방</button></div><input type="text" id="deleteReason" class="w-full border border-gray-100 bg-gray-50 rounded-xl p-3 text-xs font-bold outline-none shadow-inner" placeholder="사유를 입력하세요 (이력용)"></div><div class="grid grid-cols-2 gap-4"><button onclick="closeModal('deleteModal')" class="py-4 bg-gray-50 rounded-2xl font-bold text-xs text-gray-500 hover:bg-gray-100 transition-all">취소</button><button onclick="confirmDelete()" class="py-4 bg-red-500 text-white rounded-2xl font-bold text-xs shadow-xl hover:bg-red-600 transition-all">삭제 확정</button></div></div></div>
+    <div id="deleteModal" class="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm hidden fade-in font-bold p-4"><div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm p-8 lg:p-10 text-center border border-gray-50"><div class="w-14 h-14 lg:w-16 lg:h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-xl lg:text-2xl mx-auto mb-4 lg:mb-5 shadow-inner"><i class="fas fa-user-minus"></i></div><p class="text-gray-800 font-bold text-base lg:text-lg mb-5 lg:mb-6 leading-tight"><span id="deleteTargetName" class="text-red-500"></span> 제거 확정</p><div class="space-y-3 lg:space-y-4 text-left mb-6 lg:mb-8"><div class="flex gap-2"><button onclick="setDeleteType('leave')" id="btnLeave" class="flex-1 py-2.5 lg:py-3 rounded-xl font-bold text-[10px] lg:text-xs bg-gray-800 text-white shadow-sm transition-all">자진탈퇴</button><button onclick="setDeleteType('kick')" id="btnKick" class="flex-1 py-2.5 lg:py-3 rounded-xl font-bold text-[10px] lg:text-xs bg-gray-100 text-gray-400 transition-all">추방</button></div><input type="text" id="deleteReason" class="w-full border border-gray-100 bg-gray-50 rounded-xl p-3 text-[10px] lg:text-xs font-bold outline-none shadow-inner" placeholder="사유를 입력하세요 (이력용)"></div><div class="grid grid-cols-2 gap-3 lg:gap-4"><button onclick="closeModal('deleteModal')" class="py-3.5 lg:py-4 bg-gray-50 rounded-xl lg:rounded-2xl font-bold text-[10px] lg:text-xs text-gray-500 hover:bg-gray-100 transition-all">취소</button><button onclick="confirmDelete()" class="py-3.5 lg:py-4 bg-red-500 text-white rounded-xl lg:rounded-2xl font-bold text-[10px] lg:text-xs shadow-xl hover:bg-red-600 transition-all">삭제 확정</button></div></div></div>
 
     <!-- Event Detail Modal -->
-    <div id="eventDetailModal" class="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm hidden fade-in font-bold">
-        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 border border-gray-50 relative flex flex-col max-h-[85vh]">
-            <div class="flex justify-between items-center mb-6 shrink-0">
-                <h3 id="eventDetailDate" class="text-2xl font-black text-slate-800 tracking-tighter">Date</h3>
-                <button onclick="closeModal('eventDetailModal')" class="text-gray-400 hover:text-gray-600 text-xl"><i class="fas fa-times"></i></button>
+    <div id="eventDetailModal" class="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm hidden fade-in font-bold p-4">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm p-8 lg:p-10 border border-gray-50 relative flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center mb-5 lg:mb-6 shrink-0">
+                <h3 id="eventDetailDate" class="text-xl lg:text-2xl font-black text-slate-800 tracking-tighter">Date</h3>
+                <button onclick="closeModal('eventDetailModal')" class="text-gray-400 hover:text-gray-600 text-lg lg:text-xl"><i class="fas fa-times"></i></button>
             </div>
             
-            <div id="eventListForDate" class="flex flex-col gap-2 mb-6 overflow-y-auto no-scrollbar shrink-0 max-h-[150px]">
+            <div id="eventListForDate" class="flex flex-col gap-2 mb-5 lg:mb-6 overflow-y-auto no-scrollbar shrink-0 max-h-[120px] lg:max-h-[150px]">
             </div>
 
-            <div class="space-y-6 flex-1 overflow-y-auto no-scrollbar">
+            <div class="space-y-5 lg:space-y-6 flex-1 overflow-y-auto no-scrollbar">
                 <div class="flex justify-between items-end">
-                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">일정 내용</span>
-                    <button onclick="window.resetEventForm()" class="text-[10px] bg-pink-50 text-pink-500 px-3 py-1 rounded-lg font-bold hover:bg-pink-100 transition-colors">+ 새 일정</button>
+                    <span class="text-[9px] lg:text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">일정 내용</span>
+                    <button onclick="window.resetEventForm()" class="text-[9px] lg:text-[10px] bg-pink-50 text-pink-500 px-2 lg:px-3 py-1 rounded-lg font-bold hover:bg-pink-100 transition-colors">+ 새 일정</button>
                 </div>
                 
                 <div class="space-y-2">
-                    <input type="text" id="eventTitleInput" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl p-4 outline-none focus:ring-4 focus:ring-pink-50 text-sm font-bold shadow-inner placeholder:text-gray-300" placeholder="제목 (예: 수로 정산)">
+                    <input type="text" id="eventTitleInput" class="w-full border border-gray-100 bg-gray-50/50 rounded-xl lg:rounded-2xl p-3.5 lg:p-4 outline-none focus:ring-4 focus:ring-pink-50 text-xs lg:text-sm font-bold shadow-inner placeholder:text-gray-300" placeholder="제목 (예: 수로 정산)">
                 </div>
                 
                 <div class="space-y-2">
-                    <textarea id="eventContentInput" rows="3" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl p-4 outline-none focus:ring-4 focus:ring-pink-50 text-sm font-bold shadow-inner resize-none placeholder:text-gray-300" placeholder="상세 내용을 입력하세요."></textarea>
+                    <textarea id="eventContentInput" rows="3" class="w-full border border-gray-100 bg-gray-50/50 rounded-xl lg:rounded-2xl p-3.5 lg:p-4 outline-none focus:ring-4 focus:ring-pink-50 text-xs lg:text-sm font-bold shadow-inner resize-none placeholder:text-gray-300" placeholder="상세 내용을 입력하세요."></textarea>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mt-8 shrink-0">
-                <button onclick="deleteEvent()" id="btnDeleteEvent" class="py-4 bg-rose-50 text-rose-500 rounded-[1.5rem] font-bold text-sm hover:bg-rose-100 transition-all hidden">삭제</button>
-                <button onclick="saveEvent()" id="btnSaveEvent" class="col-span-2 py-4 bg-[#1e232d] text-white rounded-[1.5rem] font-bold text-sm shadow-xl hover:bg-black transition-all">저장</button>
+            <div class="grid grid-cols-2 gap-3 lg:gap-4 mt-6 lg:mt-8 shrink-0">
+                <button onclick="deleteEvent()" id="btnDeleteEvent" class="py-3.5 lg:py-4 bg-rose-50 text-rose-500 rounded-xl lg:rounded-[1.5rem] font-bold text-[10px] lg:text-sm hover:bg-rose-100 transition-all hidden">삭제</button>
+                <button onclick="saveEvent()" id="btnSaveEvent" class="col-span-2 py-3.5 lg:py-4 bg-[#1e232d] text-white rounded-xl lg:rounded-[1.5rem] font-bold text-[10px] lg:text-sm shadow-xl hover:bg-black transition-all">저장</button>
             </div>
         </div>
     </div>
@@ -157,7 +159,7 @@
         // --- CONSTANTS ---
         const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/19V1FFMz9M3gQof6T89nwLSGHEK_OriOint2adLINlY0/edit?gid=1890518105#gid=1890518105";
         
-        // ★ 최신 URL 연결
+        // ★ 최신 URL 연결 (If you get fetch errors, check if this URL is correct and allows cross-origin requests)
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx6KiDSRROnH-EgKBmqpWw5eYNOtnY_hr_vBKS337Q0tzR4g7ylc5ce8OwxCMikKQcWCA/exec";
         
         const GUILD_START_DATE = new Date('2020-03-17');
@@ -391,9 +393,8 @@
         window.fetchMembers = async () => {
             window.showLoading(true);
             try {
-                // ★ Failed to fetch 방지: mode, cache 설정 제거하여 단순한 GET 요청으로 변경
                 const targetUrl = appState.scriptUrl + "?t=" + new Date().getTime();
-                const response = await fetch(targetUrl);
+                const response = await fetch(targetUrl); // Removed CORS block to prevent Failed to Fetch
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -451,7 +452,6 @@
             if(!skipRefresh) window.showMsg("데이터 처리 중...", "info");
             try {
                 const targetUrl = appState.scriptUrl;
-                // ★ Failed to fetch 방지: mode 설정 제거
                 const response = await fetch(targetUrl, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
@@ -503,30 +503,31 @@
             const adminBailStats = window.getAdminBailStats();
             const adminBailHtml = adminBailStats.map(([name, count]) => `<div class="flex justify-between items-center py-2 border-b border-gray-50 last:border-0"><span class="text-[11px] font-bold text-gray-600">${name}</span><span class="text-[11px] font-black text-pink-500">${count}개</span></div>`).join('') || '<p class="text-[10px] text-gray-300 italic text-center py-4">보석금 내역 없음</p>';
             
+            // ★ 반응형 레이아웃 및 차트 비중 확대 적용
             container.innerHTML = `
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8 fade-in shrink-0">
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8 mb-6 lg:mb-8 fade-in shrink-0">
                 <div class="flex flex-col gap-6">
-                    <div class="flex gap-6 h-40">
-                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚠카롱')" class="flex-1 bg-gradient-to-br from-pink-500 to-rose-500 rounded-[2.5rem] p-8 shadow-lg text-white cursor-pointer hover:scale-[1.02] transition-transform relative overflow-hidden flex flex-col justify-center border-none">
+                    <div class="flex flex-col sm:flex-row gap-4 lg:gap-6 h-auto sm:h-40">
+                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚠카롱')" class="flex-1 bg-gradient-to-br from-pink-500 to-rose-500 rounded-[2rem] lg:rounded-[2.5rem] p-6 lg:p-8 shadow-lg text-white cursor-pointer hover:scale-[1.02] transition-transform relative overflow-hidden flex flex-col justify-center border-none min-h-[120px]">
                             <div class="absolute top-0 right-0 p-4 opacity-20 text-5xl"><i class="fas fa-crown"></i></div>
-                            <h3 class="text-sm font-bold opacity-80 uppercase tracking-widest text-center">뚠카롱 수로 총점</h3>
-                            <p class="text-3xl font-black tracking-tighter text-center">${ddunT.toLocaleString()}</p>
+                            <h3 class="text-xs lg:text-sm font-bold opacity-80 uppercase tracking-widest text-center">뚠카롱 수로 총점</h3>
+                            <p class="text-2xl lg:text-3xl font-black tracking-tighter text-center">${ddunT.toLocaleString()}</p>
                         </div>
-                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚱카롱')" class="flex-1 bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm text-gray-800 cursor-pointer hover:border-pink-200 transition-all flex flex-col justify-center relative overflow-hidden">
-                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest text-center">뚱카롱 수로 총점</h3>
-                            <p class="text-3xl font-black tracking-tighter text-pink-500 text-center">${ddungT.toLocaleString()}</p>
+                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚱카롱')" class="flex-1 bg-white border border-gray-100 rounded-[2rem] lg:rounded-[2.5rem] p-6 lg:p-8 shadow-sm text-gray-800 cursor-pointer hover:border-pink-200 transition-all flex flex-col justify-center relative overflow-hidden min-h-[120px]">
+                            <h3 class="text-xs lg:text-sm font-bold text-gray-400 uppercase tracking-widest text-center">뚱카롱 수로 총점</h3>
+                            <p class="text-2xl lg:text-3xl font-black tracking-tighter text-pink-500 text-center">${ddungT.toLocaleString()}</p>
                         </div>
                     </div>
-                    <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 min-h-[340px] shadow-sm flex flex-col">
-                        <div class="flex justify-between items-center mb-6">
-                            <div class="flex items-center gap-3">
-                                <span class="text-2xl">📅</span>
-                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Guild Calendar</h3>
+                    <div class="bg-white p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] border border-gray-100 min-h-[340px] shadow-sm flex flex-col">
+                        <div class="flex justify-between items-center mb-4 lg:mb-6">
+                            <div class="flex items-center gap-2 lg:gap-3">
+                                <span class="text-xl lg:text-2xl">📅</span>
+                                <h3 class="text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest">Guild Calendar</h3>
                             </div>
                             <div class="flex items-center gap-4">
                                 <div class="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-2xl border border-gray-100">
                                     <button onclick="moveMonth(-1)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-white hover:text-pink-500 transition-all text-gray-400"><i class="fas fa-chevron-left text-[10px]"></i></button>
-                                    <span class="text-[11px] font-bold text-gray-600 w-16 text-center">${appState.calendarView.year}.${String(appState.calendarView.month + 1).padStart(2, '0')}</span>
+                                    <span class="text-[10px] lg:text-[11px] font-bold text-gray-600 w-14 lg:w-16 text-center">${appState.calendarView.year}.${String(appState.calendarView.month + 1).padStart(2, '0')}</span>
                                     <button onclick="moveMonth(1)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-white hover:text-pink-500 transition-all text-gray-400"><i class="fas fa-chevron-right text-[10px]"></i></button>
                                 </div>
                             </div>
@@ -534,32 +535,38 @@
                         ${window.renderCalendar()}
                     </div>
                 </div>
-                <div class="flex flex-col gap-8 h-full">
-                    <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100 flex flex-col h-[300px] overflow-hidden shrink-0">
+                
+                <div class="flex flex-col gap-6 lg:gap-8 h-full">
+                    <!-- ★ 차트 영역 세로 높이를 더 넓게 확대 (min-h-[350px] ~ min-h-[450px]) -->
+                    <div class="bg-white p-6 lg:p-10 rounded-[2rem] lg:rounded-[3rem] shadow-sm border border-gray-100 flex flex-col flex-1 min-h-[350px] lg:min-h-[450px] overflow-hidden shrink-0">
                         <div class="flex justify-between items-center mb-4 shrink-0">
-                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest">직업 분포도</h3>
-                            <select onchange="window.updateJobChart(this.value)" class="bg-gray-50 rounded-xl px-3 py-1.5 text-xs font-bold outline-none cursor-pointer hover:bg-gray-100">
+                            <h3 class="text-xs lg:text-sm font-bold text-gray-400 uppercase tracking-widest">직업 분포도</h3>
+                            <select onchange="window.updateJobChart(this.value)" class="bg-gray-50 rounded-xl px-3 py-1.5 text-[10px] lg:text-xs font-bold outline-none cursor-pointer hover:bg-gray-100">
                                 <option value="all">전체</option>${appState.guilds.map(g => `<option value="${g.name}">${g.name}</option>`).join('')}
                             </select>
                         </div>
                         <div class="flex-1 overflow-y-auto no-scrollbar relative">
-                            <div id="jobChartContainer" style="min-height: 250px;"><canvas id="jobChart"></canvas></div>
+                            <div id="jobChartContainer" style="min-height: 100%;"><canvas id="jobChart"></canvas></div>
                         </div>
                     </div>
-                    <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100 flex flex-col flex-1 min-h-[200px] overflow-hidden">
-                        <div class="flex items-center justify-between mb-6">
-                            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest">간부진 보석금 현황</h3>
+                    
+                    <!-- ★ 간부진 보석금 영역 세로 높이를 작게 고정 (h-[180px] ~ h-[220px]) -->
+                    <div class="bg-white p-6 lg:p-10 rounded-[2rem] lg:rounded-[3rem] shadow-sm border border-gray-100 flex flex-col h-[180px] lg:h-[220px] shrink-0 overflow-hidden">
+                        <div class="flex items-center justify-between mb-4 lg:mb-6">
+                            <h3 class="text-xs lg:text-sm font-bold text-gray-400 uppercase tracking-widest">간부진 보석금 현황</h3>
                             <i class="fas fa-gem text-pink-300"></i>
                         </div>
                         <div class="flex-1 overflow-y-auto no-scrollbar pr-2">${adminBailHtml}</div>
                     </div>
                 </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 fade-in shrink-0">
+            
+            <!-- 하단 길드 요약 카드 (반응형: 모바일 2개, 태블릿 3개, PC 6개) -->
+            <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6 fade-in shrink-0">
                 ${appState.guilds.map(g => { 
                     const count = appState.members.filter(m => m.guild === g.name).length; 
                     const pct = Math.min((count / g.max) * 100, 100); 
-                    return `<div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group" onclick="filterByGuild('${g.name}')"><div class="flex justify-between items-start mb-6"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-pink-50 group-hover:text-pink-500 transition-colors"><i class="fas ${g.icon}"></i></div><div><span class="block font-bold text-lg text-gray-800 group-hover:text-pink-500">${g.name}</span><span class="text-[10px] text-gray-400 font-bold">${g.type}</span></div></div></div><div class="w-full bg-gray-50 rounded-full h-1.5 overflow-hidden"><div class="h-full bg-pink-500 transition-all duration-1000" style="width:${pct}%"></div></div><p class="text-[10px] text-gray-400 font-bold mt-2 text-right">${count} / ${g.max}</p></div>`; 
+                    return `<div class="bg-white p-4 lg:p-6 rounded-[1.5rem] lg:rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group" onclick="filterByGuild('${g.name}')"><div class="flex justify-between items-start mb-4 lg:mb-6"><div class="flex flex-col sm:flex-row items-center sm:items-start gap-2 lg:gap-3 text-center sm:text-left"><div class="w-8 h-8 lg:w-10 lg:h-10 mx-auto sm:mx-0 bg-gray-50 rounded-xl lg:rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-pink-50 group-hover:text-pink-500 transition-colors"><i class="fas ${g.icon} text-sm lg:text-base"></i></div><div><span class="block font-bold text-sm lg:text-lg text-gray-800 group-hover:text-pink-500">${g.name}</span><span class="text-[9px] lg:text-[10px] text-gray-400 font-bold">${g.type}</span></div></div></div><div class="w-full bg-gray-50 rounded-full h-1.5 overflow-hidden"><div class="h-full bg-pink-500 transition-all duration-1000" style="width:${pct}%"></div></div><p class="text-[9px] lg:text-[10px] text-gray-400 font-bold mt-2 text-center sm:text-right">${count} / ${g.max}</p></div>`; 
                 }).join('')}
             </div>`;
             setTimeout(() => window.updateJobChart('all'), 0);
@@ -808,7 +815,7 @@
 
             const sortIcon = (f) => appState.analysisFilters.sortField === f ? (appState.analysisFilters.sortOrder === 'asc' ? ' <i class="fas fa-sort-up"></i>' : ' <i class="fas fa-sort-down"></i>') : '';
             const analysisGuildsOptions = ['뚠카롱', '뚱카롱'];
-
+            
             container.innerHTML = `
             <div class="flex flex-col gap-4 fade-in h-full overflow-hidden">
                 <div class="flex gap-2 overflow-x-auto no-scrollbar shrink-0">
@@ -846,7 +853,7 @@
                     <div class="lg:col-span-1 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
                         <h3 class="text-xs font-bold text-gray-400 mb-4 uppercase tracking-widest">주간 총점 추이</h3>
                         <div class="flex-1 w-full relative">
-                            <!-- ★ 가로 스크롤 없이 차트가 박스에 꽉 차게 렌더링되도록 수정 -->
+                            <!-- ★ 가로 스크롤 없이 차트가 꽉 차게 표시되도록 적용 완료 -->
                             <canvas id="analysisChart"></canvas>
                         </div>
                     </div>
@@ -855,15 +862,14 @@
                         <div class="p-4 border-b border-gray-50 flex justify-between items-center shrink-0 bg-white z-40 relative">
                             <h3 class="text-xs font-bold text-gray-800 uppercase tracking-widest">전체 데이터 (누적)</h3>
                         </div>
-                        <div id="analysisTableWrapper" class="flex-1 overflow-auto no-scrollbar relative bg-white">
-                            <!-- ★ UI 버그 완전 해결: border-collapse 적용 및 inset box-shadow로 빈틈 차단 -->
+                        <div id="analysisTableWrapper" class="flex-1 overflow-auto relative bg-white scroll-smooth" style="scrollbar-width: thin;">
+                            <!-- ★ UI 버그 완전 해결: border-collapse와 box-shadow-inset 혼합사용 -->
                             <table class="w-full text-left text-xs whitespace-nowrap" style="border-collapse: collapse;">
                                 <thead class="text-[10px] text-gray-500 uppercase bg-gray-50">
                                     <tr>
-                                        <!-- 인라인 스타일로 너비와 위치를 픽셀 단위로 완전 고정, 그림자로 빈틈 메움 -->
-                                        <th class="p-3 text-center sticky top-0 left-0 bg-gray-100 z-50 shadow-[inset_-1px_0_0_#e5e7eb,inset_0_-1px_0_#e5e7eb]" style="width: 60px; min-width: 60px; max-width: 60px;">RANK</th>
-                                        <th class="p-3 sticky top-0 left-[60px] bg-gray-100 z-50 shadow-[inset_-1px_0_0_#e5e7eb,inset_0_-1px_0_#e5e7eb] cursor-pointer hover:bg-gray-200" style="width: 140px; min-width: 140px; max-width: 140px;" onclick="window.setAnalysisSort('name')">캐릭터명${sortIcon('name')}</th>
-                                        <th class="p-3 text-center sticky top-0 left-[200px] bg-pink-100 text-pink-600 z-50 shadow-[inset_-1px_0_0_#fbcfe8,inset_0_-1px_0_#fbcfe8,2px_0_5px_-2px_rgba(0,0,0,0.1)] cursor-pointer" style="width: 110px; min-width: 110px; max-width: 110px;" onclick="window.setAnalysisSort('avg')">평균 (참여)${sortIcon('avg')}</th>
+                                        <th class="p-3 text-center sticky top-0 bg-gray-100 z-50 shadow-[inset_-1px_0_0_#e5e7eb,inset_0_-1px_0_#e5e7eb]" style="left: 0px; width: 60px; min-width: 60px; max-width: 60px;">RANK</th>
+                                        <th class="p-3 sticky top-0 bg-gray-100 z-50 shadow-[inset_-1px_0_0_#e5e7eb,inset_0_-1px_0_#e5e7eb] cursor-pointer hover:bg-gray-200" style="left: 60px; width: 140px; min-width: 140px; max-width: 140px;" onclick="window.setAnalysisSort('name')">캐릭터명${sortIcon('name')}</th>
+                                        <th class="p-3 text-center sticky top-0 bg-pink-100 text-pink-600 z-50 shadow-[inset_-1px_0_0_#fbcfe8,inset_0_-1px_0_#fbcfe8,3px_0_5px_-2px_rgba(0,0,0,0.1)] cursor-pointer" style="left: 200px; width: 110px; min-width: 110px; max-width: 110px;" onclick="window.setAnalysisSort('avg')">평균 (참여)${sortIcon('avg')}</th>
                                         ${recentHeaders.map((h, idx) => {
                                             const displayStr = getWedStr(h);
                                             return `<th class="p-3 min-w-[100px] text-right font-medium cursor-pointer hover:bg-gray-200 transition-colors select-none sticky top-0 bg-gray-50 z-30 shadow-[inset_0_-1px_0_#e5e7eb]" onclick="window.setAnalysisSort('date_${h}')" title="클릭하여 상승률 순으로 정렬">${displayStr}${sortIcon('date_'+h)}</th>`;
@@ -875,15 +881,13 @@
                                         const globalIndex = i + 1;
                                         return `
                                         <tr class="group h-11 hover:bg-gray-50 transition-colors">
-                                            <!-- 바디 데이터 고정열: 배경색 완전 불투명(bg-white), 그림자로 테두리 및 틈새 메움 -->
-                                            <td class="p-3 text-center text-gray-400 sticky left-0 z-40 bg-white group-hover:bg-gray-50 shadow-[inset_-1px_0_0_#e5e7eb,inset_0_-1px_0_#e5e7eb]" style="width: 60px; min-width: 60px; max-width: 60px;">${globalIndex}</td>
-                                            <td class="p-3 text-gray-800 sticky left-[60px] z-40 bg-white group-hover:bg-gray-50 shadow-[inset_-1px_0_0_#e5e7eb,inset_0_-1px_0_#e5e7eb]" style="width: 140px; min-width: 140px; max-width: 140px;">
+                                            <td class="p-3 text-center text-gray-400 sticky z-40 bg-white group-hover:bg-gray-50 shadow-[inset_-1px_0_0_#e5e7eb,inset_0_-1px_0_#e5e7eb]" style="left: 0px; width: 60px; min-width: 60px; max-width: 60px;">${globalIndex}</td>
+                                            <td class="p-3 text-gray-800 sticky z-40 bg-white group-hover:bg-gray-50 shadow-[inset_-1px_0_0_#e5e7eb,inset_0_-1px_0_#e5e7eb]" style="left: 60px; width: 140px; min-width: 140px; max-width: 140px;">
                                                 <div class="flex items-center leading-none overflow-hidden text-ellipsis">
                                                     ${window.getNicknameIcon(m.role)}<span class="truncate">${m.name}</span>
                                                 </div>
                                             </td>
-                                            <td class="p-3 text-center text-pink-600 sticky left-[200px] z-40 bg-pink-50 group-hover:bg-pink-100 shadow-[inset_-1px_0_0_#fbcfe8,inset_0_-1px_0_#e5e7eb,2px_0_5px_-2px_rgba(0,0,0,0.05)]" style="width: 110px; min-width: 110px; max-width: 110px;">${m.avg.toLocaleString()}</td>
-                                            <!-- 스크롤 데이터 -->
+                                            <td class="p-3 text-center text-pink-600 sticky z-40 bg-pink-50 group-hover:bg-pink-100 shadow-[inset_-1px_0_0_#fbcfe8,inset_0_-1px_0_#e5e7eb,3px_0_5px_-2px_rgba(0,0,0,0.05)]" style="left: 200px; width: 110px; min-width: 110px; max-width: 110px;">${m.avg.toLocaleString()}</td>
                                             ${m.recentScores.map((s, scoreIdx) => {
                                                 let diffHtml = '';
                                                 let prevScore = 0;
@@ -908,7 +912,7 @@
                                                 }
 
                                                 return `
-                                                <td class="p-3 min-w-[100px] text-right font-mono align-middle shadow-[inset_0_-1px_0_#e5e7eb] ${s === 0 ? 'bg-red-50 text-red-400 group-hover:bg-red-100' : 'bg-white text-gray-700 group-hover:bg-gray-50'}" style="position: relative; z-index: 10;">
+                                                <td class="p-3 min-w-[100px] text-right font-mono align-middle shadow-[inset_0_-1px_0_#e5e7eb] ${s === 0 ? 'bg-red-50 text-red-400 group-hover:bg-red-100' : 'bg-white text-gray-700 group-hover:bg-gray-50'} relative z-10">
                                                     <div class="flex flex-col justify-center items-end leading-tight min-h-[28px]">
                                                         <span class="${s > 0 ? 'text-xs' : 'text-gray-400'}">${s > 0 ? s.toLocaleString() : '0'}</span>
                                                         ${diffHtml}
@@ -925,13 +929,13 @@
                 </div>
             </div>`;
 
-            // ★ 최신 데이터를 바로 볼 수 있게, 표 렌더링 즉시 무조건 우측 끝으로 스크롤 넘김
+            // ★ 최신 데이터를 바로 볼 수 있게 자동으로 스크롤 맨 끝으로 이동
             setTimeout(() => {
                 const tableWrapper = document.getElementById('analysisTableWrapper');
                 if (tableWrapper) {
                     tableWrapper.scrollLeft = tableWrapper.scrollWidth;
                 }
-            }, 50);
+            }, 100);
 
             const ctx = document.getElementById('analysisChart');
             if(!ctx) return;
@@ -982,7 +986,8 @@
             const counts = {}; targets.forEach(m => { const j = m.class || '미설정'; counts[j] = (counts[j] || 0) + 1; });
             const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
             
-            const newHeight = Math.max(250, 50 + (sorted.length * 30));
+            // ★ 직업 분포도 차트의 컨테이너를 부모 높이에 꽉 차게 수정
+            const newHeight = Math.max(300, 50 + (sorted.length * 30));
             if(container) container.style.height = newHeight + 'px';
 
             const jobPalette = [
