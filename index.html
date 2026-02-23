@@ -248,11 +248,11 @@
         const baseRanks = ['마카롱', '다쿠아즈'];
         const initialGuildRanks = {
             '뚠카롱': [...baseRanks, '크라운', '파르페', '티라미슈', '크로칸슈', '롤케이크', '팬케이크', '와플'],
-            '뚱카롱': [...baseRanks, '뚠케이크', '뚠브레드', '수플레', '뚠스콘', '반죽', '반죽(휴면)', '아인슈페너'],
-            '밤카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽', '반죽(휴면)'],
-            '별카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽', '반죽(휴면)'],
-            '달카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽', '반죽(휴면)'],
-            '꿀카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽', '반죽(휴면)']
+            '뚱카롱': [...baseRanks, '뚠케이크', '뚠브레드', '수플레', '뚠스콘', '반죽(휴면)', '아인슈페너'],
+            '밤카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽(휴면)'],
+            '별카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽(휴면)'],
+            '달카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽(휴면)'],
+            '꿀카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽(휴면)']
         };
         const ITEMS_PER_PAGE = 17;
 
@@ -329,11 +329,19 @@
             return Object.entries(stats).sort((a,b) => a[0].localeCompare(b[0], 'ko'));
         };
 
+        const ROLE_PRIORITY = {'마카롱':0,'다쿠아즈':1,'크라운':2,'파르페':3,'티라미슈':4,'크로칸슈':5,'롤케이크':6,'팬케이크':7,'와플':8,'스콘':9,'반죽(휴면)':10,'뚠케이크':2,'뚠브레드':3,'아인슈페너':4,'부팬케이크':5,'수플레':6,'뚠스콘':7,'부케이크':8};
+
         function smartCompare(a, b, field, order) {
             let valA = a[field]; let valB = b[field];
             if (field === 'mainInfo') {
                 valA = a.isMain ? a.name : (a.mainCharName || "");
                 valB = b.isMain ? b.name : (b.mainCharName || "");
+            }
+            if (field === 'role') {
+                const pA = ROLE_PRIORITY[valA] !== undefined ? ROLE_PRIORITY[valA] : 99;
+                const pB = ROLE_PRIORITY[valB] !== undefined ? ROLE_PRIORITY[valB] : 99;
+                if (pA !== pB) return order === 'asc' ? pA - pB : pB - pA;
+                return 0;
             }
             if (valA === valB) return 0;
             const numA = parseFloat(valA); const numB = parseFloat(valB);
@@ -573,6 +581,147 @@
         };
 
         window.router = (tab) => {
+
+        // ★ 직위 자동 부여 (뚠카롱 본캐 전용, 마카롱/다쿠아즈/부캐 제외)
+        window.autoAssignRoles = () => {
+            const excludeRoles = ['마카롱', '다쿠아즈'];
+            const targets = appState.members.filter(m => m.guild === '뚠카롱' && !excludeRoles.includes(m.role) && m.isMain !== false);
+            
+            if(targets.length === 0) return window.showMsg("부여 대상이 없습니다.", "error");
+            
+            const headers = appState.suroHeaders || [];
+            const latestHeader = headers.length > 0 ? headers[headers.length - 1] : null;
+            if(!latestHeader) return window.showMsg("수로 데이터가 없습니다.", "error");
+            
+            const getRoleByScore = (score) => {
+                if(score >= 130000) return '파르페';
+                if(score >= 95000) return '티라미슈';
+                if(score >= 72000) return '크로칸슈';
+                if(score >= 50000) return '롤케이크';
+                if(score >= 38000) return '팬케이크';
+                return '스콘';
+            };
+            
+            const scored = targets.map(m => ({
+                ...m,
+                latestScore: Math.round(Number(m.suro?.[latestHeader])) || 0
+            })).sort((a, b) => b.latestScore - a.latestScore);
+            
+            const changes = [];
+            scored.forEach((m, idx) => {
+                let newRole;
+                if(idx < 3 && m.latestScore > 0) {
+                    newRole = '크라운';
+                } else {
+                    newRole = getRoleByScore(m.latestScore);
+                }
+                if(m.role !== newRole) {
+                    changes.push({ name: m.name, from: m.role, to: newRole, score: m.latestScore });
+                }
+            });
+            
+            if(changes.length === 0) return window.showMsg("변경할 직위가 없습니다. 모두 이미 올바른 직위입니다.", "info");
+            
+            // 예쁜 확인 모달
+            const existing = document.getElementById('roleConfirmModal'); if(existing) existing.remove();
+            const overlay = document.createElement('div');
+            overlay.id = 'roleConfirmModal';
+            overlay.className = 'fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4';
+            
+            const roleColors = {
+                '크라운': 'text-amber-500', '파르페': 'text-pink-500', '티라미슈': 'text-orange-500',
+                '크로칸슈': 'text-yellow-600', '롤케이크': 'text-rose-400', '팬케이크': 'text-amber-400',
+                '스콘': 'text-gray-500', '와플': 'text-purple-400'
+            };
+            
+            const rows = changes.map((c, i) => {
+                const fromColor = roleColors[c.from] || 'text-gray-500';
+                const toColor = roleColors[c.to] || 'text-gray-500';
+                return `<tr class="border-b border-gray-50 hover:bg-gray-50">
+                    <td class="py-2 px-1 text-center"><input type="checkbox" checked data-role-idx="${i}" class="role-chk w-4 h-4 rounded text-amber-500 cursor-pointer" onchange="window._updateRoleCount()"></td>
+                    <td class="py-2 px-2 text-xs font-bold text-gray-800">${c.name}</td>
+                    <td class="py-2 px-2 text-xs font-bold ${fromColor}">${c.from}</td>
+                    <td class="py-2 px-1 text-gray-300 text-xs">→</td>
+                    <td class="py-2 px-2 text-xs font-black ${toColor}">${c.to}</td>
+                    <td class="py-2 px-2 text-xs text-gray-400 text-right font-mono">${c.score.toLocaleString()}</td>
+                </tr>`;
+            }).join('');
+            
+            overlay.innerHTML = `<div class="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+                <div class="p-5 bg-amber-50 border-b border-amber-100 flex justify-between items-center shrink-0">
+                    <div>
+                        <h3 class="text-sm font-bold text-amber-700 flex items-center gap-2"><i class="fas fa-magic"></i> 직위 자동 부여</h3>
+                        <p class="text-[10px] text-amber-500 mt-1">기준: ${latestHeader} · 변경 대상 <span class="font-black">${changes.length}명</span></p>
+                    </div>
+                    <button onclick="document.getElementById('roleConfirmModal').remove()" class="w-8 h-8 rounded-full bg-amber-100 hover:bg-amber-200 flex items-center justify-center text-amber-500"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-4">
+                    <table class="w-full">
+                        <thead><tr class="text-[9px] text-gray-400 uppercase border-b border-gray-100">
+                            <th class="py-2 px-1 text-center"><input type="checkbox" checked onclick="document.querySelectorAll('.role-chk').forEach(c=>c.checked=this.checked);window._updateRoleCount()" class="w-4 h-4 rounded cursor-pointer"></th>
+                            <th class="py-2 px-2 text-left">닉네임</th>
+                            <th class="py-2 px-2 text-left">현재</th>
+                            <th class="py-2 px-1"></th>
+                            <th class="py-2 px-2 text-left">변경</th>
+                            <th class="py-2 px-2 text-right">점수</th>
+                        </tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+                <div class="p-4 border-t border-gray-100 flex gap-3 shrink-0">
+                    <button onclick="document.getElementById('roleConfirmModal').remove()" class="flex-1 py-3 rounded-xl text-xs font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-all">취소</button>
+                    <button id="roleConfirmBtn" onclick="window._executeRoleChanges()" class="flex-1 py-3 rounded-xl text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 transition-all shadow-lg"><i class="fas fa-check mr-1"></i> <span id="roleConfirmCount">${changes.length}</span>명 직위 변경</button>
+                </div>
+            </div>`;
+            
+            document.body.appendChild(overlay);
+            overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
+            
+            // 실행 함수 저장
+            window._pendingRoleChanges = changes;
+        };
+        
+        window._updateRoleCount = () => {
+            const checked = document.querySelectorAll('.role-chk:checked').length;
+            const el = document.getElementById('roleConfirmCount');
+            const btn = document.getElementById('roleConfirmBtn');
+            if(el) el.textContent = checked;
+            if(btn) { btn.disabled = checked === 0; btn.style.opacity = checked === 0 ? '0.4' : '1'; }
+        };
+
+        window._executeRoleChanges = async () => {
+            const allChanges = window._pendingRoleChanges;
+            if(!allChanges) return;
+            const checkedIdxs = new Set();
+            document.querySelectorAll('.role-chk:checked').forEach(c => checkedIdxs.add(Number(c.dataset.roleIdx)));
+            const changes = allChanges.filter((_, i) => checkedIdxs.has(i));
+            if(changes.length === 0) return window.showMsg("선택된 변경사항이 없습니다.", "error");
+            document.getElementById('roleConfirmModal')?.remove();
+            
+            window.showLoading(true);
+            window.setLoadProgress(10, '직위 업데이트 준비 중...');
+            
+            const allMembers = appState.members.map(m => {
+                const change = changes.find(c => c.name === m.name);
+                return {
+                    name: m.name, guild: m.guild,
+                    role: change ? change.to : m.role,
+                    class: m.class || '', isMain: m.isMain || false,
+                    mainCharName: m.mainCharName || '', joinDate: m.joinDate || ''
+                };
+            });
+            
+            window.setLoadProgress(30, '서버에 전송 중...');
+            const success = await window.sendAction('save_members', { members: allMembers });
+            
+            window.setLoadProgress(80, '데이터 갱신 중...');
+            if(success) {
+                window.showMsg(changes.length + '명의 직위가 업데이트되었습니다!', 'success');
+                await window.fetchMembers();
+            }
+            window.showLoading(false);
+            window._pendingRoleChanges = null;
+        };
             appState.activeTab = tab;
             const content = document.getElementById('contentArea'); if(!content) return;
             content.innerHTML = '';
@@ -593,6 +742,15 @@
         window.renderDashboard = (container) => {
             const ddunT = window.calculateTotalSuro('뚠카롱'); 
             const ddungT = window.calculateTotalSuro('뚱카롱');
+            
+            // 뚠카롱 직위별 인원수
+            const ddunMembers = appState.members.filter(m => m.guild === '뚠카롱');
+            const roleCounts = {};
+            ddunMembers.forEach(m => { const r = m.role || '미설정'; roleCounts[r] = (roleCounts[r] || 0) + 1; });
+            const roleOrder = ['마카롱','다쿠아즈','크라운','파르페','티라미슈','크로칸슈','롤케이크','팬케이크','와플','스콘','반죽(휴면)'];
+            const roleEmoji = {'마카롱':'👑','다쿠아즈':'👑','크라운':'👑','파르페':'🍨','티라미슈':'🍰','크로칸슈':'🥐','롤케이크':'🍥','팬케이크':'🥞','와플':'🧇','스콘':'🍪','반죽(휴면)':'🫓'};
+            const roleColorClass = {'마카롱':'text-blue-600 bg-blue-50 border-blue-100','다쿠아즈':'text-pink-600 bg-pink-50 border-pink-100','크라운':'text-amber-600 bg-amber-50 border-amber-100','파르페':'text-indigo-600 bg-indigo-50 border-indigo-100','티라미슈':'text-indigo-600 bg-indigo-50 border-indigo-100','크로칸슈':'text-green-600 bg-green-50 border-green-100','롤케이크':'text-pink-600 bg-pink-50 border-pink-100','팬케이크':'text-pink-600 bg-pink-50 border-pink-100','와플':'text-orange-600 bg-orange-50 border-orange-100','스콘':'text-gray-600 bg-gray-50 border-gray-100','반죽(휴면)':'text-gray-400 bg-gray-50 border-gray-100'};
+            const roleCountHtml = roleOrder.filter(r => roleCounts[r]).map(r => `<div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg border ${roleColorClass[r] || 'bg-gray-50 border-gray-100'}"><span>${roleEmoji[r] || ''} ${r}</span><span class="font-black">${roleCounts[r]}명</span></div>`).join('');
             const adminBailStats = window.getAdminBailStats();
             const adminBailHtml = adminBailStats.map(([name, count]) => `<div class="flex justify-between items-center py-2 border-b border-gray-50 last:border-0"><span class="text-[11px] font-bold text-gray-600">${name}</span><span class="text-[11px] font-black text-pink-500">${count}개</span></div>`).join('') || '<p class="text-[10px] text-gray-300 italic text-center py-4">보석금 내역 없음</p>';
             
@@ -656,6 +814,11 @@
                                 <div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-gray-50 border border-gray-100"><span class="text-gray-400">🫓 반죽</span><span class="text-gray-400">휴면</span></div>
                             </div>
                         </div>
+                    </div>
+                    <!-- 뚠카롱 직위별 인원수 -->
+                    <div class="bg-white p-4 lg:p-6 rounded-2xl lg:rounded-[2rem] border border-gray-100 shadow-sm">
+                        <h3 class="text-[10px] lg:text-xs font-bold text-pink-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-users text-pink-400"></i> 뚠카롱 직위별 인원 <span class="text-gray-400 font-bold">(${ddunMembers.length}명)</span></h3>
+                        <div class="grid grid-cols-2 gap-1.5 text-[10px] lg:text-[11px] font-bold">${roleCountHtml}</div>
                     </div>
                 </div>
                 <div class="flex flex-col gap-4 lg:gap-8 h-full">
@@ -1118,8 +1281,9 @@
             <div class="flex flex-col fade-in h-full">
                 <!-- 상단 컨트롤 (고정) -->
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shrink-0 pb-3 bg-gray-50 z-20">
-                    <div class="flex gap-2 overflow-x-auto no-scrollbar shrink-0 w-full sm:w-auto">
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar shrink-0 w-full sm:w-auto items-center">
                         ${analysisGuildsOptions.map(gNameOption => `<button onclick="window.renderAnalysis(document.getElementById('contentArea'), '${gNameOption}')" class="px-6 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${gNameOption === gName ? 'bg-pink-500 text-white shadow-lg' : 'bg-white text-gray-500 border border-gray-100'}">${gNameOption}</button>`).join('')}
+                        ${gName === '뚠카롱' ? '<button onclick="window.autoAssignRoles()" class="px-4 py-2.5 rounded-xl text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition-all shrink-0 flex items-center gap-1.5"><i class="fas fa-magic"></i> 직위 자동부여</button>' : ''}
                     </div>
                     <div class="relative w-full sm:w-64 shrink-0">
                         <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
@@ -1595,7 +1759,7 @@
             const pageData = filtered.slice((appState.pagination.members - 1) * ITEMS_PER_PAGE, appState.pagination.members * ITEMS_PER_PAGE);
             const sortIcon = (f) => appState.filters.sortField === f ? (appState.filters.sortOrder === 'asc' ? ' <i class="fas fa-sort-up"></i>' : ' <i class="fas fa-sort-down"></i>') : '';
             
-            let html = `<div class="overflow-auto flex-1 relative -webkit-overflow-scrolling-touch"><table class="w-full text-left min-w-[700px] lg:min-w-[900px] text-[10px] lg:text-xs whitespace-nowrap"><thead class="bg-gray-50 text-[9px] lg:text-[10px] font-bold text-gray-500 border-b border-gray-100 shadow-sm"><tr><th class="p-2 lg:p-4 text-center w-10 lg:w-16">${appState.isKickMode ? '선택' : 'No.'}</th><th class="p-2 lg:p-4 sortable" onclick="window.handleSort('name')">닉네임${sortIcon('name')}</th><th class="p-2 lg:p-4 sortable" onclick="window.handleSort('mainInfo')">본캐${sortIcon('mainInfo')}</th><th class="p-2 lg:p-4 sortable" onclick="window.handleSort('guild')">소속${sortIcon('guild')}</th><th class="p-2 lg:p-4 sortable" onclick="window.handleSort('role')">직위${sortIcon('role')}</th><th class="p-2 lg:p-4 sortable" onclick="window.handleSort('class')">직업${sortIcon('class')}</th><th class="p-2 lg:p-4 text-right">관리</th></tr></thead><tbody class="divide-y divide-gray-50 text-gray-600 font-bold">`;
+            let html = `<div class="overflow-auto flex-1 relative -webkit-overflow-scrolling-touch"><table class="w-full text-left min-w-[700px] lg:min-w-[900px] text-[10px] lg:text-xs whitespace-nowrap"><thead class="bg-gray-50 text-[9px] lg:text-[10px] font-bold text-gray-500 border-b border-gray-100 shadow-sm"><tr><th class="py-2 px-2 text-center w-8 lg:w-12">${appState.isKickMode ? '선택' : 'No.'}</th><th class="py-2 px-2 sortable" onclick="window.handleSort('name')">닉네임${sortIcon('name')}</th><th class="py-2 px-2 sortable" onclick="window.handleSort('mainInfo')">본캐${sortIcon('mainInfo')}</th><th class="py-2 px-2 sortable" onclick="window.handleSort('guild')">소속${sortIcon('guild')}</th><th class="py-2 px-2 sortable" onclick="window.handleSort('role')">직위${sortIcon('role')}</th><th class="py-2 px-2 sortable" onclick="window.handleSort('class')">직업${sortIcon('class')}</th><th class="py-2 px-2 text-right">관리</th></tr></thead><tbody class="divide-y divide-gray-50 text-gray-600 font-bold">`;
             
             pageData.forEach((m, idx) => {
                 const globalIndex = (appState.pagination.members - 1) * ITEMS_PER_PAGE + idx + 1;
@@ -1603,20 +1767,18 @@
                 const mainMem = appState.members.find(x => x.name === mainName);
                 const mainRankHtml = mainMem ? formatRankWithSuffix(mainMem.role) : '-';
                 
-                let mainInfoStyle = "";
-                let mainInfoTextClass = "text-gray-700";
-                let subInfoTextClass = "text-gray-400";
-                
                 const targetRole = mainMem ? mainMem.role : (m.isMain ? m.role : '');
-
-                if (['티라미슈', '파르페', '크라운'].includes(targetRole)) {
-                    mainInfoStyle = "background-color: #0066FF;";
-                    mainInfoTextClass = "text-white";
-                    subInfoTextClass = "text-white opacity-80";
+                
+                // 크로칸슈 이상만 좌측 테두리 표시
+                let rowStyle = "";
+                if (targetRole === '크라운') {
+                    rowStyle = "background:linear-gradient(to right,#FFF9E6,#FFF3CC);border-left:3px solid #F0C050;";
+                } else if (targetRole === '파르페') {
+                    rowStyle = "background:linear-gradient(to right,#EBF0FF,#E4EAFF);border-left:3px solid #8EA8F0;";
+                } else if (targetRole === '티라미슈') {
+                    rowStyle = "background:linear-gradient(to right,#EBF0FF,#E8EDFF);border-left:3px solid #A0B4E8;";
                 } else if (targetRole === '크로칸슈') {
-                    mainInfoStyle = "background-color: #92D050;";
-                    mainInfoTextClass = "text-black";
-                    subInfoTextClass = "text-black opacity-80";
+                    rowStyle = "background:linear-gradient(to right,#EEFFEE,#E5FAE5);border-left:3px solid #92D050;";
                 }
 
                 const pending = appState.pendingUpdates[m.id];
@@ -1629,24 +1791,22 @@
                     roleHtml = `<span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold text-white tracking-tight shadow-sm" style="background-color: #FF99FF; text-shadow: 0 1px 1px rgba(0,0,0,0.1);">${m.role}</span>`;
                 }
 
-                html += `<tr class="${pending ? 'batch-modified' : ''} hover:bg-pink-50/20 group transition-colors h-12">
-                    <td class="p-3 text-center text-gray-400 text-[11px]">
+                html += `<tr class="${pending ? 'batch-modified' : ''} hover:bg-pink-50/20 group transition-colors" style="${rowStyle}">
+                    <td class="py-1.5 px-2 text-center text-gray-400 text-[11px]">
                         ${appState.isKickMode 
                             ? `<input type="checkbox" class="custom-checkbox" ${appState.kickSelection.has(m.id) ? 'checked' : ''} onchange="window.handleKickSelect('${m.id}')">`
                             : globalIndex}
                     </td>
-                    <td class="p-3 font-bold text-gray-800 flex items-center h-full leading-none">${window.getNicknameIcon(m.role)}<span class="text-sm tracking-tight">${m.name}</span></td>
-                    <td class="p-3 leading-tight">
-                        <div class="rounded-xl p-2 transition-colors -m-1" style="${mainInfoStyle}">
-                            <span class="block text-[11px] font-bold ${mainInfoTextClass}">${mainName}</span>
-                            <span class="text-[9px] font-medium ${subInfoTextClass}">${mainRankHtml}</span>
-                        </div>
+                    <td class="py-1.5 px-2 font-bold text-gray-800 flex items-center leading-none">${window.getNicknameIcon(m.role)}<span class="text-sm tracking-tight">${m.name}</span></td>
+                    <td class="py-1.5 px-2 leading-tight">
+                        <span class="block text-[11px] font-bold text-gray-700">${mainName}</span>
+                        <span class="text-[9px] font-medium text-gray-400">${mainRankHtml}</span>
                     </td>
-                    <td class="p-3">${appState.isBatchMode ? `<select onchange="window.stageUpdate('${m.id}', 'guild', this.value)" class="bg-white border rounded px-1 text-[10px] outline-none">${appState.guilds.map(g=>`<option value="${g.name}" ${currentGuild===g.name?'selected':''}>${g.name}</option>`).join('')}</select>` : m.guild}</td>
-                    <td class="p-3">${appState.isBatchMode ? `<select onchange="window.stageUpdate('${m.id}', 'role', this.value)" class="bg-white border rounded px-1 text-[10px] outline-none">${(appState.guildRanks[currentGuild]||initialGuildRanks[currentGuild]||initialGuildRanks['뚠카롱']).map(r=>`<option value="${r}" ${currentRole===r?'selected':''}>${r}</option>`).join('')}</select>` : roleHtml}</td>
-                    <td class="p-3">${appState.isBatchMode ? `<input type="text" value="${currentClass}" onchange="window.stageUpdate('${m.id}', 'class', this.value)" class="bg-white border rounded px-1 text-[10px] w-24 outline-none">` : `<span class="text-[10px] text-gray-400">${m.class||'-'}</span>`}</td>
-                    <td class="p-3 text-right">
-                        ${!appState.isBatchMode && !appState.isKickMode ? `<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onclick="window.openEditModal('${m.id}')" class="w-8 h-8 rounded-xl border border-gray-100 text-blue-500 hover:bg-blue-50 flex items-center justify-center shadow-sm"><i class="fas fa-edit text-[10px]"></i></button><button onclick="window.openDeleteModal('${m.id}')" class="w-8 h-8 rounded-xl border border-gray-100 text-red-500 hover:bg-red-50 flex items-center justify-center shadow-sm"><i class="fas fa-trash text-[10px]"></i></button></div>` : '<span class="text-[9px] text-gray-300">-</span>'}
+                    <td class="py-1.5 px-2">${appState.isBatchMode ? `<select onchange="window.stageUpdate('${m.id}', 'guild', this.value)" class="bg-white border rounded px-1 text-[10px] outline-none">${appState.guilds.map(g=>`<option value="${g.name}" ${currentGuild===g.name?'selected':''}>${g.name}</option>`).join('')}</select>` : m.guild}</td>
+                    <td class="py-1.5 px-2">${appState.isBatchMode ? `<select onchange="window.stageUpdate('${m.id}', 'role', this.value)" class="bg-white border rounded px-1 text-[10px] outline-none">${(appState.guildRanks[currentGuild]||initialGuildRanks[currentGuild]||initialGuildRanks['뚠카롱']).map(r=>`<option value="${r}" ${currentRole===r?'selected':''}>${r}</option>`).join('')}</select>` : roleHtml}</td>
+                    <td class="py-1.5 px-2">${appState.isBatchMode ? `<input type="text" value="${currentClass}" onchange="window.stageUpdate('${m.id}', 'class', this.value)" class="bg-white border rounded px-1 text-[10px] w-24 outline-none">` : `<span class="text-[10px] text-gray-400">${m.class||'-'}</span>`}</td>
+                    <td class="py-1.5 px-2 text-right">
+                        ${!appState.isBatchMode && !appState.isKickMode ? `<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onclick="window.openEditModal('${m.id}')" class="w-7 h-7 rounded-lg border border-gray-100 text-blue-500 hover:bg-blue-50 flex items-center justify-center shadow-sm"><i class="fas fa-edit text-[10px]"></i></button><button onclick="window.openDeleteModal('${m.id}')" class="w-7 h-7 rounded-lg border border-gray-100 text-red-500 hover:bg-red-50 flex items-center justify-center shadow-sm"><i class="fas fa-trash text-[10px]"></i></button></div>` : '<span class="text-[9px] text-gray-300">-</span>'}
                     </td>
                 </tr>`;
             });
