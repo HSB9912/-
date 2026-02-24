@@ -151,7 +151,7 @@
 
     <div id="loadingOverlay">
         <div class="text-center w-72">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-pink-400 to-rose-400 flex items-center justify-center text-white font-bold shadow-lg shadow-pink-200 text-2xl mx-auto mb-6">뚠</div>
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-pink-400 to-rose-400 flex items-center justify-center text-white font-bold shadow-lg shadow-pink-100 text-2xl mx-auto mb-6">뚠</div>
             <p class="text-gray-800 font-black text-lg tracking-tight mb-1">뚠카롱 길드 관리</p>
             <p id="loadingStatus" class="text-gray-400 font-bold text-xs mb-6">서버 연결 중...</p>
             <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden mb-3">
@@ -168,7 +168,7 @@
 
     <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-[1000] w-64 bg-white border-r border-gray-100 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col shadow-sm">
         <div class="p-6 border-b border-gray-100 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-400 to-rose-400 flex items-center justify-center text-white font-bold shadow-lg shadow-pink-100 text-xl">뚠</div>
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-400 to-rose-400 flex items-center justify-center text-white font-bold shadow-lg shadow-pink-200 text-xl">뚠</div>
             <div><h1 class="text-lg font-bold text-gray-800 tracking-tight">뚠카롱 길드 관리</h1><p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">v8.59 UPDATE</p></div>
             <button id="closeSidebar" class="lg:hidden ml-auto text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
         </div>
@@ -194,8 +194,8 @@
                 <div class="px-2 lg:px-4 py-1 lg:py-1.5 bg-pink-50 text-pink-600 rounded-full text-[9px] lg:text-[11px] font-bold border border-pink-100 shadow-sm hidden md:block">
                     ✨ <span id="anniversaryLabel">로딩 중...</span>
                 </div>
-                <div class="px-2 lg:px-4 py-1 lg:py-1.5 bg-slate-50 text-slate-600 rounded-full text-[9px] lg:text-[11px] font-bold border border-slate-100 shadow-sm flex items-center gap-1 lg:gap-2">
-                    <span>👥</span> <span id="totalMembersCount" class="truncate max-w-[120px] sm:max-w-none">로딩 중...</span>
+                <div class="flex items-center gap-1" id="totalMembersCount">
+                    <span class="text-[9px] lg:text-[10px] text-gray-300 font-bold">로딩 중...</span>
                 </div>
                 <button id="refreshBtn" onclick="fetchMembers()" class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-400 transition-all border border-gray-100 shadow-sm shrink-0"><i class="fas fa-sync-alt text-xs lg:text-base"></i></button>
             </div>
@@ -204,7 +204,7 @@
     </main>
 
     <!-- Modals -->
-    <div id="memberModal" class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/30 backdrop-blur-sm hidden fade-in font-bold p-4"><div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden border border-gray-100"><div class="p-5 lg:p-6 bg-pink-50 border-b border-pink-100 flex justify-between items-center"><div><h3 id="modalTitle" class="text-base lg:text-lg font-bold text-pink-700 tracking-tight">멤버 정보 입력</h3></div><button onclick="closeModal('memberModal')"><i class="fas fa-times text-gray-400 text-lg"></i></button></div><form id="memberForm" class="p-6 lg:p-8 space-y-4 lg:space-y-5"><input type="hidden" id="editMemberId"><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">닉네임</label><input type="text" id="inputName" class="w-full border border-gray-100 bg-gray-50 rounded-xl lg:rounded-2xl p-3 lg:p-3.5 outline-none focus:ring-4 focus:ring-pink-50 text-sm font-bold shadow-inner" required placeholder="정확한 캐릭터명"></div><div class="grid grid-cols-2 gap-3 lg:gap-4"><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">소속</label><select id="inputGuild" class="w-full border border-gray-100 bg-gray-50 rounded-xl lg:rounded-2xl p-3 lg:p-3.5 text-xs lg:text-sm font-bold outline-none" onchange="onGuildSelectChange(this.value)"></select></div><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">직위</label><select id="inputRole" class="w-full border border-gray-100 bg-gray-50 rounded-xl lg:rounded-2xl p-3 lg:p-3.5 text-xs lg:text-sm font-bold outline-none"></select></div></div><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">직업</label><select id="inputClass" class="w-full border border-gray-100 bg-gray-50 rounded-xl lg:rounded-2xl p-3 lg:p-3.5 text-xs lg:text-sm font-bold outline-none shadow-inner cursor-pointer"><option value="">직업을 선택하세요</option></select></div><div class="flex items-center gap-3 py-1"><input type="checkbox" id="inputIsMain" class="w-5 h-5 text-pink-500 rounded focus:ring-pink-50 shadow-sm cursor-pointer" checked onchange="toggleMainCharInput()"><label for="inputIsMain" class="text-[10px] lg:text-[11px] font-bold text-gray-600 uppercase tracking-tight cursor-pointer">본캐릭터입니까?</label></div><div id="mainCharInputGroup" class="hidden animate-fade-in space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">본캐 닉네임</label><input type="text" id="inputMainCharName" class="w-full border border-gray-100 bg-gray-50 rounded-xl lg:rounded-2xl p-3 lg:p-3.5 text-xs lg:text-sm font-bold outline-none shadow-inner" placeholder="본캐릭명 입력"></div><button type="submit" id="btnSubmitMember" class="w-full bg-gray-900 text-white py-3.5 lg:py-4 rounded-xl lg:rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-black transition-all shadow-xl mt-2">데이터베이스에 저장</button></form></div></div>
+    <div id="memberModal" class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/30 backdrop-blur-sm hidden fade-in font-bold p-4"><div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden border border-gray-100"><div class="p-5 lg:p-6 bg-pink-50 border-b border-pink-100 flex justify-between items-center"><div><h3 id="modalTitle" class="text-base lg:text-lg font-bold text-pink-600 tracking-tight">멤버 정보 입력</h3></div><button onclick="closeModal('memberModal')"><i class="fas fa-times text-gray-400 text-lg"></i></button></div><form id="memberForm" class="p-6 lg:p-8 space-y-4 lg:space-y-5"><input type="hidden" id="editMemberId"><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">닉네임</label><input type="text" id="inputName" class="w-full border border-gray-100 bg-gray-50 rounded-xl lg:rounded-2xl p-3 lg:p-3.5 outline-none focus:ring-4 focus:ring-pink-50 text-sm font-bold shadow-inner" required placeholder="정확한 캐릭터명"></div><div class="grid grid-cols-2 gap-3 lg:gap-4"><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">소속</label><select id="inputGuild" class="w-full border border-gray-100 bg-gray-50 rounded-xl lg:rounded-2xl p-3 lg:p-3.5 text-xs lg:text-sm font-bold outline-none" onchange="onGuildSelectChange(this.value)"></select></div><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">직위</label><select id="inputRole" class="w-full border border-gray-100 bg-gray-50 rounded-xl lg:rounded-2xl p-3 lg:p-3.5 text-xs lg:text-sm font-bold outline-none"></select></div></div><div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">직업</label><select id="inputClass" class="w-full border border-gray-100 bg-gray-50 rounded-xl lg:rounded-2xl p-3 lg:p-3.5 text-xs lg:text-sm font-bold outline-none shadow-inner cursor-pointer"><option value="">직업을 선택하세요</option></select></div><div class="flex items-center gap-3 py-1"><input type="checkbox" id="inputIsMain" class="w-5 h-5 text-pink-500 rounded focus:ring-pink-50 shadow-sm cursor-pointer" checked onchange="toggleMainCharInput()"><label for="inputIsMain" class="text-[10px] lg:text-[11px] font-bold text-gray-600 uppercase tracking-tight cursor-pointer">본캐릭터입니까?</label></div><div id="mainCharInputGroup" class="hidden animate-fade-in space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">본캐 닉네임</label><input type="text" id="inputMainCharName" class="w-full border border-gray-100 bg-gray-50 rounded-xl lg:rounded-2xl p-3 lg:p-3.5 text-xs lg:text-sm font-bold outline-none shadow-inner" placeholder="본캐릭명 입력"></div><button type="submit" id="btnSubmitMember" class="w-full bg-gray-900 text-white py-3.5 lg:py-4 rounded-xl lg:rounded-2xl font-bold uppercase text-[10px] tracking-widest hover:bg-black transition-all shadow-xl mt-2">데이터베이스에 저장</button></form></div></div>
     
     <div id="deleteModal" class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm hidden fade-in font-bold p-4"><div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm p-8 lg:p-10 text-center border border-gray-50"><div class="w-14 h-14 lg:w-16 lg:h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-xl lg:text-2xl mx-auto mb-4 lg:mb-5 shadow-inner"><i class="fas fa-user-minus"></i></div><p class="text-gray-800 font-bold text-base lg:text-lg mb-5 lg:mb-6 leading-tight"><span id="deleteTargetName" class="text-red-500"></span> 제거 확정</p><div class="space-y-3 lg:space-y-4 text-left mb-6 lg:mb-8"><div class="flex gap-2"><button onclick="setDeleteType('leave')" id="btnLeave" class="flex-1 py-2.5 lg:py-3 rounded-xl font-bold text-[10px] lg:text-xs bg-gray-800 text-white shadow-sm transition-all">자진탈퇴</button><button onclick="setDeleteType('kick')" id="btnKick" class="flex-1 py-2.5 lg:py-3 rounded-xl font-bold text-[10px] lg:text-xs bg-gray-100 text-gray-400 transition-all">추방</button></div><input type="text" id="deleteReason" class="w-full border border-gray-100 bg-gray-50 rounded-xl p-3 text-[10px] lg:text-xs font-bold outline-none shadow-inner" placeholder="사유를 입력하세요 (이력용)"></div><div class="grid grid-cols-2 gap-3 lg:gap-4"><button onclick="closeModal('deleteModal')" class="py-3.5 lg:py-4 bg-gray-50 rounded-xl lg:rounded-2xl font-bold text-[10px] lg:text-xs text-gray-500 hover:bg-gray-100 transition-all">취소</button><button onclick="confirmDelete()" class="py-3.5 lg:py-4 bg-red-500 text-white rounded-xl lg:rounded-2xl font-bold text-[10px] lg:text-xs shadow-xl hover:bg-red-600 transition-all">삭제 확정</button></div></div></div>
 
@@ -221,7 +221,7 @@
             <div class="space-y-5 lg:space-y-6 flex-1 overflow-y-auto no-scrollbar">
                 <div class="flex justify-between items-end">
                     <span class="text-[9px] lg:text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">일정 내용</span>
-                    <button onclick="window.resetEventForm()" class="text-[9px] lg:text-[10px] bg-pink-50 text-pink-500 px-2 lg:px-3 py-1 rounded-lg font-bold hover:bg-pink-100 transition-colors">+ 새 일정</button>
+                    <button onclick="window.resetEventForm()" class="text-[9px] lg:text-[10px] bg-pink-50 text-pink-600 px-2 lg:px-3 py-1 rounded-lg font-bold hover:bg-pink-100 transition-colors">+ 새 일정</button>
                 </div>
                 
                 <div class="space-y-2">
@@ -247,8 +247,8 @@
         const MAPLE_JOBS = ["히어로", "다크나이트", "팔라딘", "불독", "썬콜", "비숍", "보우마스터", "신궁", "패스파인더","나이트로드", "섀도어", "듀얼블레이드", "캡틴", "바이퍼", "캐논마스터","미하일", "소울마스터", "플레임위자드", "윈드브레이커", "나이트워커", "스트라이커","아란", "에반", "루미너스", "메르세데스", "팬텀", "은월","데몬 슬레이어", "데몬 어벤져", "블래스터", "배틀메이지", "와일드헌터", "메카닉", "제논","카이저", "카인", "카데나", "엔젤릭버스터","라라", "호영", "아델", "일리움", "아크", "칼리","제로", "키네시스", "렌"];
         const baseRanks = ['마카롱', '다쿠아즈'];
         const initialGuildRanks = {
-            '뚠카롱': [...baseRanks, '크라운', '파르페', '티라미슈', '크로칸슈', '롤케이크', '팬케이크', '와플'],
-            '뚱카롱': [...baseRanks, '뚠케이크', '뚠브레드', '수플레', '뚠스콘', '반죽(휴면)', '아인슈페너'],
+            '뚠카롱': [...baseRanks, '크라운', '파르페', '티라미슈', '크로칸슈', '롤케이크', '팬케이크', '와플', '스콘', '반죽(휴면)'],
+            '뚱카롱': [...baseRanks, '뚠케이크', '뚠브레드', '아인슈페너', '부팬케이크', '수플레', '뚠스콘', '부케이크', '반죽(휴면)'],
             '밤카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽(휴면)'],
             '별카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽(휴면)'],
             '달카롱': [...baseRanks, '부팬케이크', '부케이크', '아인슈페너', '반죽(휴면)'],
@@ -329,7 +329,7 @@
             return Object.entries(stats).sort((a,b) => a[0].localeCompare(b[0], 'ko'));
         };
 
-        const ROLE_PRIORITY = {'마카롱':0,'다쿠아즈':1,'크라운':2,'파르페':3,'티라미슈':4,'크로칸슈':5,'롤케이크':6,'팬케이크':7,'와플':8,'스콘':9,'반죽(휴면)':10,'뚠케이크':2,'뚠브레드':3,'아인슈페너':4,'부팬케이크':5,'수플레':6,'뚠스콘':7,'부케이크':8};
+        const ROLE_PRIORITY = {'마카롱':0,'다쿠아즈':1,'크라운':2,'파르페':3,'티라미슈':4,'크로칸슈':5,'롤케이크':6,'팬케이크':7,'와플':8,'스콘':9,'반죽':10,'반죽(휴면)':10,'뚠케이크':2,'뚠브레드':3,'아인슈페너':4,'부팬케이크':5,'수플레':6,'뚠스콘':7,'부케이크':8};
 
         function smartCompare(a, b, field, order) {
             let valA = a[field]; let valB = b[field];
@@ -357,11 +357,44 @@
             return '<span class="w-3 h-3 rounded-full bg-gray-200 mr-2 inline-block"></span>';
         };
 
+        const ROLE_DISPLAY = {
+            '크라운':  { emoji:'👑', color:'text-amber-600' },
+            '파르페':  { emoji:'🍨', color:'text-blue-600' },
+            '티라미슈': { emoji:'🍰', color:'text-blue-600' },
+            '크로칸슈': { emoji:'🥐', color:'text-green-600' },
+            '롤케이크': { emoji:'🍥', color:'text-pink-600' },
+            '팬케이크': { emoji:'🥞', color:'text-pink-500' },
+            '와플':    { emoji:'🧇', color:'text-orange-500' },
+            '스콘':    { emoji:'🍪', color:'text-gray-500' },
+            '반죽(휴면)':{ emoji:'🫓', color:'text-gray-400' },
+            '반죽':    { emoji:'🫓', color:'text-gray-400' },
+            '마카롱':  { emoji:'👑', color:'text-blue-600' },
+            '다쿠아즈': { emoji:'👑', color:'text-pink-600' },
+            '뚠케이크': { emoji:'🎂', color:'text-pink-600' },
+            '뚠브레드': { emoji:'🍞', color:'text-pink-500' },
+            '아인슈페너':{ emoji:'☕', color:'text-amber-500' },
+            '부팬케이크':{ emoji:'🥞', color:'text-amber-500' },
+            '수플레':  { emoji:'🍮', color:'text-orange-500' },
+            '뚠스콘':  { emoji:'🍪', color:'text-gray-500' },
+            '부케이크': { emoji:'🍰', color:'text-gray-400' }
+        };
+        const SURO_EXEMPT = ['크라운','파르페','티라미슈','크로칸슈'];
+
         function formatRankWithSuffix(rank) {
             if (!rank) return '-';
-            const special = ['크라운', '파르페', '티라미슈', '크로칸슈'];
-            if (special.includes(rank)) return `${rank} <span class="text-[8.5px] text-blue-500 font-bold tracking-tighter">(아인슈페너)</span>`;
-            return rank;
+            const d = ROLE_DISPLAY[rank];
+            const emoji = d ? d.emoji : '';
+            const suffix = SURO_EXEMPT.includes(rank) ? ' <span class="text-[8px] text-blue-400 font-bold">(아인슈페너)</span>' : '';
+            const displayName = rank === '반죽' ? '반죽(휴면)' : rank;
+            return `${emoji} ${displayName}${suffix}`;
+        }
+
+        function formatRoleHtml(role) {
+            const d = ROLE_DISPLAY[role];
+            if (!d) return `<span class="text-[10px] text-gray-500">${role || '-'}</span>`;
+            const displayName = role === '반죽' ? '반죽(휴면)' : role;
+            const suffix = SURO_EXEMPT.includes(role) ? `<span class="text-[7px] text-blue-400 font-bold ml-0.5">(아인슈페너)</span>` : '';
+            return `<span class="text-[10px] font-bold ${d.color}">${d.emoji} ${displayName}</span>${suffix}`;
         }
 
         window.getSuroPeriodHeader = (dateObj) => { 
@@ -527,13 +560,23 @@
                             if (counts[m.guild] !== undefined) counts[m.guild]++;
                         });
                         
-                        const aliases = { '뚠카롱': '뚠', '뚱카롱': '뚱', '밤카롱': '밤', '별카롱': '별', '달카롱': '달', '꿀카롱': '꿀' };
-                        const text = appState.guilds.map(g => {
-                            const name = aliases[g.name] || g.name.substring(0, 1);
-                            return `${name}:${counts[g.name]}`;
-                        }).join(' ');
                         
-                        countEl.innerText = text;
+                        const aliases = { '뚠카롱': '뚠', '뚱카롱': '뚱', '밤카롱': '밤', '별카롱': '별', '달카롱': '달', '꿀카롱': '꿀' };
+                        
+                        const guildBadgeStyles = {
+                            '뚠카롱': 'background:#fdf2f8;color:#db2777;border-color:#fbcfe8',
+                            '뚱카롱': 'background:#fff1f2;color:#e11d48;border-color:#fecdd3',
+                            '밤카롱': 'background:#eef2ff;color:#4f46e5;border-color:#c7d2fe',
+                            '별카롱': 'background:#fefce8;color:#ca8a04;border-color:#fef08a',
+                            '달카롱': 'background:#eff6ff;color:#2563eb;border-color:#bfdbfe',
+                            '꿀카롱': 'background:#fffbeb;color:#d97706;border-color:#fde68a'
+                        };
+                        
+                        countEl.innerHTML = appState.guilds.map(g => {
+                            const name = aliases[g.name] || g.name.substring(0, 1);
+                            const s = guildBadgeStyles[g.name] || 'background:#f3f4f6;color:#666';
+                            return `<span style="${s};border:1px solid;padding:2px 6px;border-radius:6px;font-size:10px;font-weight:900">${name} ${counts[g.name]}</span>`;
+                        }).join('');
                     }
                     window.updateAnniversaryLabel();
                 } else {
@@ -582,10 +625,11 @@
 
         window.router = (tab) => {
 
-        // ★ 직위 자동 부여 (뚠카롱 본캐 전용, 마카롱/다쿠아즈/부캐 제외)
-        window.autoAssignRoles = () => {
-            const excludeRoles = ['마카롱', '다쿠아즈'];
-            const targets = appState.members.filter(m => m.guild === '뚠카롱' && !excludeRoles.includes(m.role) && m.isMain !== false);
+        // ★ 직위 자동 부여 (뚠카롱/뚱카롱 지원)
+        window.autoAssignRoles = (guild) => {
+            guild = guild || '뚠카롱';
+            const excludeRoles = ['마카롱', '다쿠아즈', '아인슈페너'];
+            const targets = appState.members.filter(m => m.guild === guild && !excludeRoles.includes(m.role) && m.isMain !== false);
             
             if(targets.length === 0) return window.showMsg("부여 대상이 없습니다.", "error");
             
@@ -593,14 +637,21 @@
             const latestHeader = headers.length > 0 ? headers[headers.length - 1] : null;
             if(!latestHeader) return window.showMsg("수로 데이터가 없습니다.", "error");
             
-            const getRoleByScore = (score) => {
-                if(score >= 130000) return '파르페';
-                if(score >= 95000) return '티라미슈';
-                if(score >= 72000) return '크로칸슈';
-                if(score >= 50000) return '롤케이크';
-                if(score >= 38000) return '팬케이크';
-                return '스콘';
-            };
+            // 길드별 점수→직위 매핑
+            const getRoleByScore = guild === '뚠카롱' 
+                ? (score) => {
+                    if(score >= 130000) return '파르페';
+                    if(score >= 95000) return '티라미슈';
+                    if(score >= 72000) return '크로칸슈';
+                    if(score >= 50000) return '롤케이크';
+                    if(score >= 38000) return '팬케이크';
+                    return '스콘';
+                }
+                : (score) => {
+                    if(score >= 18000) return '뚠케이크';
+                    if(score >= 5000) return '뚠브레드';
+                    return '뚠스콘';
+                };
             
             const scored = targets.map(m => ({
                 ...m,
@@ -610,7 +661,7 @@
             const changes = [];
             scored.forEach((m, idx) => {
                 let newRole;
-                if(idx < 3 && m.latestScore > 0) {
+                if(guild === '뚠카롱' && idx < 3 && m.latestScore > 0) {
                     newRole = '크라운';
                 } else {
                     newRole = getRoleByScore(m.latestScore);
@@ -631,7 +682,10 @@
             const roleColors = {
                 '크라운': 'text-amber-500', '파르페': 'text-pink-500', '티라미슈': 'text-orange-500',
                 '크로칸슈': 'text-yellow-600', '롤케이크': 'text-rose-400', '팬케이크': 'text-amber-400',
-                '스콘': 'text-gray-500', '와플': 'text-purple-400'
+                '스콘': 'text-gray-500', '와플': 'text-purple-400',
+                '뚠케이크': 'text-pink-600', '뚠브레드': 'text-pink-500', '뚠스콘': 'text-gray-500',
+                '아인슈페너': 'text-amber-500', '부팬케이크': 'text-amber-400', '수플레': 'text-orange-500',
+                '부케이크': 'text-gray-400', '반죽': 'text-gray-400', '반죽(휴면)': 'text-gray-400'
             };
             
             const rows = changes.map((c, i) => {
@@ -650,7 +704,7 @@
             overlay.innerHTML = `<div class="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
                 <div class="p-5 bg-amber-50 border-b border-amber-100 flex justify-between items-center shrink-0">
                     <div>
-                        <h3 class="text-sm font-bold text-amber-700 flex items-center gap-2"><i class="fas fa-magic"></i> 직위 자동 부여</h3>
+                        <h3 class="text-sm font-bold text-amber-700 flex items-center gap-2"><i class="fas fa-magic"></i> ${guild} 직위 자동 부여</h3>
                         <p class="text-[10px] text-amber-500 mt-1">기준: ${latestHeader} · 변경 대상 <span class="font-black">${changes.length}명</span></p>
                     </div>
                     <button onclick="document.getElementById('roleConfirmModal').remove()" class="w-8 h-8 rounded-full bg-amber-100 hover:bg-amber-200 flex items-center justify-center text-amber-500"><i class="fas fa-times"></i></button>
@@ -747,25 +801,25 @@
             const ddunMembers = appState.members.filter(m => m.guild === '뚠카롱');
             const roleCounts = {};
             ddunMembers.forEach(m => { const r = m.role || '미설정'; roleCounts[r] = (roleCounts[r] || 0) + 1; });
-            const roleOrder = ['마카롱','다쿠아즈','크라운','파르페','티라미슈','크로칸슈','롤케이크','팬케이크','와플','스콘','반죽(휴면)'];
-            const roleEmoji = {'마카롱':'👑','다쿠아즈':'👑','크라운':'👑','파르페':'🍨','티라미슈':'🍰','크로칸슈':'🥐','롤케이크':'🍥','팬케이크':'🥞','와플':'🧇','스콘':'🍪','반죽(휴면)':'🫓'};
-            const roleColorClass = {'마카롱':'text-blue-600 bg-blue-50 border-blue-100','다쿠아즈':'text-pink-600 bg-pink-50 border-pink-100','크라운':'text-amber-600 bg-amber-50 border-amber-100','파르페':'text-indigo-600 bg-indigo-50 border-indigo-100','티라미슈':'text-indigo-600 bg-indigo-50 border-indigo-100','크로칸슈':'text-green-600 bg-green-50 border-green-100','롤케이크':'text-pink-600 bg-pink-50 border-pink-100','팬케이크':'text-pink-600 bg-pink-50 border-pink-100','와플':'text-orange-600 bg-orange-50 border-orange-100','스콘':'text-gray-600 bg-gray-50 border-gray-100','반죽(휴면)':'text-gray-400 bg-gray-50 border-gray-100'};
+            const roleOrder = ['마카롱','다쿠아즈','크라운','파르페','티라미슈','크로칸슈','롤케이크','팬케이크','와플','스콘','반죽','반죽(휴면)'];
+            const roleEmoji = {'마카롱':'👑','다쿠아즈':'👑','크라운':'👑','파르페':'🍨','티라미슈':'🍰','크로칸슈':'🥐','롤케이크':'🍥','팬케이크':'🥞','와플':'🧇','스콘':'🍪','반죽(휴면)':'🫓','반죽':'🫓'};
+            const roleColorClass = {'마카롱':'text-blue-600 bg-blue-50 border-blue-100','다쿠아즈':'text-pink-600 bg-pink-50 border-pink-100','크라운':'text-amber-600 bg-amber-50 border-amber-100','파르페':'text-indigo-600 bg-indigo-50 border-indigo-100','티라미슈':'text-indigo-600 bg-indigo-50 border-indigo-100','크로칸슈':'text-green-600 bg-green-50 border-green-100','롤케이크':'text-pink-600 bg-pink-50 border-pink-100','팬케이크':'text-pink-600 bg-pink-50 border-pink-100','와플':'text-orange-600 bg-orange-50 border-orange-100','스콘':'text-gray-600 bg-gray-50 border-gray-100','반죽(휴면)':'text-gray-400 bg-gray-50 border-gray-100','반죽':'text-gray-400 bg-gray-50 border-gray-100'};
             const roleCountHtml = roleOrder.filter(r => roleCounts[r]).map(r => `<div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg border ${roleColorClass[r] || 'bg-gray-50 border-gray-100'}"><span>${roleEmoji[r] || ''} ${r}</span><span class="font-black">${roleCounts[r]}명</span></div>`).join('');
             const adminBailStats = window.getAdminBailStats();
-            const adminBailHtml = adminBailStats.map(([name, count]) => `<div class="flex justify-between items-center py-2 border-b border-gray-50 last:border-0"><span class="text-[11px] font-bold text-gray-600">${name}</span><span class="text-[11px] font-black text-pink-500">${count}개</span></div>`).join('') || '<p class="text-[10px] text-gray-300 italic text-center py-4">보석금 내역 없음</p>';
+            const adminBailHtml = adminBailStats.map(([name, count]) => `<div class="flex justify-between items-center py-2 border-b border-gray-50 last:border-0"><span class="text-[11px] font-bold text-gray-600">${name}</span><span class="text-[11px] font-black text-pink-600">${count}개</span></div>`).join('') || '<p class="text-[10px] text-gray-300 italic text-center py-4">보석금 내역 없음</p>';
             
             container.innerHTML = `
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-8 mb-4 lg:mb-8 fade-in shrink-0">
                 <div class="flex flex-col gap-4 lg:gap-6">
                     <div class="grid grid-cols-2 gap-3 lg:gap-6 h-auto lg:h-40">
-                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚠카롱')" class="bg-gradient-to-br from-pink-500 to-rose-500 rounded-2xl lg:rounded-[2.5rem] p-4 lg:p-8 shadow-lg text-white cursor-pointer hover:scale-[1.02] transition-transform relative overflow-hidden flex flex-col justify-center border-none min-h-[100px]">
+                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚠카롱')" class="bg-gradient-to-br from-pink-400 to-rose-400 rounded-2xl lg:rounded-[2.5rem] p-4 lg:p-8 shadow-lg text-white cursor-pointer hover:scale-[1.02] transition-transform relative overflow-hidden flex flex-col justify-center border-none min-h-[100px]">
                             <div class="absolute top-0 right-0 p-2 lg:p-4 opacity-20 text-3xl lg:text-5xl"><i class="fas fa-crown"></i></div>
                             <h3 class="text-[10px] lg:text-sm font-bold opacity-80 uppercase tracking-widest text-center">뚠카롱 수로 총점</h3>
                             <p class="text-xl lg:text-3xl font-black tracking-tighter text-center">${ddunT.toLocaleString()}</p>
                         </div>
-                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚱카롱')" class="bg-white border border-gray-100 rounded-2xl lg:rounded-[2.5rem] p-4 lg:p-8 shadow-sm text-gray-800 cursor-pointer hover:border-pink-200 transition-all flex flex-col justify-center relative overflow-hidden min-h-[100px]">
+                        <div onclick="router('analysis'); renderAnalysis(document.getElementById('contentArea'), '뚱카롱')" class="bg-white border border-gray-100 rounded-2xl lg:rounded-[2.5rem] p-4 lg:p-8 shadow-sm text-gray-800 cursor-pointer hover:border-pink-100 transition-all flex flex-col justify-center relative overflow-hidden min-h-[100px]">
                             <h3 class="text-[10px] lg:text-sm font-bold text-gray-400 uppercase tracking-widest text-center">뚱카롱 수로 총점</h3>
-                            <p class="text-xl lg:text-3xl font-black tracking-tighter text-pink-500 text-center">${ddungT.toLocaleString()}</p>
+                            <p class="text-xl lg:text-3xl font-black tracking-tighter text-pink-600 text-center">${ddungT.toLocaleString()}</p>
                         </div>
                     </div>
                     <div class="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col">
@@ -776,9 +830,9 @@
                             </div>
                             <div class="flex items-center gap-2 lg:gap-4">
                                 <div class="flex items-center gap-1 lg:gap-2 bg-gray-50 px-2 lg:px-3 py-1 lg:py-1.5 rounded-xl lg:rounded-2xl border border-gray-100">
-                                    <button onclick="moveMonth(-1)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-white hover:text-pink-500 transition-all text-gray-400"><i class="fas fa-chevron-left text-[10px]"></i></button>
+                                    <button onclick="moveMonth(-1)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-white hover:text-pink-600 transition-all text-gray-400"><i class="fas fa-chevron-left text-[10px]"></i></button>
                                     <span class="text-[10px] lg:text-[11px] font-bold text-gray-600 w-14 lg:w-16 text-center">${appState.calendarView.year}.${String(appState.calendarView.month + 1).padStart(2, '0')}</span>
-                                    <button onclick="moveMonth(1)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-white hover:text-pink-500 transition-all text-gray-400"><i class="fas fa-chevron-right text-[10px]"></i></button>
+                                    <button onclick="moveMonth(1)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-white hover:text-pink-600 transition-all text-gray-400"><i class="fas fa-chevron-right text-[10px]"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -787,7 +841,7 @@
                     <!-- 직위별 커트라인 -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
                         <div class="bg-white p-4 lg:p-6 rounded-2xl lg:rounded-[2rem] border border-gray-100 shadow-sm">
-                            <h3 class="text-[10px] lg:text-xs font-bold text-pink-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-crown text-pink-400"></i> 뚠카롱 직위 커트라인</h3>
+                            <h3 class="text-[10px] lg:text-xs font-bold text-pink-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-crown text-pink-500"></i> 뚠카롱 직위 커트라인</h3>
                             <div class="space-y-1.5 text-[10px] lg:text-[11px] font-bold">
                                 <div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-100"><span class="text-yellow-700">👑 크라운</span><span class="text-yellow-600">TOP 3</span></div>
                                 <div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg" style="background:linear-gradient(to right,#EBF0FF,#E8EDFF);border:1px solid #D6DFFF"><span class="text-blue-700">🍨 파르페</span><span class="text-blue-600">130,000~</span></div>
@@ -798,11 +852,11 @@
                                 <div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-pink-50 border border-pink-100"><span class="text-pink-700">🥞 팬케이크</span><span class="text-pink-600">38,000 ~ 49,999</span></div>
                                 <div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-orange-50 border border-orange-100"><span class="text-orange-700">🧇 와플</span><span class="text-orange-500">75,000~ <span class="text-[9px] text-gray-400">(부캐전용)</span></span></div>
                                 <div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-gray-50 border border-gray-100"><span class="text-gray-600">🍪 스콘</span><span class="text-gray-500">0 ~ 37,999</span></div>
-                                <div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-gray-50 border border-gray-100"><span class="text-gray-400">🫓 반죽</span><span class="text-gray-400">휴면</span></div>
+                                <div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-gray-50 border border-gray-100"><span class="text-gray-400">🫓 반죽(휴면)</span><span class="text-gray-400">휴면</span></div>
                             </div>
                         </div>
                         <div class="bg-white p-4 lg:p-6 rounded-2xl lg:rounded-[2rem] border border-gray-100 shadow-sm">
-                            <h3 class="text-[10px] lg:text-xs font-bold text-rose-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-heart text-rose-400"></i> 뚱카롱 직위 커트라인</h3>
+                            <h3 class="text-[10px] lg:text-xs font-bold text-pink-600 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-heart text-pink-400"></i> 뚱카롱 직위 커트라인</h3>
                             <div class="space-y-1.5 text-[10px] lg:text-[11px] font-bold">
                                 <div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-pink-50 border border-pink-100"><span class="text-pink-700">🎂 뚠케이크</span><span class="text-pink-600">18,000~</span></div>
                                 <div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-pink-50 border border-pink-100"><span class="text-pink-700">🍞 뚠브레드</span><span class="text-pink-600">5,000 ~ 17,999</span></div>
@@ -811,20 +865,20 @@
                                 <div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-orange-50 border border-orange-100"><span class="text-orange-700">🍮 수플레</span><span class="text-orange-500">35,000~ <span class="text-[9px] text-gray-400">(부캐전용)</span></span></div>
                                 <div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-gray-50 border border-gray-100"><span class="text-gray-600">🍪 뚠스콘</span><span class="text-gray-500">0 ~ 4,999</span></div>
                                 <div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-gray-50 border border-gray-100"><span class="text-gray-600">🍰 부케이크</span><span class="text-gray-400">부캐 직위 <span class="text-[9px]">노블X</span></span></div>
-                                <div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-gray-50 border border-gray-100"><span class="text-gray-400">🫓 반죽</span><span class="text-gray-400">휴면</span></div>
+                                <div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-gray-50 border border-gray-100"><span class="text-gray-400">🫓 반죽(휴면)</span><span class="text-gray-400">휴면</span></div>
                             </div>
                         </div>
                     </div>
                     <!-- 뚠카롱 직위별 인원수 -->
                     <div class="bg-white p-4 lg:p-6 rounded-2xl lg:rounded-[2rem] border border-gray-100 shadow-sm">
-                        <h3 class="text-[10px] lg:text-xs font-bold text-pink-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-users text-pink-400"></i> 뚠카롱 직위별 인원 <span class="text-gray-400 font-bold">(${ddunMembers.length}명)</span></h3>
+                        <h3 class="text-[10px] lg:text-xs font-bold text-pink-600 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-users text-pink-500"></i> 뚠카롱 직위별 인원 <span class="text-gray-400 font-bold">(${ddunMembers.length}명)</span></h3>
                         <div class="grid grid-cols-2 gap-1.5 text-[10px] lg:text-[11px] font-bold">${roleCountHtml}</div>
                     </div>
                 </div>
                 <div class="flex flex-col gap-4 lg:gap-8 h-full">
                     <div class="bg-white p-5 lg:p-10 rounded-2xl lg:rounded-[3rem] shadow-sm border border-gray-100 flex flex-col min-h-[250px] lg:min-h-[300px] overflow-hidden shrink-0">
                         <div class="flex justify-between items-center mb-3 lg:mb-4 shrink-0">
-                            <h3 class="text-[10px] lg:text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-chart-bar text-pink-300"></i> 직업 분포도</h3>
+                            <h3 class="text-[10px] lg:text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-chart-bar text-pink-400"></i> 직업 분포도</h3>
                             <select onchange="window.updateJobChart(this.value)" class="bg-gray-50 rounded-xl px-3 py-1.5 text-xs font-bold outline-none cursor-pointer hover:bg-gray-100 border border-gray-100">
                                 <option value="all">전체보기</option>${appState.guilds.map(g => `<option value="${g.name}">${g.name}</option>`).join('')}
                             </select>
@@ -832,7 +886,7 @@
                         <div class="flex-1 overflow-y-auto no-scrollbar relative">
                             <div id="jobChartContainer" class="flex flex-col gap-3 lg:gap-4"></div>
                         </div>
-                        <button onclick="window.toggleJobChart()" id="jobToggleBtn" class="mt-3 py-2 text-[10px] font-bold text-gray-400 hover:text-pink-500 transition-all flex items-center justify-center gap-1"><i class="fas fa-chevron-down text-[8px]" id="jobToggleIcon"></i> <span id="jobToggleText">더보기</span></button>
+                        <button onclick="window.toggleJobChart()" id="jobToggleBtn" class="mt-3 py-2 text-[10px] font-bold text-gray-400 hover:text-pink-600 transition-all flex items-center justify-center gap-1"><i class="fas fa-chevron-down text-[8px]" id="jobToggleIcon"></i> <span id="jobToggleText">더보기</span></button>
                     </div>
                     <div class="bg-white p-5 lg:p-10 rounded-2xl lg:rounded-[3rem] shadow-sm border border-gray-100 flex flex-col flex-1 min-h-[150px] lg:min-h-[200px] overflow-hidden">
                         <div class="flex items-center justify-between mb-4 lg:mb-6">
@@ -847,7 +901,7 @@
                 ${appState.guilds.map(g => { 
                     const count = appState.members.filter(m => m.guild === g.name).length; 
                     const pct = Math.min((count / g.max) * 100, 100); 
-                    return `<div class="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group" onclick="filterByGuild('${g.name}')"><div class="flex justify-between items-start mb-3 lg:mb-6"><div class="flex items-center gap-2 lg:gap-3"><div class="w-8 h-8 lg:w-10 lg:h-10 bg-gray-50 rounded-xl lg:rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-pink-50 group-hover:text-pink-500 transition-colors text-xs lg:text-base"><i class="fas ${g.icon}"></i></div><div><span class="block font-bold text-sm lg:text-lg text-gray-800 group-hover:text-pink-500">${g.name}</span><span class="text-[8px] lg:text-[10px] text-gray-400 font-bold">${g.type}</span></div></div></div><div class="w-full bg-gray-50 rounded-full h-1 lg:h-1.5 overflow-hidden"><div class="h-full bg-pink-500 transition-all duration-1000" style="width:${pct}%"></div></div><p class="text-[9px] lg:text-[10px] text-gray-400 font-bold mt-1.5 lg:mt-2 text-right">${count} / ${g.max}</p></div>`; 
+                    return `<div class="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group" onclick="filterByGuild('${g.name}')"><div class="flex justify-between items-start mb-3 lg:mb-6"><div class="flex items-center gap-2 lg:gap-3"><div class="w-8 h-8 lg:w-10 lg:h-10 bg-gray-50 rounded-xl lg:rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-pink-50 group-hover:text-pink-600 transition-colors text-xs lg:text-base"><i class="fas ${g.icon}"></i></div><div><span class="block font-bold text-sm lg:text-lg text-gray-800 group-hover:text-pink-600">${g.name}</span><span class="text-[8px] lg:text-[10px] text-gray-400 font-bold">${g.type}</span></div></div></div><div class="w-full bg-gray-50 rounded-full h-1 lg:h-1.5 overflow-hidden"><div class="h-full bg-pink-500 transition-all duration-1000" style="width:${pct}%"></div></div><p class="text-[9px] lg:text-[10px] text-gray-400 font-bold mt-1.5 lg:mt-2 text-right">${count} / ${g.max}</p></div>`; 
                 }).join('')}
             </div>`;
             setTimeout(() => window.updateJobChart('all'), 0);
@@ -924,7 +978,7 @@
             if (dayEvents.length > 0) {
                 dayEvents.forEach((e, idx) => {
                     const item = document.createElement('div');
-                    item.className = 'p-3 bg-gray-50 border border-gray-100 rounded-xl cursor-pointer hover:bg-pink-50 hover:border-pink-200 transition-all flex justify-between items-center text-xs font-bold text-gray-600';
+                    item.className = 'p-3 bg-gray-50 border border-gray-100 rounded-xl cursor-pointer hover:bg-pink-50 hover:border-pink-100 transition-all flex justify-between items-center text-xs font-bold text-gray-600';
                     item.innerHTML = `<span>${e.title}</span><i class="fas fa-chevron-right text-gray-300"></i>`;
                     item.onclick = () => window.selectEventForEdit(e);
                     listContainer.appendChild(item);
@@ -1283,7 +1337,8 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shrink-0 pb-3 bg-gray-50 z-20">
                     <div class="flex gap-2 overflow-x-auto no-scrollbar shrink-0 w-full sm:w-auto items-center">
                         ${analysisGuildsOptions.map(gNameOption => `<button onclick="window.renderAnalysis(document.getElementById('contentArea'), '${gNameOption}')" class="px-6 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${gNameOption === gName ? 'bg-pink-500 text-white shadow-lg' : 'bg-white text-gray-500 border border-gray-100'}">${gNameOption}</button>`).join('')}
-                        ${gName === '뚠카롱' ? '<button onclick="window.autoAssignRoles()" class="px-4 py-2.5 rounded-xl text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition-all shrink-0 flex items-center gap-1.5"><i class="fas fa-magic"></i> 직위 자동부여</button>' : ''}
+                        ${gName === '뚠카롱' ? '<button onclick="window.autoAssignRoles(\'뚠카롱\')" class="px-4 py-2.5 rounded-xl text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition-all shrink-0 flex items-center gap-1.5"><i class="fas fa-magic"></i> 직위 자동부여</button>' : ''}
+                        ${gName === '뚱카롱' ? '<button onclick="window.autoAssignRoles(\'뚱카롱\')" class="px-4 py-2.5 rounded-xl text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition-all shrink-0 flex items-center gap-1.5"><i class="fas fa-magic"></i> 직위 자동부여</button>' : ''}
                     </div>
                     <div class="relative w-full sm:w-64 shrink-0">
                         <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
@@ -1786,12 +1841,9 @@
                 const currentRole = pending && pending.role ? pending.role : m.role;
                 const currentClass = pending && pending.class ? pending.class : (m.class || '');
 
-                let roleHtml = `<span class="text-[10px]">${m.role}</span>`;
-                if (!appState.isBatchMode && m.role === '아인슈페너') {
-                    roleHtml = `<span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold text-white tracking-tight shadow-sm" style="background-color: #FF99FF; text-shadow: 0 1px 1px rgba(0,0,0,0.1);">${m.role}</span>`;
-                }
+                let roleHtml = formatRoleHtml(m.role);
 
-                html += `<tr class="${pending ? 'batch-modified' : ''} hover:bg-pink-50/20 group transition-colors" style="${rowStyle}">
+                html += `<tr class="${pending ? 'batch-modified' : ''} hover:bg-pink-50/30 group transition-colors" style="${rowStyle}">
                     <td class="py-1.5 px-2 text-center text-gray-400 text-[11px]">
                         ${appState.isKickMode 
                             ? `<input type="checkbox" class="custom-checkbox" ${appState.kickSelection.has(m.id) ? 'checked' : ''} onchange="window.handleKickSelect('${m.id}')">`
@@ -1813,9 +1865,9 @@
             html += `</tbody></table></div>`;
             
             html += `<div class="p-3 border-t border-gray-100 flex justify-center items-center gap-4 bg-gray-50/50 relative z-20">
-                <button onclick="changePage('members', -1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-pink-50 hover:text-pink-500 hover:border-pink-200 disabled:opacity-30 disabled:hover:bg-white" ${appState.pagination.members <= 1 ? 'disabled' : ''}><i class="fas fa-chevron-left text-[10px]"></i></button>
+                <button onclick="changePage('members', -1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-pink-50 hover:text-pink-600 hover:border-pink-100 disabled:opacity-30 disabled:hover:bg-white" ${appState.pagination.members <= 1 ? 'disabled' : ''}><i class="fas fa-chevron-left text-[10px]"></i></button>
                 <span class="text-xs font-bold text-gray-500">${appState.pagination.members} / ${totalPages || 1}</span>
-                <button onclick="changePage('members', 1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-pink-50 hover:text-pink-500 hover:border-pink-200 disabled:opacity-30 disabled:hover:bg-white" ${appState.pagination.members >= totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right text-[10px]"></i></button>
+                <button onclick="changePage('members', 1)" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-pink-50 hover:text-pink-600 hover:border-pink-100 disabled:opacity-30 disabled:hover:bg-white" ${appState.pagination.members >= totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right text-[10px]"></i></button>
             </div>`;
 
             container.innerHTML = html;
@@ -1825,7 +1877,7 @@
             const receivers = appState.members.filter(m => m.guild === '뚠카롱' && ['마카롱', '다쿠아즈'].includes(m.role)).sort((a,b) => smartCompare(a, b, 'name', 'asc'));
             const adminStats = window.getAdminBailStats();
             const historyRows = [...appState.bailHistory].reverse().map(h => `<tr class="hover:bg-gray-50 border-b border-gray-50 h-12 transition-colors font-bold text-xs"><td class="p-4 font-mono text-gray-400 text-[10px]">${h.date}</td><td class="p-4 text-gray-700">${h.payer}</td><td class="p-4 text-blue-500">${h.receiver}</td><td class="p-4 text-right text-pink-500">${h.amount}개</td></tr>`).join('');
-            const statsHtml = adminStats.map(([name, count]) => `<div class="bg-gray-50 rounded-2xl p-4 flex justify-between items-center border border-gray-100 hover:bg-white transition-all shadow-sm"><span class="font-bold text-gray-700 text-xs">${name}</span><span class="font-black text-pink-500 text-lg">${count}개</span></div>`).join('');
+            const statsHtml = adminStats.map(([name, count]) => `<div class="bg-gray-50 rounded-2xl p-4 flex justify-between items-center border border-gray-100 hover:bg-white transition-all shadow-sm"><span class="font-bold text-gray-700 text-xs">${name}</span><span class="font-black text-pink-600 text-lg">${count}개</span></div>`).join('');
             container.innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in h-full"><div class="lg:col-span-1 bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden"><div class="mb-8"><h3 class="text-xl font-bold text-gray-800 tracking-tight">보석금 납부 등록</h3><p class="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">GEM BAIL REGISTRATION</p></div><div class="space-y-6 flex-1 overflow-y-auto no-scrollbar pb-6"><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">납부자</label><input type="text" id="bailPayerInput" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-inner" placeholder="닉네임 직접 입력"></div><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">수령자</label><select id="bailReceiver" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-sm cursor-pointer font-bold">${receivers.map(r=>`<option value="${r.name}">${r.name} (${r.role})</option>`).join('')}</select></div><div class="space-y-2"><label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">수량</label><input type="number" id="bailAmount" value="1" min="1" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none shadow-inner"></div><button onclick="window.submitBail()" id="btnBailSubmit" class="w-full py-6 bg-gray-900 text-white rounded-[2rem] font-bold text-xs shadow-2xl hover:bg-black transition-all active:scale-[0.98]">납부 확인 및 저장</button><div class="mt-8 border-t pt-8"><h4 class="text-xs font-bold text-gray-400 mb-4 uppercase tracking-widest">간부별 수령 총계</h4><div class="grid grid-cols-1 gap-2">${statsHtml || '<p class="text-[10px] text-gray-300 italic text-center">데이터 없음</p>'}</div></div></div></div><div class="lg:col-span-2 bg-white rounded-[3rem] border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden"><div class="p-8 border-b border-gray-50 flex justify-between items-center"><h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">최근 보석금 내역 (yy-mm-dd)</h3><span class="text-[10px] text-gray-400 font-bold italic">Total: ${appState.bailHistory.length}</span></div><div class="flex-1 overflow-y-auto no-scrollbar"><table class="w-full text-left text-xs"><thead class="bg-gray-50 text-[10px] font-bold text-gray-500 uppercase"><tr><th class="p-5">날짜</th><th class="p-5">납부자</th><th class="p-5">수령자</th><th class="p-5 text-right">수량</th></tr></thead><tbody class="divide-y divide-gray-50">${historyRows || '<tr><td colspan="4" class="p-20 text-center text-gray-300 font-bold italic">내역이 존재하지 않습니다.</td></tr>'}</tbody></table></div></div></div>`;
         };
 
