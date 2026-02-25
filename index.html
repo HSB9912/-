@@ -435,49 +435,35 @@
             const updates = Object.values(appState.pendingUpdates); 
             if(updates.length === 0) return window.showMsg("수정된 내용이 없습니다.", "error"); 
             
-            if(confirm(`${updates.length}명의 정보를 업데이트하시겠습니까? (시간이 조금 걸릴 수 있습니다)`)) { 
-                window.showLoading(true); 
-                let successCount = 0;
-                const total = updates.length;
-
-                for (const update of updates) {
-                    const original = appState.members.find(m => String(m.id) === String(update.id));
-                    if (!original) continue;
-
-                    const payload = {
-                        id: original.id,
-                        name: original.name,
-                        guild: update.guild !== undefined ? update.guild : original.guild,
-                        role: update.role !== undefined ? update.role : original.role,
-                        class: update.class !== undefined ? update.class : original.class,
-                        isMain: original.isMain,
-                        mainCharName: original.mainCharName || '',
-                        joinDate: original.joinDate || ''
+            if(confirm(`${updates.length}명의 정보를 업데이트하시겠습니까?`)) { 
+                window.showLoading(true);
+                window.setLoadProgress(10, '변경사항 적용 중...');
+                
+                // 전체 멤버 목록에서 변경사항 반영
+                const allMembers = appState.members.map(m => {
+                    const update = appState.pendingUpdates[m.id];
+                    return {
+                        name: m.name,
+                        guild: update && update.guild !== undefined ? update.guild : m.guild,
+                        role: update && update.role !== undefined ? update.role : m.role,
+                        class: update && update.class !== undefined ? update.class : (m.class || ''),
+                        isMain: m.isMain || false,
+                        mainCharName: m.mainCharName || '',
+                        joinDate: m.joinDate || ''
                     };
-
-                    try {
-                        const response = await fetch(appState.scriptUrl, { 
-                            method: 'POST', 
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                            body: JSON.stringify({ action: 'update', data: payload }), 
-                        });
-                        const res = await response.json();
-                        if (res.status === "success") successCount++;
-                    } catch (e) {
-                        console.error("Update failed for", original.name, e);
-                    }
-                }
-
-                window.showLoading(false);
-                if (successCount === total) {
-                    window.showMsg("모든 변경사항이 저장되었습니다.", "success");
+                });
+                
+                window.setLoadProgress(30, '서버에 전송 중...');
+                const success = await window.sendAction('save_members', { members: allMembers });
+                
+                window.setLoadProgress(80, '데이터 갱신 중...');
+                if(success) {
+                    window.showMsg(`${updates.length}명의 변경사항이 저장되었습니다.`, "success");
                     appState.isBatchMode = false; 
                     appState.pendingUpdates = {};
                     await window.fetchMembers();
-                } else {
-                    window.showMsg(`${successCount}/${total}건 저장 완료. 일부 실패했습니다.`, "warning");
-                    await window.fetchMembers();
                 }
+                window.showLoading(false);
             } 
         };
 
