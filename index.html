@@ -150,6 +150,39 @@
 </head>
 <body class="bg-gray-50 text-slate-800 h-screen overflow-hidden flex font-medium">
 
+    <!-- ★ 로그인 화면 ★ -->
+    <div id="authOverlay" class="fixed inset-0 z-[20000] bg-gradient-to-br from-pink-50 via-white to-rose-50 flex items-center justify-center">
+        <div class="text-center w-80 p-8">
+            <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-pink-400 to-rose-400 flex items-center justify-center text-white font-bold shadow-lg shadow-pink-200 text-3xl mx-auto mb-6">뚠</div>
+            <h1 class="text-2xl font-black text-gray-800 tracking-tight mb-2">뚠카롱 길드 관리</h1>
+            <p class="text-xs text-gray-400 font-bold mb-8">관리자 전용 페이지입니다</p>
+            
+            <div id="authLoginSection">
+                <button onclick="window._authGoogleLogin()" id="googleLoginBtn" class="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 rounded-2xl px-6 py-4 font-bold text-sm text-gray-700 hover:border-pink-300 hover:shadow-lg transition-all shadow-sm">
+                    <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                    Google 계정으로 로그인
+                </button>
+                <p class="text-[10px] text-gray-300 mt-4">허가된 Google 계정만 접근 가능합니다</p>
+            </div>
+
+            <div id="authCheckingSection" class="hidden">
+                <div class="flex items-center justify-center gap-2 text-gray-400">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span class="text-xs font-bold">인증 확인 중...</span>
+                </div>
+            </div>
+
+            <div id="authDeniedSection" class="hidden">
+                <div class="bg-red-50 border border-red-200 rounded-2xl p-5 mb-4">
+                    <div class="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-3"><i class="fas fa-ban text-red-500 text-xl"></i></div>
+                    <p class="text-sm font-bold text-red-600 mb-1">접근 권한이 없습니다</p>
+                    <p id="authDeniedEmail" class="text-[10px] text-red-400"></p>
+                </div>
+                <button onclick="window._authLogout()" class="w-full py-3 bg-gray-100 text-gray-500 rounded-xl font-bold text-xs hover:bg-gray-200 transition-all">다른 계정으로 로그인</button>
+            </div>
+        </div>
+    </div>
+
     <div id="loadingOverlay">
         <div class="text-center w-72">
             <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-pink-400 to-rose-400 flex items-center justify-center text-white font-bold shadow-lg shadow-pink-200 text-2xl mx-auto mb-6">뚠</div>
@@ -288,6 +321,88 @@
         const SUPABASE_URL = 'https://luglshrfkkeacmefnvlm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1Z2xzaHJma2tlYWNtZWZudmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNjE0NTIsImV4cCI6MjA4NzYzNzQ1Mn0.LrJ-ejXJGqVGzrJyL5nFW45J92-MxrcKuEpE2EGNsIo';
         const supaDb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // ═══════════════════════════════════════════════════════════════
+        // ██  Google 로그인 인증 시스템  ██
+        // ═══════════════════════════════════════════════════════════════
+        
+        let CURRENT_USER = null; // { email, name, avatar }
+        
+        window._authGoogleLogin = async () => {
+            const btn = document.getElementById('googleLoginBtn');
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>로그인 중...';
+            try {
+                const { error } = await supaDb.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: { redirectTo: window.location.href.split('?')[0].split('#')[0] }
+                });
+                if (error) throw error;
+            } catch (e) {
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> Google 계정으로 로그인';
+                alert('로그인 실패: ' + e.message);
+            }
+        };
+        
+        window._authLogout = async () => {
+            await supaDb.auth.signOut();
+            CURRENT_USER = null;
+            document.getElementById('authOverlay').classList.remove('hidden');
+            document.getElementById('authLoginSection').classList.remove('hidden');
+            document.getElementById('authCheckingSection').classList.add('hidden');
+            document.getElementById('authDeniedSection').classList.add('hidden');
+        };
+        
+        window._authCheck = async () => {
+            const authOverlay = document.getElementById('authOverlay');
+            const loginSection = document.getElementById('authLoginSection');
+            const checkingSection = document.getElementById('authCheckingSection');
+            const deniedSection = document.getElementById('authDeniedSection');
+            
+            // 세션 확인
+            const { data: { session } } = await supaDb.auth.getSession();
+            
+            if (!session) {
+                // 로그인 안 됨 → 로그인 화면 표시
+                authOverlay.classList.remove('hidden');
+                loginSection.classList.remove('hidden');
+                checkingSection.classList.add('hidden');
+                deniedSection.classList.add('hidden');
+                return false;
+            }
+            
+            // 세션 있음 → 화이트리스트 확인
+            loginSection.classList.add('hidden');
+            checkingSection.classList.remove('hidden');
+            
+            const userEmail = session.user.email;
+            const userName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || userEmail;
+            const userAvatar = session.user.user_metadata?.avatar_url || '';
+            
+            const { data: whitelisted, error } = await supaDb.from('admin_whitelist')
+                .select('email, name, role')
+                .eq('email', userEmail)
+                .maybeSingle();
+            
+            if (error || !whitelisted) {
+                // 화이트리스트에 없음 → 접근 거부
+                checkingSection.classList.add('hidden');
+                deniedSection.classList.remove('hidden');
+                document.getElementById('authDeniedEmail').textContent = `${userEmail} 은(는) 등록된 관리자가 아닙니다.`;
+                return false;
+            }
+            
+            // 인증 성공!
+            CURRENT_USER = { 
+                email: userEmail, 
+                name: whitelisted.name || userName, 
+                role: whitelisted.role || '관리자',
+                avatar: userAvatar 
+            };
+            authOverlay.classList.add('hidden');
+            return true;
+        };
+        
         let GUILD_START_DATE = new Date('2020-03-17');
         const MAPLE_JOBS = ["히어로", "다크나이트", "팔라딘", "불독", "썬콜", "비숍", "보우마스터", "신궁", "패스파인더","나이트로드", "섀도어", "듀얼블레이드", "캡틴", "바이퍼", "캐논마스터","미하일", "소울마스터", "플레임위자드", "윈드브레이커", "나이트워커", "스트라이커","아란", "에반", "루미너스", "메르세데스", "팬텀", "은월","데몬 슬레이어", "데몬 어벤져", "블래스터", "배틀메이지", "와일드헌터", "메카닉", "제논","카이저", "카인", "카데나", "엔젤릭버스터","라라", "호영", "아델", "일리움", "아크", "칼리","제로", "키네시스", "렌"];
         const baseRanks = ['마카롱', '다쿠아즈'];
@@ -1009,7 +1124,7 @@
             else if (tab === 'guide_edit') window.renderGuideEditor(content);
             else if (tab === 'history') window.renderHistory(content);
             else if (tab === 'sync') window.renderSync(content);
-            else if (tab === 'settings') window.renderSettings(content);
+            else if (tab === 'settings') { window.renderSettings(content); setTimeout(() => window._loadAdminList(), 100); }
         };
 
         // --- DASHBOARD ---
@@ -3213,6 +3328,32 @@
                     </div>
                 </div>
 
+                <!-- ★ 관리자 계정 관리 ★ -->
+                <div class="bg-white p-8 lg:p-12 rounded-[3rem] border border-blue-100 shadow-sm font-bold">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 bg-blue-100 rounded-2xl flex items-center justify-center"><i class="fas fa-user-shield text-blue-500"></i></div>
+                        <div><h3 class="text-xl text-gray-800">관리자 계정 관리</h3><p class="text-[10px] text-gray-400">Google 로그인이 허용된 이메일을 관리합니다</p></div>
+                    </div>
+                    ${CURRENT_USER ? `<p class="text-[10px] text-blue-400 mb-6"><i class="fas fa-user mr-1"></i>현재 로그인: <strong>${CURRENT_USER.email}</strong> (${CURRENT_USER.role})</p>` : ''}
+                    
+                    <div class="mb-6">
+                        <div class="flex gap-2 mb-4">
+                            <input type="email" id="newAdminEmail" class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-4 focus:ring-blue-50" placeholder="추가할 Google 이메일">
+                            <input type="text" id="newAdminName" class="w-32 bg-gray-50 border border-gray-200 rounded-xl px-3 py-3 text-xs font-bold outline-none" placeholder="이름">
+                            <select id="newAdminRole" class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-3 text-xs font-bold outline-none cursor-pointer">
+                                <option value="마스터">마스터</option>
+                                <option value="부마스터" selected>부마스터</option>
+                                <option value="관리자">관리자</option>
+                            </select>
+                            <button onclick="window._addAdmin()" class="px-5 bg-blue-500 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg shrink-0"><i class="fas fa-plus mr-1"></i>추가</button>
+                        </div>
+                    </div>
+                    
+                    <div id="adminListContainer" class="space-y-2">
+                        <div class="text-center py-4 text-gray-300"><i class="fas fa-spinner fa-spin mr-1"></i> 로딩 중...</div>
+                    </div>
+                </div>
+
                 <!-- 데이터 백업 -->
                 <div class="bg-white p-8 lg:p-12 rounded-[3rem] border border-gray-100 shadow-sm font-bold">
                     <h3 class="text-xl mb-3 text-gray-800"><i class="fas fa-download mr-3 text-emerald-500"></i>데이터 백업</h3>
@@ -3517,6 +3658,72 @@
                 window.showMsg('JSON 백업 완료!', 'success');
             } catch(e) {
                 window.showMsg('백업 실패: ' + (e.message || e), 'error');
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        // ██  관리자 화이트리스트 관리  ██
+        // ═══════════════════════════════════════════════════════════════
+
+        window._loadAdminList = async () => {
+            const container = document.getElementById('adminListContainer');
+            if (!container) return;
+            try {
+                const { data, error } = await supaDb.from('admin_whitelist').select('*').order('created_at');
+                if (error) throw error;
+                
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">등록된 관리자가 없습니다.</p>';
+                    return;
+                }
+                
+                container.innerHTML = data.map(a => `
+                    <div class="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100 group hover:border-blue-200 transition-all">
+                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 text-[10px] font-bold shrink-0">${(a.name || a.email)[0].toUpperCase()}</div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-bold text-gray-700 truncate">${a.name || '-'}</p>
+                            <p class="text-[9px] text-gray-400 truncate">${a.email}</p>
+                        </div>
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${a.role === '마스터' ? 'bg-pink-100 text-pink-600' : a.role === '부마스터' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}">${a.role || '관리자'}</span>
+                        ${CURRENT_USER && CURRENT_USER.email !== a.email ? `<button onclick="window._removeAdmin(${a.id}, '${a.email}')" class="w-7 h-7 rounded-lg bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 text-[10px] transition-all opacity-0 group-hover:opacity-100 shrink-0"><i class="fas fa-times"></i></button>` : '<span class="text-[8px] text-green-500 font-bold">나</span>'}
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = `<p class="text-xs text-red-400 text-center py-4">로드 실패: ${e.message}</p>`;
+            }
+        };
+
+        window._addAdmin = async () => {
+            const email = document.getElementById('newAdminEmail')?.value?.trim();
+            const name = document.getElementById('newAdminName')?.value?.trim();
+            const role = document.getElementById('newAdminRole')?.value || '관리자';
+            
+            if (!email || !email.includes('@')) { window.showMsg('유효한 이메일을 입력하세요.', 'error'); return; }
+            
+            try {
+                const { error } = await supaDb.from('admin_whitelist').insert({ email, name, role });
+                if (error) {
+                    if (error.code === '23505') { window.showMsg('이미 등록된 이메일입니다.', 'error'); return; }
+                    throw error;
+                }
+                window.showMsg(`${email} 관리자 추가 완료!`, 'success');
+                document.getElementById('newAdminEmail').value = '';
+                document.getElementById('newAdminName').value = '';
+                await window._loadAdminList();
+            } catch (e) {
+                window.showMsg('추가 실패: ' + e.message, 'error');
+            }
+        };
+
+        window._removeAdmin = async (id, email) => {
+            if (!confirm(`"${email}" 관리자를 삭제하시겠습니까?\n이 사람은 더 이상 어드민 페이지에 접근할 수 없게 됩니다.`)) return;
+            try {
+                const { error } = await supaDb.from('admin_whitelist').delete().eq('id', id);
+                if (error) throw error;
+                window.showMsg(`${email} 제거 완료`, 'success');
+                await window._loadAdminList();
+            } catch (e) {
+                window.showMsg('삭제 실패: ' + e.message, 'error');
             }
         };
 
@@ -5214,7 +5421,27 @@
             ov.onclick = () => { sb.classList.add('-translate-x-full'); ov.classList.add('hidden'); };
         }
 
-        document.addEventListener('DOMContentLoaded', () => { initSidebar(); window.fetchMembers(); });
+        document.addEventListener('DOMContentLoaded', async () => {
+            initSidebar();
+            const authed = await window._authCheck();
+            if (authed) {
+                // 사이드바 하단에 사용자 정보 표시
+                const sidebarFooter = document.querySelector('#sidebar > div:last-child');
+                if (sidebarFooter && CURRENT_USER) {
+                    sidebarFooter.innerHTML = `
+                        <div class="flex items-center gap-2 mb-2">
+                            ${CURRENT_USER.avatar ? `<img src="${CURRENT_USER.avatar}" class="w-7 h-7 rounded-full border border-pink-200">` : `<div class="w-7 h-7 rounded-full bg-pink-100 flex items-center justify-center text-pink-500 text-[10px] font-bold">${(CURRENT_USER.name||'?')[0]}</div>`}
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-bold text-gray-700 truncate">${CURRENT_USER.name}</p>
+                                <p class="text-[8px] text-gray-400 truncate">${CURRENT_USER.role}</p>
+                            </div>
+                        </div>
+                        <button onclick="window._authLogout()" class="w-full py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-[9px] font-bold text-gray-500 transition-all"><i class="fas fa-sign-out-alt mr-1"></i>로그아웃</button>
+                    `;
+                }
+                window.fetchMembers();
+            }
+        });
     </script>
 </body>
 </html>
