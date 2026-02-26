@@ -797,7 +797,14 @@
                         success = true; break;
                     }
                     case 'save_members': {
-                        const { data: current } = await supaDb.from('members').select('id, name');
+                        // 전체 멤버 조회 (1000건 제한 우회)
+                        let current = [], pg = 0;
+                        while (true) {
+                            const { data: b } = await supaDb.from('members').select('id, name').range(pg * 1000, (pg + 1) * 1000 - 1);
+                            current = current.concat(b);
+                            if (b.length < 1000) break;
+                            pg++;
+                        }
                         const currentMap = {};
                         current.forEach(m => { currentMap[m.name] = m.id; });
                         const newNames = new Set(data.members.map(m => m.name));
@@ -5105,8 +5112,15 @@
             resultDiv.innerHTML = '<div class="text-center py-8 text-gray-400 font-bold"><i class="fas fa-spinner fa-spin text-xl mb-2"></i><p class="text-xs">중복 닉네임 검사 중...</p></div>';
 
             try {
-                const { data: allMembers, error } = await supaDb.from('members').select('*').order('name');
-                if (error) throw error;
+                // 1000건 제한 우회: 페이지네이션으로 전체 조회
+                let allMembers = [], page = 0, pageSize = 1000;
+                while (true) {
+                    const { data: batch, error: bErr } = await supaDb.from('members').select('*').order('id').range(page * pageSize, (page + 1) * pageSize - 1);
+                    if (bErr) throw bErr;
+                    allMembers = allMembers.concat(batch);
+                    if (batch.length < pageSize) break;
+                    page++;
+                }
 
                 const nameMap = {};
                 allMembers.forEach(m => {
