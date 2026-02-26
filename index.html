@@ -2150,30 +2150,71 @@
             const reason = document.getElementById('deleteReason').value;
             
             if (appState.isKickMode && appState.kickSelection.size > 0) {
-                const ids = Array.from(appState.kickSelection);
-                window.showLoading(true);
-                let successCount = 0;
+                const ids = new Set(Array.from(appState.kickSelection));
+                const kickedNames = appState.members.filter(m => ids.has(m.id)).map(m => m.name);
                 
-                for(const id of ids) {
-                    const m = appState.members.find(x => x.id === id);
-                    if(m) {
-                        const success = await window.sendAction('delete', { id: id, type: 'kick', reason: reason }, true);
-                        if(success) successCount++;
+                window.showLoading(true);
+                window.setLoadProgress(10, '추방 처리 중...');
+                
+                // save_members with kicked members removed
+                const remainingMembers = appState.members.filter(m => !ids.has(m.id)).map(m => ({
+                    name: m.name, guild: m.guild, role: m.role,
+                    class: m.class || '', isMain: m.isMain || false,
+                    mainCharName: m.mainCharName || '', joinDate: m.joinDate || ''
+                }));
+                
+                window.setLoadProgress(30, '서버에 전송 중...');
+                const success = await window.sendAction('save_members', { members: remainingMembers }, true);
+                
+                // Save history if reason provided
+                if (success && reason) {
+                    for (const name of kickedNames) {
+                        await window.sendAction('save_penalty', { date: new Date().toISOString().split('T')[0], name: name, points: 0, reason: `[추방] ${reason}` }, true);
                     }
                 }
                 
+                window.setLoadProgress(80, '데이터 갱신 중...');
                 window.showLoading(false);
-                window.showMsg(`${successCount}명 추방 완료.`, "success");
-                window.closeModal('deleteModal');
                 
+                if (success) {
+                    window.showMsg(`${ids.size}명 추방 완료.`, "success");
+                } else {
+                    window.showMsg("추방 처리 실패.", "error");
+                }
+                
+                window.closeModal('deleteModal');
                 appState.isKickMode = false;
                 appState.kickSelection.clear();
                 await window.fetchMembers();
                 return;
             }
 
-            if(await window.sendAction('delete', { id: appState.memberToDelete.id, type: appState.deleteType, reason: reason })) {
-                window.closeModal('deleteModal'); 
+            // Single member delete
+            if (appState.memberToDelete) {
+                window.showLoading(true);
+                const delId = appState.memberToDelete.id;
+                const delName = appState.memberToDelete.name;
+                
+                const remainingMembers = appState.members.filter(m => m.id !== delId).map(m => ({
+                    name: m.name, guild: m.guild, role: m.role,
+                    class: m.class || '', isMain: m.isMain || false,
+                    mainCharName: m.mainCharName || '', joinDate: m.joinDate || ''
+                }));
+                
+                const success = await window.sendAction('save_members', { members: remainingMembers }, true);
+                
+                if (success && reason) {
+                    await window.sendAction('save_penalty', { date: new Date().toISOString().split('T')[0], name: delName, points: 0, reason: `[${appState.deleteType === 'kick' ? '추방' : '자진탈퇴'}] ${reason}` }, true);
+                }
+                
+                window.showLoading(false);
+                if (success) {
+                    window.showMsg(`${delName} 제거 완료.`, "success");
+                    await window.fetchMembers();
+                } else {
+                    window.showMsg("제거 실패.", "error");
+                }
+                window.closeModal('deleteModal');
             }
         };
 
