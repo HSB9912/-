@@ -380,19 +380,83 @@
             const userAvatar = session.user.user_metadata?.avatar_url || '';
             
             const { data: whitelisted, error } = await supaDb.from('admin_whitelist')
-                .select('email, name, role')
+                .select('email, name, role, status')
                 .eq('email', userEmail)
                 .maybeSingle();
             
-            if (error || !whitelisted) {
-                // 화이트리스트에 없음 → 접근 거부
+            if (error && error.code === '42P01') {
+                // 테이블이 없음 → SQL 미실행
                 checkingSection.classList.add('hidden');
                 deniedSection.classList.remove('hidden');
-                document.getElementById('authDeniedEmail').textContent = `${userEmail} 은(는) 등록된 관리자가 아닙니다.`;
+                document.getElementById('authDeniedEmail').textContent = `admin_whitelist 테이블이 없습니다. SQL을 먼저 실행해주세요.`;
                 return false;
             }
             
-            // 인증 성공!
+            if (!whitelisted) {
+                // 첫 방문 → 자동으로 승인 요청 등록
+                try {
+                    await supaDb.from('admin_whitelist').insert({
+                        email: userEmail,
+                        name: userName,
+                        role: '관리자',
+                        status: 'pending',
+                        requested_at: new Date().toISOString()
+                    });
+                } catch (e) { /* 이미 있으면 무시 */ }
+                
+                checkingSection.classList.add('hidden');
+                deniedSection.classList.remove('hidden');
+                document.getElementById('authDeniedEmail').innerHTML = `
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-clock text-amber-500 text-2xl"></i>
+                        </div>
+                        <p class="font-bold text-gray-700 mb-1">승인 대기 중</p>
+                        <p class="text-xs text-gray-400">${userEmail}</p>
+                        <p class="text-xs text-gray-400 mt-2">관리자가 승인하면 접근할 수 있습니다.</p>
+                        <button onclick="location.reload()" class="mt-4 px-6 py-2 bg-amber-500 text-white rounded-xl text-xs font-bold hover:bg-amber-600 transition-all">
+                            <i class="fas fa-sync-alt mr-1"></i>승인 확인
+                        </button>
+                    </div>`;
+                return false;
+            }
+            
+            if (whitelisted.status === 'pending') {
+                // 이미 요청했지만 아직 승인 안 됨
+                checkingSection.classList.add('hidden');
+                deniedSection.classList.remove('hidden');
+                document.getElementById('authDeniedEmail').innerHTML = `
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-clock text-amber-500 text-2xl"></i>
+                        </div>
+                        <p class="font-bold text-gray-700 mb-1">승인 대기 중</p>
+                        <p class="text-xs text-gray-400">${userEmail}</p>
+                        <p class="text-xs text-gray-400 mt-2">관리자가 승인하면 접근할 수 있습니다.</p>
+                        <button onclick="location.reload()" class="mt-4 px-6 py-2 bg-amber-500 text-white rounded-xl text-xs font-bold hover:bg-amber-600 transition-all">
+                            <i class="fas fa-sync-alt mr-1"></i>승인 확인
+                        </button>
+                    </div>`;
+                return false;
+            }
+            
+            if (whitelisted.status === 'rejected') {
+                // 거절됨
+                checkingSection.classList.add('hidden');
+                deniedSection.classList.remove('hidden');
+                document.getElementById('authDeniedEmail').innerHTML = `
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-ban text-red-500 text-2xl"></i>
+                        </div>
+                        <p class="font-bold text-gray-700 mb-1">접근이 거부되었습니다</p>
+                        <p class="text-xs text-gray-400">${userEmail}</p>
+                        <p class="text-xs text-gray-400 mt-2">관리자에게 문의하세요.</p>
+                    </div>`;
+                return false;
+            }
+            
+            // status === 'approved' → 인증 성공!
             CURRENT_USER = { 
                 email: userEmail, 
                 name: whitelisted.name || userName, 
@@ -3339,24 +3403,11 @@
                 <div class="bg-white p-8 lg:p-12 rounded-[3rem] border border-blue-100 shadow-sm font-bold">
                     <div class="flex items-center gap-3 mb-2">
                         <div class="w-10 h-10 bg-blue-100 rounded-2xl flex items-center justify-center"><i class="fas fa-user-shield text-blue-500"></i></div>
-                        <div><h3 class="text-xl text-gray-800">관리자 계정 관리</h3><p class="text-[10px] text-gray-400">Google 로그인이 허용된 이메일을 관리합니다</p></div>
+                        <div><h3 class="text-xl text-gray-800">관리자 계정 관리</h3><p class="text-[10px] text-gray-400">Google 로그인 후 승인된 사용자만 접근할 수 있습니다</p></div>
                     </div>
                     ${CURRENT_USER ? `<p class="text-[10px] text-blue-400 mb-6"><i class="fas fa-user mr-1"></i>현재 로그인: <strong>${CURRENT_USER.email}</strong> (${CURRENT_USER.role})</p>` : ''}
                     
-                    <div class="mb-6">
-                        <div class="flex gap-2 mb-4">
-                            <input type="email" id="newAdminEmail" class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-4 focus:ring-blue-50" placeholder="추가할 Google 이메일">
-                            <input type="text" id="newAdminName" class="w-32 bg-gray-50 border border-gray-200 rounded-xl px-3 py-3 text-xs font-bold outline-none" placeholder="이름">
-                            <select id="newAdminRole" class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-3 text-xs font-bold outline-none cursor-pointer">
-                                <option value="마스터">마스터</option>
-                                <option value="부마스터" selected>부마스터</option>
-                                <option value="관리자">관리자</option>
-                            </select>
-                            <button onclick="window._addAdmin()" class="px-5 bg-blue-500 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg shrink-0"><i class="fas fa-plus mr-1"></i>추가</button>
-                        </div>
-                    </div>
-                    
-                    <div id="adminListContainer" class="space-y-2">
+                    <div id="adminListContainer" class="space-y-6">
                         <div class="text-center py-4 text-gray-300"><i class="fas fa-spinner fa-spin mr-1"></i> 로딩 중...</div>
                     </div>
                 </div>
@@ -3684,50 +3735,120 @@
                     return;
                 }
                 
-                container.innerHTML = data.map(a => `
-                    <div class="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100 group hover:border-blue-200 transition-all">
-                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 text-[10px] font-bold shrink-0">${(a.name || a.email)[0].toUpperCase()}</div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-xs font-bold text-gray-700 truncate">${a.name || '-'}</p>
-                            <p class="text-[9px] text-gray-400 truncate">${a.email}</p>
+                const pending = data.filter(a => a.status === 'pending');
+                const approved = data.filter(a => a.status === 'approved');
+                const rejected = data.filter(a => a.status === 'rejected');
+                
+                let html = '';
+                
+                // 승인 대기 섹션
+                if (pending.length > 0) {
+                    html += `<div>
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
+                            <span class="text-xs font-bold text-amber-600">승인 대기 (${pending.length}명)</span>
                         </div>
-                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${a.role === '마스터' ? 'bg-pink-100 text-pink-600' : a.role === '부마스터' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}">${a.role || '관리자'}</span>
-                        ${CURRENT_USER && CURRENT_USER.email !== a.email ? `<button onclick="window._removeAdmin(${a.id}, '${a.email}')" class="w-7 h-7 rounded-lg bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 text-[10px] transition-all opacity-0 group-hover:opacity-100 shrink-0"><i class="fas fa-times"></i></button>` : '<span class="text-[8px] text-green-500 font-bold">나</span>'}
-                    </div>
-                `).join('');
+                        <div class="space-y-2">${pending.map(a => `
+                            <div class="flex items-center gap-3 bg-amber-50 rounded-xl px-4 py-3 border border-amber-200">
+                                <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-[10px] font-bold shrink-0">${(a.name || a.email)[0].toUpperCase()}</div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-bold text-gray-700 truncate">${a.name || '-'}</p>
+                                    <p class="text-[9px] text-gray-400 truncate">${a.email}</p>
+                                    <p class="text-[8px] text-amber-400">${a.requested_at ? new Date(a.requested_at).toLocaleString('ko-KR') + ' 요청' : ''}</p>
+                                </div>
+                                <div class="flex gap-1.5 shrink-0">
+                                    <button onclick="window._approveAdmin(${a.id}, '${a.email}')" class="px-3 py-1.5 bg-green-500 text-white rounded-lg text-[10px] font-bold hover:bg-green-600 transition-all"><i class="fas fa-check mr-1"></i>승인</button>
+                                    <button onclick="window._rejectAdmin(${a.id}, '${a.email}')" class="px-3 py-1.5 bg-red-400 text-white rounded-lg text-[10px] font-bold hover:bg-red-500 transition-all"><i class="fas fa-times mr-1"></i>거절</button>
+                                </div>
+                            </div>
+                        `).join('')}</div>
+                    </div>`;
+                }
+                
+                // 승인된 관리자 섹션
+                if (approved.length > 0) {
+                    html += `<div>
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                            <span class="text-xs font-bold text-green-600">승인됨 (${approved.length}명)</span>
+                        </div>
+                        <div class="space-y-2">${approved.map(a => `
+                            <div class="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100 group hover:border-blue-200 transition-all">
+                                <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-500 text-[10px] font-bold shrink-0">${(a.name || a.email)[0].toUpperCase()}</div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-bold text-gray-700 truncate">${a.name || '-'}</p>
+                                    <p class="text-[9px] text-gray-400 truncate">${a.email}</p>
+                                </div>
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${a.role === '마스터' ? 'bg-pink-100 text-pink-600' : a.role === '부마스터' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}">${a.role || '관리자'}</span>
+                                ${CURRENT_USER && CURRENT_USER.email !== a.email ? `<button onclick="window._removeAdmin(${a.id}, '${a.email}')" class="w-7 h-7 rounded-lg bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 text-[10px] transition-all opacity-0 group-hover:opacity-100 shrink-0"><i class="fas fa-times"></i></button>` : '<span class="text-[8px] text-green-500 font-bold">나</span>'}
+                            </div>
+                        `).join('')}</div>
+                    </div>`;
+                }
+                
+                // 거절된 사용자 섹션
+                if (rejected.length > 0) {
+                    html += `<div>
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="w-2 h-2 bg-red-400 rounded-full"></span>
+                            <span class="text-xs font-bold text-red-400">거절됨 (${rejected.length}명)</span>
+                        </div>
+                        <div class="space-y-2">${rejected.map(a => `
+                            <div class="flex items-center gap-3 bg-red-50/50 rounded-xl px-4 py-3 border border-red-100 group">
+                                <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-400 text-[10px] font-bold shrink-0">${(a.name || a.email)[0].toUpperCase()}</div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-bold text-gray-500 truncate">${a.name || '-'}</p>
+                                    <p class="text-[9px] text-gray-400 truncate">${a.email}</p>
+                                </div>
+                                <div class="flex gap-1.5 shrink-0">
+                                    <button onclick="window._approveAdmin(${a.id}, '${a.email}')" class="px-2.5 py-1 bg-green-100 text-green-600 rounded-lg text-[9px] font-bold hover:bg-green-200 transition-all opacity-0 group-hover:opacity-100"><i class="fas fa-check mr-1"></i>승인</button>
+                                    <button onclick="window._removeAdmin(${a.id}, '${a.email}')" class="w-7 h-7 rounded-lg bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 text-[10px] transition-all opacity-0 group-hover:opacity-100"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        `).join('')}</div>
+                    </div>`;
+                }
+                
+                container.innerHTML = html || '<p class="text-xs text-gray-400 text-center py-4">등록된 관리자가 없습니다.</p>';
             } catch (e) {
                 container.innerHTML = `<p class="text-xs text-red-400 text-center py-4">로드 실패: ${e.message}</p>`;
             }
         };
 
-        window._addAdmin = async () => {
-            const email = document.getElementById('newAdminEmail')?.value?.trim();
-            const name = document.getElementById('newAdminName')?.value?.trim();
-            const role = document.getElementById('newAdminRole')?.value || '관리자';
-            
-            if (!email || !email.includes('@')) { window.showMsg('유효한 이메일을 입력하세요.', 'error'); return; }
-            
+        window._approveAdmin = async (id, email) => {
             try {
-                const { error } = await supaDb.from('admin_whitelist').insert({ email, name, role });
-                if (error) {
-                    if (error.code === '23505') { window.showMsg('이미 등록된 이메일입니다.', 'error'); return; }
-                    throw error;
-                }
-                window.showMsg(`${email} 관리자 추가 완료!`, 'success');
-                document.getElementById('newAdminEmail').value = '';
-                document.getElementById('newAdminName').value = '';
+                const { error } = await supaDb.from('admin_whitelist').update({ 
+                    status: 'approved', 
+                    approved_at: new Date().toISOString() 
+                }).eq('id', id);
+                if (error) throw error;
+                window.showMsg(`${email} 승인 완료!`, 'success');
                 await window._loadAdminList();
             } catch (e) {
-                window.showMsg('추가 실패: ' + e.message, 'error');
+                window.showMsg('승인 실패: ' + e.message, 'error');
             }
         };
 
+        window._rejectAdmin = async (id, email) => {
+            if (!confirm(`"${email}" 접근을 거절하시겠습니까?`)) return;
+            try {
+                const { error } = await supaDb.from('admin_whitelist').update({ status: 'rejected' }).eq('id', id);
+                if (error) throw error;
+                window.showMsg(`${email} 거절됨`, 'success');
+                await window._loadAdminList();
+            } catch (e) {
+                window.showMsg('거절 실패: ' + e.message, 'error');
+            }
+        };
+
+        window._addAdmin = async () => { /* 미사용 - 자동 요청 방식 */ };
+
         window._removeAdmin = async (id, email) => {
-            if (!confirm(`"${email}" 관리자를 삭제하시겠습니까?\n이 사람은 더 이상 어드민 페이지에 접근할 수 없게 됩니다.`)) return;
+            if (!confirm(`"${email}"을(를) 완전히 삭제하시겠습니까?\n다시 로그인하면 새로 승인 요청됩니다.`)) return;
             try {
                 const { error } = await supaDb.from('admin_whitelist').delete().eq('id', id);
                 if (error) throw error;
-                window.showMsg(`${email} 제거 완료`, 'success');
+                window.showMsg(`${email} 삭제 완료`, 'success');
                 await window._loadAdminList();
             } catch (e) {
                 window.showMsg('삭제 실패: ' + e.message, 'error');
@@ -5134,7 +5255,7 @@
                     resultDiv.innerHTML = `<div class="bg-green-50 border border-green-200 rounded-2xl p-8 text-center">
                         <div class="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-3"><i class="fas fa-check text-green-500 text-xl"></i></div>
                         <p class="text-sm font-bold text-green-600">중복 닉네임이 없습니다!</p>
-                        <p class="text-[10px] text-green-400 mt-1">총 ${allMembers.length}명 모두 고유한 닉네임입니다.</p>
+                        <p class="text-[10px] text-green-400 mt-1">총 ${allMembers.length}명 (${page+1}페이지 조회) 모두 고유한 닉네임입니다.</p>
                     </div>`;
                 } else {
                     const guilds = appState.guilds.map(g => g.name);
