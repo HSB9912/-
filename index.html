@@ -146,6 +146,93 @@
         /* Sticky table header */
         .stick-head { border-collapse: separate; border-spacing: 0; }
         .stick-head thead th { position: sticky; top: 0; z-index: 10; background: #f9fafb; }
+
+        /* 모바일 수로 분석 최적화 */
+        @media (max-width: 640px) {
+            .analysis-summary-grid { grid-template-columns: 1fr !important; }
+            .analysis-mvp-grid { grid-template-columns: repeat(2, 1fr) !important; }
+            .analysis-table-wrap table { font-size: 0.6rem; }
+            .analysis-table-wrap table th, .analysis-table-wrap table td { padding: 0.375rem 0.25rem !important; }
+        }
+
+        /* ===== DARK MODE ===== */
+        body.dark { background-color: #0f1117; color: #c9cdd4; }
+        body.dark .bg-gray-50, body.dark main { background-color: #0f1117 !important; }
+        body.dark .bg-white { background-color: #1a1d27 !important; color: #c9cdd4; border-color: #2a2d3a !important; }
+        body.dark aside { background-color: #14161e !important; border-color: #2a2d3a !important; }
+        body.dark header { background-color: #14161e !important; border-color: #2a2d3a !important; }
+        body.dark .border-gray-100, body.dark .border-gray-200, body.dark .border-gray-50 { border-color: #2a2d3a !important; }
+        body.dark .text-gray-800, body.dark .text-slate-800 { color: #e0e3ea !important; }
+        body.dark .text-gray-700 { color: #b8bcc6 !important; }
+        body.dark .text-gray-600 { color: #8b90a0 !important; }
+        body.dark .text-gray-500 { color: #6b7080 !important; }
+        body.dark .text-gray-400 { color: #555a6a !important; }
+        body.dark .text-gray-300 { color: #444a5a !important; }
+        body.dark .bg-gray-100 { background-color: #22252f !important; }
+        body.dark .bg-gray-50 { background-color: #1a1d27 !important; }
+        body.dark input, body.dark select, body.dark textarea { background-color: #22252f !important; color: #c9cdd4 !important; border-color: #333848 !important; }
+        body.dark input::placeholder, body.dark textarea::placeholder { color: #555a6a !important; }
+        body.dark table thead { background-color: #14161e !important; }
+        body.dark table thead th { background-color: #14161e !important; color: #6b7080 !important; border-color: #2a2d3a !important; }
+        body.dark table tbody td { background-color: #1a1d27 !important; border-color: #22252f !important; }
+        body.dark table tbody tr:hover td { background-color: #22252f !important; }
+        body.dark .stick-head thead th { background: #14161e !important; }
+        body.dark .nav-item:hover { background-color: #22252f !important; }
+        body.dark .nav-item.active { background-color: #1e1a2e !important; color: #c084fc !important; box-shadow: inset 4px 0 0 #a855f7 !important; }
+        body.dark .shadow-sm, body.dark .shadow-lg, body.dark .shadow-md, body.dark .shadow-2xl { box-shadow: none !important; }
+        body.dark #loadingOverlay { background: #0f1117 !important; }
+        body.dark .bg-pink-50, body.dark .bg-pink-50\/30 { background-color: rgba(168,85,247,0.08) !important; }
+        body.dark .text-pink-600, body.dark .text-pink-500, body.dark .text-pink-400 { color: #a78bfa !important; }
+        body.dark .border-pink-100, body.dark .border-pink-50 { border-color: #2a2540 !important; }
+        body.dark .bg-red-50, body.dark .bg-red-50\/20 { background-color: rgba(239,68,68,0.08) !important; }
+        body.dark .text-red-500, body.dark .text-red-600, body.dark .text-red-400 { color: #f87171 !important; }
+        body.dark .text-blue-500, body.dark .text-blue-600, body.dark .text-blue-400 { color: #93c5fd !important; }
+        body.dark .text-green-500, body.dark .text-green-600, body.dark .text-green-400 { color: #86efac !important; }
+        body.dark .text-amber-500, body.dark .text-amber-600 { color: #fbbf24 !important; }
+        body.dark .text-orange-500 { color: #fb923c !important; }
+        body.dark .text-purple-600, body.dark .text-purple-500 { color: #c084fc !important; }
+        body.dark .bg-pink-500 { background-color: #7c3aed !important; }
+        body.dark .bg-gradient-to-br, body.dark .bg-gradient-to-tr, body.dark .bg-gradient-to-r { background: #1a1d27 !important; }
+        body.dark [class*="from-pink"], body.dark [class*="from-rose"], body.dark [class*="from-blue"],
+        body.dark [class*="from-emerald"], body.dark [class*="from-purple"], body.dark [class*="from-yellow"],
+        body.dark [class*="from-amber"], body.dark [class*="from-green"], body.dark [class*="from-red"],
+        body.dark [class*="from-indigo"], body.dark [class*="from-orange"], body.dark [class*="from-cyan"] { background: #1a1d27 !important; }
+        body.dark [class*="border-pink-100"], body.dark [class*="border-rose-100"], body.dark [class*="border-blue-100"],
+        body.dark [class*="border-emerald-100"], body.dark [class*="border-purple-100"], body.dark [class*="border-orange-100"],
+        body.dark [class*="border-amber-100"], body.dark [class*="border-green-100"], body.dark [class*="border-red-100"] { border-color: #2a2d3a !important; }
+        body.dark .bg-white\/40 { background-color: rgba(255,255,255,0.05) !important; }
+        body.dark .hover\:bg-pink-50\/30:hover, body.dark .hover\:bg-gray-50:hover { background-color: #22252f !important; }
+        body.dark .hover\:bg-pink-100:hover, body.dark .hover\:bg-gray-100:hover { background-color: #22252f !important; }
+        body.dark th.sortable:hover { background-color: #22252f !important; color: #a78bfa !important; }
+        body.dark .batch-modified { background-color: rgba(251,146,60,0.1) !important; }
+        body.dark .calendar-day { color: #8b90a0; }
+        body.dark .calendar-day:hover { background-color: #22252f; border-color: #333848; }
+        body.dark .calendar-day.today { background-color: #7c3aed; color: white; }
+        body.dark .calendar-day.thursday { background-color: rgba(124,58,237,0.15); color: #c084fc; border-color: rgba(124,58,237,0.3); }
+        body.dark .event-snippet { background-color: rgba(124,58,237,0.15); color: #c9cdd4; }
+        body.dark .calendar-day.today .event-snippet { background-color: rgba(255,255,255,0.15); color: white; }
+        body.dark .bg-green-50 { background-color: rgba(34,197,94,0.08) !important; }
+        body.dark .bg-amber-50 { background-color: rgba(245,158,11,0.08) !important; }
+        body.dark .bg-blue-50 { background-color: rgba(59,130,246,0.08) !important; }
+        body.dark .bg-emerald-50 { background-color: rgba(16,185,129,0.08) !important; }
+        body.dark .bg-purple-50 { background-color: rgba(168,85,247,0.08) !important; }
+        body.dark [style*="background:#fdf2f8"], body.dark [style*="background:#fff1f2"],
+        body.dark [style*="background:#eef2ff"], body.dark [style*="background:#fefce8"],
+        body.dark [style*="background:#eff6ff"], body.dark [style*="background:#fffbeb"] {
+            background: #22252f !important; border-color: #333848 !important;
+        }
+        body.dark ::-webkit-scrollbar-track { background: #14161e; }
+        body.dark ::-webkit-scrollbar-thumb { background: #333848; }
+        body.dark ::-webkit-scrollbar-thumb:hover { background: #444a5a; }
+        body.dark #authOverlay { background: #0f1117 !important; }
+        body.dark .bg-gradient-to-br.from-pink-50 { background: #0f1117 !important; }
+        body.dark .score-zero { background-color: rgba(239,68,68,0.08) !important; color: #f87171 !important; }
+        body.dark .analysis-table-wrap table tbody tr td:nth-child(1),
+        body.dark .analysis-table-wrap table tbody tr td:nth-child(2) { background: #1a1d27 !important; }
+        body.dark .analysis-table-wrap table tbody tr:hover td:nth-child(1),
+        body.dark .analysis-table-wrap table tbody tr:hover td:nth-child(2) { background: #22252f !important; }
+        body.dark .analysis-table-wrap table thead th:nth-child(1),
+        body.dark .analysis-table-wrap table thead th:nth-child(2) { background: #14161e !important; }
     </style>
 </head>
 <body class="bg-gray-50 text-slate-800 h-screen overflow-hidden flex font-medium">
@@ -232,6 +319,7 @@
                     ✨ <span id="anniversaryLabel">로딩 중...</span>
                 </div>
                 <div class="flex items-center gap-1 lg:gap-1.5" id="totalMembersCount"></div>
+                <button id="darkToggle" onclick="window.toggleDark()" class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-400 transition-all border border-gray-100 shadow-sm shrink-0" title="다크모드"><i class="fas fa-adjust text-xs lg:text-base"></i></button>
                 <button id="refreshBtn" onclick="fetchMembers()" class="w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-400 transition-all border border-gray-100 shadow-sm shrink-0"><i class="fas fa-sync-alt text-xs lg:text-base"></i></button>
             </div>
         </header>
@@ -507,6 +595,61 @@
             currentSelectedDate: null,
             currentEditingEvent: null,
             pagination: { members: 1, analysis: 1 } 
+        };
+
+        // ===== 다크모드 =====
+        window.toggleDark = () => {
+            document.body.classList.toggle('dark');
+            const isDark = document.body.classList.contains('dark');
+            localStorage.setItem('adminDarkMode', isDark ? '1' : '0');
+            const icon = document.querySelector('#darkToggle i');
+            if (icon) icon.className = isDark ? 'fas fa-sun text-xs lg:text-base text-amber-400' : 'fas fa-adjust text-xs lg:text-base';
+        };
+        if (localStorage.getItem('adminDarkMode') === '1') {
+            document.body.classList.add('dark');
+            setTimeout(() => {
+                const icon = document.querySelector('#darkToggle i');
+                if (icon) icon.className = 'fas fa-sun text-xs lg:text-base text-amber-400';
+            }, 100);
+        }
+
+        // ===== 개인 수로 데이터 모달 =====
+        window.showPersonalSuro = (memberName) => {
+            var member = appState.members.find(function(m){ return m.name === memberName; });
+            if (!member) return;
+            var headers = [].concat(appState.suroHeaders);
+            var scores = headers.map(function(h){ return Math.round(Number(member.suro && member.suro[h])) || 0; });
+            var validScores = scores.filter(function(s){ return s > 0; });
+            var avg = validScores.length > 0 ? Math.round(validScores.reduce(function(a,b){return a+b;},0) / validScores.length) : 0;
+            var mx = validScores.length > 0 ? Math.max.apply(null, validScores) : 0;
+            var mn = validScores.length > 0 ? Math.min.apply(null, validScores) : 0;
+            var participation = scores.length > 0 ? Math.round((validScores.length / scores.length) * 100) : 0;
+            var getWedStr = function(h){ var p=h.split('~'); return p.length>1?p[1].replace('수로 점수','').trim():h.trim(); };
+            var recentScores = scores.slice(-4);
+            var recentHeaders = headers.slice(-4);
+            var maxBarVal = Math.max.apply(null, recentScores.concat([1]));
+            var dk = document.body.classList.contains('dark');
+            var trendHtml = '';
+            recentHeaders.forEach(function(h, i) {
+                var s = recentScores[i], pct = Math.round((s / maxBarVal) * 100);
+                var prev = i > 0 ? recentScores[i-1] : 0, diffHtml = '';
+                if (prev > 0 && s > 0) { var dp = ((s-prev)/prev*100); if(s>prev) diffHtml='<span class="text-red-500 text-[9px] ml-1">\u25B2'+dp.toFixed(1)+'%</span>'; else if(s<prev) diffHtml='<span class="text-blue-500 text-[9px] ml-1">\u25BC'+Math.abs(dp).toFixed(1)+'%</span>'; }
+                trendHtml += '<div><div class="flex justify-between items-center mb-1"><span class="text-[10px] font-bold '+(dk?'text-gray-400':'text-gray-600')+'">'+getWedStr(h)+'</span><span class="text-xs font-black '+(s===0?'text-red-400':dk?'text-gray-200':'text-gray-700')+'">'+(s>0?s.toLocaleString():'0')+diffHtml+'</span></div><div class="w-full '+(dk?'bg-gray-700':'bg-gray-100')+' rounded-full h-2.5 overflow-hidden"><div class="h-full rounded-full transition-all duration-700 '+(s===0?'bg-red-300':'bg-gradient-to-r from-pink-400 to-rose-400')+'" style="width:'+pct+'%"></div></div></div>';
+            });
+            var allHtml = '';
+            var revHeaders = [].concat(headers).reverse();
+            revHeaders.forEach(function(h, i) {
+                var idx2 = headers.length - 1 - i, s = scores[idx2];
+                var cls = s===0?(dk?'bg-red-900/20 text-red-400':'bg-red-50 text-red-400'):(i%2===0?(dk?'bg-gray-800':'bg-gray-50'):'');
+                allHtml += '<div class="flex justify-between items-center py-1.5 px-2 rounded-lg text-[11px] font-bold '+cls+'"><span class="'+(dk?'text-gray-400':'text-gray-500')+'">'+getWedStr(h)+'</span><span class="'+(s===0?'text-red-400':dk?'text-gray-200':'text-gray-700')+'">'+(s>0?s.toLocaleString():'0')+'</span></div>';
+            });
+            var overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:1rem;';
+            overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
+            function statCard(label,value,colorName){ return '<div class="text-center p-3 rounded-xl '+(dk?'bg-'+colorName+'-900/30 border border-'+colorName+'-800/30':'bg-'+colorName+'-50 border border-'+colorName+'-100')+'"><p class="text-[8px] '+(dk?'text-'+colorName+'-300':'text-'+colorName+'-500')+' font-bold uppercase">'+label+'</p><p class="text-lg font-black '+(dk?'text-'+colorName+'-300':'text-'+colorName+'-600')+'">'+value+'</p></div>'; }
+            overlay.innerHTML = '<div style="background:'+(dk?'#1a1d27':'white')+';border-radius:1.5rem;width:100%;max-width:500px;max-height:85vh;box-shadow:0 25px 50px rgba(0,0,0,0.25);display:flex;flex-direction:column;overflow:hidden;">'+'<div class="p-5 border-b '+(dk?'border-gray-700':'border-gray-100')+' flex justify-between items-center shrink-0"><div class="flex items-center gap-3">'+window.getNicknameIcon(member.role)+'<div><h3 class="text-lg font-bold '+(dk?'text-gray-100':'text-gray-800')+'">'+member.name+'</h3><p class="text-[10px] '+(dk?'text-gray-400':'text-gray-500')+'">'+member.guild+' \xB7 '+(member.class||'-')+' \xB7 '+(member.role||'-')+'</p></div></div><button onclick="this.closest(\'[style*=position\\:fixed]\')" class="w-8 h-8 rounded-full '+(dk?'bg-gray-700 hover:bg-gray-600 text-gray-300':'bg-gray-100 hover:bg-gray-200 text-gray-500')+' flex items-center justify-center transition-colors" id="pSuroClose"><i class="fas fa-times"></i></button></div>'+'<div class="p-5 flex-1 overflow-y-auto">'+'<div class="grid grid-cols-4 gap-2 mb-5">'+statCard('\uD3C9\uADE0',avg.toLocaleString(),'pink')+statCard('\uCD5C\uACE0',mx.toLocaleString(),'blue')+statCard('\uCD5C\uC800',mn.toLocaleString(),'amber')+statCard('\uCC38\uC5EC\uC728',participation+'%','green')+'</div>'+'<div class="mb-5"><p class="text-[10px] '+(dk?'text-gray-400':'text-gray-500')+' font-bold uppercase tracking-widest mb-3">\uCD5C\uADFC \uCD94\uC138</p><div class="space-y-2">'+trendHtml+'</div></div>'+'<div><p class="text-[10px] '+(dk?'text-gray-400':'text-gray-500')+' font-bold uppercase tracking-widest mb-3">\uC804\uCCB4 \uAE30\uB85D ('+headers.length+'\uC8FC\uCC28)</p><div class="max-h-[200px] overflow-y-auto space-y-1">'+allHtml+'</div></div>'+'</div></div>';
+            document.body.appendChild(overlay);
+            document.getElementById('pSuroClose').onclick = function(){ overlay.remove(); };
         };
 
         window.showMsg = (text, type = 'info') => {
@@ -1549,7 +1692,7 @@
 
             tbody.innerHTML = processedList.map((m, i) => {
                 const globalIndex = i + 1;
-                return `<tr class="group h-11 hover:bg-gray-50 transition-colors border-b border-gray-50">
+                return `<tr class="group h-11 hover:bg-gray-50 transition-colors border-b border-gray-50 cursor-pointer" onclick="window.showPersonalSuro(this.dataset.name)" data-name="${m.name}">
                     <td class="p-3 text-center text-gray-400 group-hover:bg-gray-50 border-r border-gray-50 bg-white group-hover:bg-gray-50">${globalIndex}</td>
                     <td class="p-3 text-gray-800 group-hover:bg-gray-50 border-r border-gray-50 bg-white group-hover:bg-gray-50">
                         <div class="flex items-center leading-none overflow-hidden text-ellipsis">
@@ -1771,7 +1914,7 @@
                 <div class="flex-1 overflow-y-auto min-h-0 flex flex-col gap-3">
 
                 <!-- ★ 상단 요약 한 줄 -->
-                <div class="grid grid-cols-3 gap-2 shrink-0 font-bold">
+                <div class="grid grid-cols-1 sm:grid-cols-3 analysis-summary-grid gap-2 shrink-0 font-bold">
                     <div class="bg-white py-2.5 px-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-center gap-3">
                         <span class="text-[8px] text-gray-400 uppercase tracking-widest">전체 총점</span>
                         <span class="text-base font-black text-gray-800 tracking-tighter">${displayTotal.toLocaleString()}</span>
@@ -1789,7 +1932,7 @@
                 <canvas id="analysisChart" style="display:none;"></canvas>
 
                 <!-- ★ MVP 4개 한 줄 -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 font-bold shrink-0">
+                <div class="grid grid-cols-2 lg:grid-cols-4 analysis-mvp-grid gap-2 font-bold shrink-0">
                         <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-2.5 lg:p-3.5 rounded-xl lg:rounded-2xl border border-blue-100 shadow-sm flex flex-col relative overflow-hidden h-full min-h-[85px] lg:min-h-[100px] cursor-pointer group/mvp" onclick="window.expandMvp('high')">
                             <div class="absolute -right-2 -bottom-2 opacity-[0.05] text-4xl lg:text-6xl text-blue-500"><i class="fas fa-crown"></i></div>
                             <div class="flex justify-between items-center z-10"><p class="text-[8px] lg:text-[9px] text-blue-600 font-bold uppercase tracking-widest flex items-center gap-1"><i class="fas fa-star"></i> <span class="hidden sm:inline">이번 주</span> 고득점</p><span class="text-[8px] text-blue-300 group-hover/mvp:text-blue-500 transition-colors"><i class="fas fa-expand-alt"></i></span></div>
@@ -1836,7 +1979,7 @@
                                     ${processedList.map((m, i) => {
                                         const globalIndex = i + 1;
                                         return `
-                                        <tr class="group h-11 hover:bg-gray-50 transition-colors border-b border-gray-50">
+                                        <tr class="group h-11 hover:bg-gray-50 transition-colors border-b border-gray-50 cursor-pointer" onclick="window.showPersonalSuro(this.dataset.name)" data-name="${m.name}">
                                             <td class="p-3 text-center text-gray-400 group-hover:bg-gray-50 border-r border-gray-50 bg-white group-hover:bg-gray-50">${globalIndex}</td>
                                             <td class="p-3 text-gray-800 group-hover:bg-gray-50 border-r border-gray-50 bg-white group-hover:bg-gray-50">
                                                 <div class="flex items-center leading-none overflow-hidden text-ellipsis">
@@ -3843,7 +3986,8 @@
 
         window._addAdmin = async () => { /* 미사용 - 자동 요청 방식 */ };
 
-        window._removeAdmin = async (id, email) => {
+        window._removeAdmin = async (id, email, role) => {
+            if (role === '마스터') { window.showMsg('마스터 계정은 삭제할 수 없습니다.', 'error'); return; }
             if (!confirm(`"${email}"을(를) 완전히 삭제하시겠습니까?\n다시 로그인하면 새로 승인 요청됩니다.`)) return;
             try {
                 const { error } = await supaDb.from('admin_whitelist').delete().eq('id', id);
