@@ -910,6 +910,7 @@
                     guild: m.guild,
                     role: m.role,
                     class: m.class || '',
+                    level: m.level || 0,
                     isMain: m.is_main,
                     mainCharName: m.main_char_name || '',
                     joinDate: m.join_date || '',
@@ -1696,7 +1697,7 @@
                     <td class="p-3 text-center text-gray-400 group-hover:bg-gray-50 border-r border-gray-50 bg-white group-hover:bg-gray-50">${globalIndex}</td>
                     <td class="p-3 text-gray-800 group-hover:bg-gray-50 border-r border-gray-50 bg-white group-hover:bg-gray-50">
                         <div class="flex items-center leading-none overflow-hidden text-ellipsis">
-                            ${window.getNicknameIcon(m.role)}<div class="flex flex-col min-w-0"><span class="truncate">${m.name}</span><span class="text-[9px] text-gray-400 font-medium truncate">${m.class||''}</span></div>
+                            ${window.getNicknameIcon(m.role)}<div class="flex flex-col min-w-0"><span class="truncate">${m.name}${m.level>0?'<span class="text-[8px] text-gray-400 font-mono ml-1">Lv.'+m.level+'</span>':''}</span><span class="text-[9px] text-gray-400 font-medium truncate">${m.class||''}</span></div>
                         </div>
                     </td>
                     <td class="p-3 text-center text-pink-600 bg-pink-50/30 group-hover:bg-pink-100 border-r border-pink-50">${m.avg.toLocaleString()}</td>
@@ -1983,7 +1984,7 @@
                                             <td class="p-3 text-center text-gray-400 group-hover:bg-gray-50 border-r border-gray-50 bg-white group-hover:bg-gray-50">${globalIndex}</td>
                                             <td class="p-3 text-gray-800 group-hover:bg-gray-50 border-r border-gray-50 bg-white group-hover:bg-gray-50">
                                                 <div class="flex items-center leading-none overflow-hidden text-ellipsis">
-                                                    ${window.getNicknameIcon(m.role)}<div class="flex flex-col min-w-0"><span class="truncate">${m.name}</span><span class="text-[9px] text-gray-400 font-medium truncate">${m.class||''}</span></div>
+                                                    ${window.getNicknameIcon(m.role)}<div class="flex flex-col min-w-0"><span class="truncate">${m.name}${m.level>0?'<span class="text-[8px] text-gray-400 font-mono ml-1">Lv.'+m.level+'</span>':''}</span><span class="text-[9px] text-gray-400 font-medium truncate">${m.class||''}</span></div>
                                                 </div>
                                             </td>
                                             <td class="p-3 text-center text-pink-600 bg-pink-50/30 group-hover:bg-pink-100 border-r border-pink-50">${m.avg.toLocaleString()}</td>
@@ -2168,7 +2169,7 @@
                         tbody.innerHTML = processed.map((m,i) => {
                             let row = `<tr class="group h-11 hover:bg-gray-50 transition-colors border-b border-gray-50">
                                 <td class="p-3 text-center text-gray-400 bg-white">${i+1}</td>
-                                <td class="p-3 text-gray-800 bg-white"><div class="flex items-center leading-none">${window.getNicknameIcon(m.role)}<div class="flex flex-col min-w-0"><span class="truncate">${m.name}</span><span class="text-[9px] text-gray-400 font-medium truncate">${m.class||''}</span></div></div></td>
+                                <td class="p-3 text-gray-800 bg-white"><div class="flex items-center leading-none">${window.getNicknameIcon(m.role)}<div class="flex flex-col min-w-0"><span class="truncate">${m.name}${m.level>0?'<span class="text-[8px] text-gray-400 font-mono ml-1">Lv.'+m.level+'</span>':''}</span><span class="text-[9px] text-gray-400 font-medium truncate">${m.class||''}</span></div></div></td>
                                 <td class="p-3 text-center text-pink-600 bg-pink-50/30">${m.avg.toLocaleString()}</td>`;
                             m.recentScores.forEach((s,si) => {
                                 let dh='',ps=si>0?m.recentScores[si-1]:0;
@@ -4673,6 +4674,40 @@
             return data;
         };
 
+        // 캐릭터 OCID 조회
+        window._getCharOcid = async (characterName) => {
+            const data = await window._nexonFetch('/maplestory/v1/id', {
+                character_name: characterName
+            });
+            return data.ocid;
+        };
+
+        // 캐릭터 기본 정보 (직업, 레벨 등) 조회
+        window._getCharBasic = async (ocid) => {
+            const data = await window._nexonFetch('/maplestory/v1/character/basic', {
+                ocid: ocid
+            });
+            return data;
+        };
+
+        // 닉네임으로 직업/레벨 한번에 조회
+        window._getCharInfo = async (characterName) => {
+            try {
+                const ocid = await window._getCharOcid(characterName);
+                const basic = await window._getCharBasic(ocid);
+                return {
+                    name: basic.character_name || characterName,
+                    class: basic.character_class || '',
+                    level: basic.character_level || 0,
+                    guild: basic.character_guild_name || '',
+                    world: basic.world_name || '',
+                    image: basic.character_image || ''
+                };
+            } catch (e) {
+                return null;
+            }
+        };
+
         // 동기화 메인 로직
         window._runSync = async () => {
             const apiKey = window._getNexonApiKey();
@@ -4804,7 +4839,13 @@
                     const guilds = appState.guilds.map(g => g.name);
                     html += `<div class="bg-white rounded-2xl border border-green-200 p-5 mb-4 shadow-sm">
                         <h4 class="text-sm font-bold text-green-600 mb-1"><i class="fas fa-user-plus mr-2"></i>신규 멤버 발견 (${newMembers.length}명)</h4>
-                        <p class="text-[10px] text-gray-400 mb-4">API에 존재하지만 DB에 등록되지 않은 멤버입니다. 정보를 입력 후 일괄 추가하세요.</p>
+                        <p class="text-[10px] text-gray-400 mb-2">API에 존재하지만 DB에 등록되지 않은 멤버입니다. 정보를 입력 후 일괄 추가하세요.</p>
+                        <div class="mb-3">
+                            <button onclick="window._syncFetchAllCharInfo()" id="syncFetchInfoBtn" class="px-4 py-2 bg-indigo-500 text-white rounded-xl font-bold text-[10px] shadow-sm hover:bg-indigo-600 transition-all">
+                                <i class="fas fa-download mr-1"></i>API에서 직업/레벨 일괄 조회
+                            </button>
+                            <span id="syncFetchProgress" class="text-[10px] text-gray-400 ml-2"></span>
+                        </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-xs" id="syncNewTable">
                                 <thead>
@@ -4814,6 +4855,7 @@
                                         <th class="p-2 text-left" style="min-width:90px">소속</th>
                                         <th class="p-2 text-left" style="min-width:90px">직위</th>
                                         <th class="p-2 text-left" style="min-width:100px">직업</th>
+                                        <th class="p-2 text-center" style="min-width:60px">레벨</th>
                                         <th class="p-2 text-center" style="min-width:50px">본캐</th>
                                         <th class="p-2 text-left" style="min-width:100px">본캐닉</th>
                                     </tr>
@@ -4835,10 +4877,13 @@
                                                 </select>
                                             </td>
                                             <td class="p-1">
-                                                <select class="sync-new-class w-full bg-gray-50 border border-gray-100 rounded-lg px-1 py-1.5 text-[10px] font-bold outline-none cursor-pointer">
+                                                <select class="sync-new-class w-full bg-gray-50 border border-gray-100 rounded-lg px-1 py-1.5 text-[10px] font-bold outline-none cursor-pointer" id="syncNewClass_${i}">
                                                     <option value="">-</option>
                                                     ${MAPLE_JOBS.map(j => `<option value="${j}">${j}</option>`).join('')}
                                                 </select>
+                                            </td>
+                                            <td class="p-1">
+                                                <input type="number" class="sync-new-level w-full bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none text-center" id="syncNewLevel_${i}" value="0" min="0" max="300">
                                             </td>
                                             <td class="p-1 text-center">
                                                 <input type="checkbox" class="sync-new-isMain w-4 h-4 text-pink-500 rounded cursor-pointer" checked onchange="window._syncNewMainToggle(${i}, this.checked)">
@@ -4968,6 +5013,36 @@
             if (el) { isMain ? el.classList.add('hidden') : el.classList.remove('hidden'); }
         };
 
+        // 신규 멤버 API에서 직업/레벨 일괄 조회
+        window._syncFetchAllCharInfo = async () => {
+            const btn = document.getElementById('syncFetchInfoBtn');
+            const prog = document.getElementById('syncFetchProgress');
+            if (!window._syncNewMembers || window._syncNewMembers.length === 0) return;
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>조회 중...';
+            const total = window._syncNewMembers.length;
+            let done = 0, fail = 0;
+            for (let i = 0; i < total; i++) {
+                const m = window._syncNewMembers[i];
+                prog.textContent = `${i+1}/${total} 조회 중...`;
+                try {
+                    const info = await window._getCharInfo(m.name);
+                    if (info) {
+                        const clsSel = document.getElementById(`syncNewClass_${i}`);
+                        const lvlInput = document.getElementById(`syncNewLevel_${i}`);
+                        if (clsSel && info.class) { for (const opt of clsSel.options) { if (opt.value === info.class) { opt.selected = true; break; } } }
+                        if (lvlInput && info.level) lvlInput.value = info.level;
+                        const row = document.getElementById(`syncNewRow_${i}`);
+                        if (row) row.classList.add('bg-green-50/50');
+                    } else { fail++; }
+                } catch(e) { fail++; }
+                // Rate limit 방지: 100ms 딜레이
+                if (i < total - 1) await new Promise(r => setTimeout(r, 100));
+            }
+            done = total - fail;
+            prog.textContent = `완료! ${done}명 성공, ${fail}명 실패`;
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-download mr-1"></i>API에서 직업/레벨 일괄 조회';
+        };
+
         // 신규 멤버 추가 (상세 정보 포함)
         window._syncAddNew = async () => {
             const rows = document.querySelectorAll('#syncNewTable tbody tr');
@@ -4980,9 +5055,10 @@
                 const guild = row.querySelector('.sync-new-guild')?.value || m.guild;
                 const role = row.querySelector('.sync-new-role')?.value || '길드원';
                 const cls = row.querySelector('.sync-new-class')?.value || '';
+                const lvl = parseInt(row.querySelector('.sync-new-level')?.value) || 0;
                 const isMain = row.querySelector('.sync-new-isMain')?.checked !== false;
                 const mainChar = row.querySelector('.sync-new-mainChar')?.value || '';
-                toAdd.push({ name: m.name, guild, role, class: cls, is_main: isMain, main_char_name: mainChar, join_date: new Date().toISOString().split('T')[0] });
+                toAdd.push({ name: m.name, guild, role, class: cls, level: lvl, is_main: isMain, main_char_name: mainChar, join_date: new Date().toISOString().split('T')[0] });
             });
 
             if (toAdd.length === 0) { window.showMsg('추가할 멤버를 선택해주세요.', 'error'); return; }
@@ -5400,6 +5476,12 @@
                         <div class="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-3"><i class="fas fa-check text-green-500 text-xl"></i></div>
                         <p class="text-sm font-bold text-green-600">중복 닉네임이 없습니다!</p>
                         <p class="text-[10px] text-green-400 mt-1">총 ${allMembers.length}명 (${page+1}페이지 조회) 모두 고유한 닉네임입니다.</p>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="window._runMismatchCheck()" id="mismatchCheckBtn" class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl text-xs font-bold shadow-lg hover:shadow-xl transition-all">
+                            <i class="fas fa-search-plus mr-2"></i>레벨/직업 불일치 검사 (API 조회)
+                        </button>
+                        <div id="mismatchResult" class="mt-4"></div>
                     </div>`;
                 } else {
                     const guilds = appState.guilds.map(g => g.name);
@@ -5495,6 +5577,90 @@
                 </div>`;
             } finally {
                 if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-search mr-2"></i>중복 검사'; }
+            }
+        };
+
+        // ██ 레벨/직업 불일치 검사 (API 조회) ██
+        window._runMismatchCheck = async () => {
+            const resultDiv = document.getElementById('mismatchResult');
+            const btn = document.getElementById('mismatchCheckBtn');
+            if (!resultDiv) return;
+            const apiKey = window._getNexonApiKey();
+            if (!apiKey) { window.showMsg('Nexon API Key를 먼저 설정해주세요 (길드원 동기화 탭).', 'error'); return; }
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>API 조회 중...';
+            resultDiv.innerHTML = '<div class="text-center py-8 text-gray-400 font-bold"><i class="fas fa-spinner fa-spin text-xl mb-2"></i><p class="text-xs">전체 멤버 API 조회 중... (시간이 걸릴 수 있습니다)</p><p id="mismatchProg" class="text-[10px] text-gray-300 mt-1"></p></div>';
+
+            try {
+                const members = appState.members;
+                const mismatches = [];
+                const total = members.length;
+                const progEl = document.getElementById('mismatchProg');
+
+                for (let i = 0; i < total; i++) {
+                    const m = members[i];
+                    if (progEl) progEl.textContent = `${i+1}/${total} (${m.name})`;
+                    try {
+                        const info = await window._getCharInfo(m.name);
+                        if (info) {
+                            const issues = [];
+                            if (info.class && m.class && info.class !== m.class) issues.push({ field: '직업', db: m.class, api: info.class });
+                            if (!m.class && info.class) issues.push({ field: '직업', db: '(미설정)', api: info.class });
+                            if (info.level && m.level !== undefined && Math.abs(info.level - (m.level||0)) > 0) issues.push({ field: '레벨', db: String(m.level||0), api: String(info.level) });
+                            if (info.guild && m.guild && info.guild !== m.guild) issues.push({ field: '소속', db: m.guild, api: info.guild });
+                            if (issues.length > 0) mismatches.push({ member: m, apiInfo: info, issues });
+                        }
+                    } catch(e) { /* skip */ }
+                    if (i < total - 1) await new Promise(r => setTimeout(r, 80));
+                }
+
+                if (mismatches.length === 0) {
+                    resultDiv.innerHTML = '<div class="bg-green-50 border border-green-200 rounded-2xl p-6 text-center"><div class="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-2"><i class="fas fa-check text-green-500 text-lg"></i></div><p class="text-sm font-bold text-green-600">불일치 없음!</p><p class="text-[10px] text-green-400 mt-1">모든 멤버의 직업/레벨이 API와 일치합니다.</p></div>';
+                } else {
+                    window._mismatchData = mismatches;
+                    let html = '<div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 mb-4"><p class="text-xs font-bold text-indigo-600"><i class="fas fa-exclamation-circle mr-1"></i>' + mismatches.length + '명의 불일치 발견</p><p class="text-[10px] text-indigo-400 mt-1">체크한 멤버의 정보를 API 데이터로 업데이트합니다.</p></div>';
+                    html += '<div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-[8px] font-bold text-gray-400 uppercase border-b border-gray-200"><th class="p-2 w-8 text-center"><input type="checkbox" checked onchange="document.querySelectorAll(\'.mm-check\').forEach(c=>c.checked=this.checked)"></th><th class="p-2">닉네임</th><th class="p-2">소속</th><th class="p-2">항목</th><th class="p-2">DB값</th><th class="p-2">API값</th></tr></thead><tbody>';
+                    mismatches.forEach((mm, i) => {
+                        mm.issues.forEach((issue, j) => {
+                            html += '<tr class="border-b border-gray-50 hover:bg-indigo-50/30"><td class="p-1.5 text-center">' + (j===0?'<input type="checkbox" class="mm-check w-4 h-4" data-idx="'+i+'" checked>':'') + '</td><td class="p-1.5 font-bold">' + (j===0?mm.member.name:'') + '</td><td class="p-1.5 text-gray-400">' + (j===0?mm.member.guild:'') + '</td><td class="p-1.5"><span class="bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded text-[9px] font-bold">' + issue.field + '</span></td><td class="p-1.5 text-red-500 line-through">' + issue.db + '</td><td class="p-1.5 text-green-600 font-bold">' + issue.api + '</td></tr>';
+                        });
+                    });
+                    html += '</tbody></table></div>';
+                    html += '<div class="mt-4 flex justify-end"><button onclick="window._applyMismatchFixes()" id="mmApplyBtn" class="px-6 py-3 bg-indigo-500 text-white rounded-xl font-bold text-xs shadow-lg hover:bg-indigo-600 transition-all"><i class="fas fa-wrench mr-2"></i>선택한 불일치 일괄 수정</button></div>';
+                    resultDiv.innerHTML = html;
+                }
+            } catch(e) {
+                resultDiv.innerHTML = '<div class="bg-red-50 border border-red-200 rounded-2xl p-6 text-center"><p class="text-sm font-bold text-red-600">검사 실패</p><p class="text-xs text-red-400 mt-1">' + e.message + '</p></div>';
+            } finally {
+                btn.disabled = false; btn.innerHTML = '<i class="fas fa-search-plus mr-2"></i>레벨/직업 불일치 검사 (API 조회)';
+            }
+        };
+
+        // 불일치 일괄 수정 적용
+        window._applyMismatchFixes = async () => {
+            const checks = document.querySelectorAll('.mm-check:checked');
+            if (checks.length === 0) { window.showMsg('수정할 멤버를 선택해주세요.', 'error'); return; }
+            const btn = document.getElementById('mmApplyBtn');
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>수정 중...';
+            try {
+                let updated = 0;
+                for (const check of checks) {
+                    const mm = window._mismatchData[parseInt(check.dataset.idx)];
+                    if (!mm) continue;
+                    const updateObj = {};
+                    mm.issues.forEach(issue => {
+                        if (issue.field === '직업') updateObj.class = issue.api;
+                        if (issue.field === '레벨') updateObj.level = parseInt(issue.api) || 0;
+                        if (issue.field === '소속') updateObj.guild = issue.api;
+                    });
+                    const { error } = await supaDb.from('members').update(updateObj).eq('id', mm.member.id);
+                    if (!error) updated++;
+                }
+                window.showMsg(updated + '명의 정보가 업데이트되었습니다!', 'success');
+                await window.fetchMembers();
+            } catch(e) {
+                window.showMsg('수정 실패: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false; btn.innerHTML = '<i class="fas fa-wrench mr-2"></i>선택한 불일치 일괄 수정';
             }
         };
 
