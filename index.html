@@ -556,7 +556,7 @@
         };
         
         let GUILD_START_DATE = new Date('2020-03-17');
-        const MAPLE_JOBS = ["히어로", "다크나이트", "팔라딘", "불독", "썬콜", "비숍", "보우마스터", "신궁", "패스파인더","나이트로드", "섀도어", "듀얼블레이드", "캡틴", "바이퍼", "캐논마스터","미하일", "소울마스터", "플레임위자드", "윈드브레이커", "나이트워커", "스트라이커","아란", "에반", "루미너스", "메르세데스", "팬텀", "은월","데몬 슬레이어", "데몬 어벤져", "블래스터", "배틀메이지", "와일드헌터", "메카닉", "제논","카이저", "카인", "카데나", "엔젤릭버스터","라라", "호영", "아델", "일리움", "아크", "칼리","제로", "키네시스", "렌"];
+        const MAPLE_JOBS = ["히어로","팔라딘","다크나이트","아크메이지(불,독)","아크메이지(썬,콜)","비숍","보우마스터","신궁","패스파인더","나이트로드","섀도어","듀얼블레이드","바이퍼","캡틴","캐논마스터","미하일","소울마스터","플레임위자드","윈드브레이커","나이트워커","스트라이커","아란","에반","루미너스","메르세데스","팬텀","은월","데몬슬레이어","데몬어벤져","블래스터","배틀메이지","와일드헌터","메카닉","제논","카이저","카인","카데나","엔젤릭버스터","라라","호영","아델","일리움","아크","칼리","제로","키네시스","렌"];
         const baseRanks = ['마카롱', '다쿠아즈'];
         let initialGuildRanks = {
             '뚠카롱': [...baseRanks, '크라운', '파르페', '티라미슈', '크로칸슈', '롤케이크', '팬케이크', '와플', '스콘', '반죽(휴면)'],
@@ -4784,6 +4784,50 @@
                     }
                 });
 
+                // 닉변 의심 감지: 탈퇴 멤버 + 신규 멤버를 API 직업/길드로 매칭
+                const nickChangeSuspects = []; // [{oldName, newName, guild, id, class}]
+                if (goneMembers.length > 0 && newMembers.length > 0) {
+                    // 신규 멤버 직업/레벨을 API에서 조회
+                    const newMemberInfos = [];
+                    for (const nm of newMembers) {
+                        try {
+                            const info = await window._getCharInfo(nm.name);
+                            newMemberInfos.push({ ...nm, apiClass: info?.class || '', apiLevel: info?.level || 0 });
+                        } catch(e) {
+                            newMemberInfos.push({ ...nm, apiClass: '', apiLevel: 0 });
+                        }
+                        await new Promise(r => setTimeout(r, 80));
+                    }
+                    // 탈퇴 멤버의 DB 직업과 신규 멤버 API 직업 매칭
+                    const usedGone = new Set();
+                    const usedNew = new Set();
+                    for (const gm of goneMembers) {
+                        const dbInfo = dbMembers.find(d => d.id === gm.id);
+                        if (!dbInfo || !dbInfo.class) continue;
+                        for (let ni = 0; ni < newMemberInfos.length; ni++) {
+                            if (usedNew.has(ni)) continue;
+                            const nm = newMemberInfos[ni];
+                            // 같은 길드 + 같은 직업 → 닉변 의심
+                            if (nm.guild === gm.guild && nm.apiClass && nm.apiClass === dbInfo.class) {
+                                nickChangeSuspects.push({
+                                    oldName: gm.name, newName: nm.name, guild: gm.guild,
+                                    id: gm.id, class: dbInfo.class, level: nm.apiLevel
+                                });
+                                usedGone.add(gm.id);
+                                usedNew.add(ni);
+                                break;
+                            }
+                        }
+                    }
+                    // 닉변 확정된 항목은 신규/탈퇴 목록에서 제거
+                    if (nickChangeSuspects.length > 0) {
+                        const goneIds = new Set(nickChangeSuspects.map(s => s.id));
+                        const newNames = new Set(nickChangeSuspects.map(s => s.newName));
+                        goneMembers.splice(0, goneMembers.length, ...goneMembers.filter(g => !goneIds.has(g.id)));
+                        newMembers.splice(0, newMembers.length, ...newMembers.filter(n => !newNames.has(n.name)));
+                    }
+                }
+
                 // 결과 렌더링
                 let html = '';
 
@@ -4800,7 +4844,7 @@
                 const totalApiCount = successGuilds.reduce((sum, [,arr]) => sum + arr.length, 0);
                 html += `<div class="bg-white rounded-2xl border border-gray-100 p-5 mb-4 shadow-sm">
                     <h4 class="text-sm font-bold text-gray-700 mb-3"><i class="fas fa-chart-pie text-pink-400 mr-2"></i>동기화 요약</h4>
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-center">
+                    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 text-center">
                         <div class="bg-blue-50 rounded-xl p-3 border border-blue-100">
                             <p class="text-lg font-bold text-blue-600">${totalApiCount}</p>
                             <p class="text-[9px] text-blue-400 font-bold">API 길드원 수</p>
@@ -4816,6 +4860,10 @@
                         <div class="bg-purple-50 rounded-xl p-3 border border-purple-100">
                             <p class="text-lg font-bold text-purple-600">${movedMembers.length}</p>
                             <p class="text-[9px] text-purple-400 font-bold">길드 이동</p>
+                        </div>
+                        <div class="bg-cyan-50 rounded-xl p-3 border border-cyan-100">
+                            <p class="text-lg font-bold text-cyan-600">${nickChangeSuspects.length}</p>
+                            <p class="text-[9px] text-cyan-400 font-bold">닉변 의심</p>
                         </div>
                     </div>
                 </div>`;
@@ -4833,6 +4881,46 @@
                         }).join('')}
                     </div>
                 </div>`;
+
+                // 닉변 의심 섹션
+                if (nickChangeSuspects.length > 0) {
+                    html += `<div class="bg-white rounded-2xl border border-cyan-200 p-5 mb-4 shadow-sm">
+                        <h4 class="text-sm font-bold text-cyan-600 mb-1"><i class="fas fa-user-edit mr-2"></i>닉네임 변경 의심 (${nickChangeSuspects.length}명)</h4>
+                        <p class="text-[10px] text-gray-400 mb-4">탈퇴 멤버와 신규 멤버의 직업·길드가 일치하여 닉변으로 추정됩니다. 확인 후 닉네임을 변경하면 수로 데이터가 유지됩니다.</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs">
+                                <thead>
+                                    <tr class="text-[9px] font-bold text-gray-400 uppercase border-b border-gray-200">
+                                        <th class="p-2 w-8 text-center"><input type="checkbox" checked onchange="document.querySelectorAll('.nc-check').forEach(c=>c.checked=this.checked)"></th>
+                                        <th class="p-2 text-left">기존 닉네임</th>
+                                        <th class="p-2 text-center">→</th>
+                                        <th class="p-2 text-left">새 닉네임</th>
+                                        <th class="p-2 text-left">소속</th>
+                                        <th class="p-2 text-left">직업</th>
+                                        <th class="p-2 text-center">레벨</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${nickChangeSuspects.map((s, i) => `<tr class="border-b border-gray-50 hover:bg-cyan-50/30 transition-colors">
+                                        <td class="p-1.5 text-center"><input type="checkbox" class="nc-check w-4 h-4" data-idx="${i}" checked></td>
+                                        <td class="p-1.5"><span class="text-red-500 line-through font-bold">${s.oldName}</span></td>
+                                        <td class="p-1.5 text-center text-gray-300"><i class="fas fa-arrow-right"></i></td>
+                                        <td class="p-1.5"><span class="text-cyan-600 font-bold">${s.newName}</span></td>
+                                        <td class="p-1.5 text-gray-500">${s.guild}</td>
+                                        <td class="p-1.5 text-gray-500">${s.class}</td>
+                                        <td class="p-1.5 text-center text-gray-500">${s.level || '-'}</td>
+                                    </tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button onclick="window._applyNickChanges()" id="ncApplyBtn" class="px-6 py-3 bg-cyan-500 text-white rounded-xl font-bold text-xs shadow-lg hover:bg-cyan-600 transition-all">
+                                <i class="fas fa-user-edit mr-2"></i>선택한 닉네임 변경 적용
+                            </button>
+                        </div>
+                    </div>`;
+                    window._nickChangeSuspects = nickChangeSuspects;
+                }
 
                 // 신규 멤버 추가 섹션 - 상세 정보 입력 테이블
                 if (newMembers.length > 0) {
@@ -5013,6 +5101,40 @@
             if (el) { isMain ? el.classList.add('hidden') : el.classList.remove('hidden'); }
         };
 
+        // 닉변 적용
+        window._applyNickChanges = async () => {
+            const checks = document.querySelectorAll('.nc-check:checked');
+            if (checks.length === 0) { window.showMsg('적용할 항목을 선택해주세요.', 'error'); return; }
+            const selected = [];
+            checks.forEach(c => selected.push(window._nickChangeSuspects[parseInt(c.dataset.idx)]));
+            const lines = selected.map(s => `• ${s.oldName} → ${s.newName} (${s.guild}/${s.class})`);
+            if (!confirm(`닉네임 변경을 적용하시겠습니까?\n기존 수로 데이터가 모두 유지됩니다.\n\n${lines.join('\n')}`)) return;
+            const btn = document.getElementById('ncApplyBtn');
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>적용 중...';
+            try {
+                let ok = 0;
+                for (const s of selected) {
+                    const updateObj = { name: s.newName };
+                    if (s.level) updateObj.level = s.level;
+                    const { error } = await supaDb.from('members').update(updateObj).eq('id', s.id);
+                    if (!error) {
+                        ok++;
+                        await supaDb.from('operation_history').insert({
+                            date: new Date().toISOString().split('T')[0], category: '닉변',
+                            name: s.newName, content: `닉네임 변경: ${s.oldName} → ${s.newName} (${s.guild}/${s.class}) — 동기화 감지`
+                        });
+                    }
+                }
+                window.showMsg(`${ok}명의 닉네임이 변경되었습니다!`, 'success');
+                await window.fetchMembers();
+                window._runSync();
+            } catch(e) {
+                window.showMsg('닉변 적용 실패: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false; btn.innerHTML = '<i class="fas fa-user-edit mr-2"></i>선택한 닉네임 변경 적용';
+            }
+        };
+
         // 신규 멤버 API에서 직업/레벨 일괄 조회
         window._syncFetchAllCharInfo = async () => {
             const btn = document.getElementById('syncFetchInfoBtn');
@@ -5029,7 +5151,11 @@
                     if (info) {
                         const clsSel = document.getElementById(`syncNewClass_${i}`);
                         const lvlInput = document.getElementById(`syncNewLevel_${i}`);
-                        if (clsSel && info.class) { for (const opt of clsSel.options) { if (opt.value === info.class) { opt.selected = true; break; } } }
+                        if (clsSel && info.class) {
+                            let found = false;
+                            for (const opt of clsSel.options) { if (opt.value === info.class) { opt.selected = true; found = true; break; } }
+                            if (!found) { const newOpt = document.createElement('option'); newOpt.value = info.class; newOpt.textContent = info.class; newOpt.selected = true; clsSel.appendChild(newOpt); }
+                        }
                         if (lvlInput && info.level) lvlInput.value = info.level;
                         const row = document.getElementById(`syncNewRow_${i}`);
                         if (row) row.classList.add('bg-green-50/50');
@@ -5478,10 +5604,16 @@
                         <p class="text-[10px] text-green-400 mt-1">총 ${allMembers.length}명 (${page+1}페이지 조회) 모두 고유한 닉네임입니다.</p>
                     </div>
                     <div class="mt-4">
-                        <button onclick="window._runMismatchCheck()" id="mismatchCheckBtn" class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl text-xs font-bold shadow-lg hover:shadow-xl transition-all">
-                            <i class="fas fa-search-plus mr-2"></i>레벨/직업 불일치 검사 (API 조회)
-                        </button>
-                        <div id="mismatchResult" class="mt-4"></div>
+                        <div class="flex items-center gap-2 flex-wrap mb-3">
+                            <select id="mismatchGuild" class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-bold outline-none">
+                                ${appState.guilds.map(g => `<option value="${g.name}">${g.name}</option>`).join('')}
+                            </select>
+                            <button onclick="window._runMismatchCheck()" id="mismatchCheckBtn" class="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl text-xs font-bold shadow-lg hover:shadow-xl transition-all">
+                                <i class="fas fa-search-plus mr-1"></i>직업/레벨 조회
+                            </button>
+                            <span id="mismatchProg" class="text-[10px] text-gray-400"></span>
+                        </div>
+                        <div id="mismatchResult"></div>
                     </div>`;
                 } else {
                     const guilds = appState.guilds.map(g => g.name);
@@ -5584,83 +5716,132 @@
         window._runMismatchCheck = async () => {
             const resultDiv = document.getElementById('mismatchResult');
             const btn = document.getElementById('mismatchCheckBtn');
-            if (!resultDiv) return;
+            const prog = document.getElementById('mismatchProg');
+            const guildName = document.getElementById('mismatchGuild')?.value;
+            if (!resultDiv || !guildName) return;
             const apiKey = window._getNexonApiKey();
             if (!apiKey) { window.showMsg('Nexon API Key를 먼저 설정해주세요 (길드원 동기화 탭).', 'error'); return; }
-            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>API 조회 중...';
-            resultDiv.innerHTML = '<div class="text-center py-8 text-gray-400 font-bold"><i class="fas fa-spinner fa-spin text-xl mb-2"></i><p class="text-xs">전체 멤버 API 조회 중... (시간이 걸릴 수 있습니다)</p><p id="mismatchProg" class="text-[10px] text-gray-300 mt-1"></p></div>';
-
-            try {
-                const members = appState.members;
-                const mismatches = [];
-                const total = members.length;
-                const progEl = document.getElementById('mismatchProg');
-
-                for (let i = 0; i < total; i++) {
-                    const m = members[i];
-                    if (progEl) progEl.textContent = `${i+1}/${total} (${m.name})`;
-                    try {
-                        const info = await window._getCharInfo(m.name);
-                        if (info) {
-                            const issues = [];
-                            if (info.class && m.class && info.class !== m.class) issues.push({ field: '직업', db: m.class, api: info.class });
-                            if (!m.class && info.class) issues.push({ field: '직업', db: '(미설정)', api: info.class });
-                            if (info.level && m.level !== undefined && Math.abs(info.level - (m.level||0)) > 0) issues.push({ field: '레벨', db: String(m.level||0), api: String(info.level) });
-                            if (info.guild && m.guild && info.guild !== m.guild) issues.push({ field: '소속', db: m.guild, api: info.guild });
-                            if (issues.length > 0) mismatches.push({ member: m, apiInfo: info, issues });
-                        }
-                    } catch(e) { /* skip */ }
-                    if (i < total - 1) await new Promise(r => setTimeout(r, 80));
-                }
-
-                if (mismatches.length === 0) {
-                    resultDiv.innerHTML = '<div class="bg-green-50 border border-green-200 rounded-2xl p-6 text-center"><div class="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-2"><i class="fas fa-check text-green-500 text-lg"></i></div><p class="text-sm font-bold text-green-600">불일치 없음!</p><p class="text-[10px] text-green-400 mt-1">모든 멤버의 직업/레벨이 API와 일치합니다.</p></div>';
-                } else {
-                    window._mismatchData = mismatches;
-                    let html = '<div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 mb-4"><p class="text-xs font-bold text-indigo-600"><i class="fas fa-exclamation-circle mr-1"></i>' + mismatches.length + '명의 불일치 발견</p><p class="text-[10px] text-indigo-400 mt-1">체크한 멤버의 정보를 API 데이터로 업데이트합니다.</p></div>';
-                    html += '<div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-[8px] font-bold text-gray-400 uppercase border-b border-gray-200"><th class="p-2 w-8 text-center"><input type="checkbox" checked onchange="document.querySelectorAll(\'.mm-check\').forEach(c=>c.checked=this.checked)"></th><th class="p-2">닉네임</th><th class="p-2">소속</th><th class="p-2">항목</th><th class="p-2">DB값</th><th class="p-2">API값</th></tr></thead><tbody>';
-                    mismatches.forEach((mm, i) => {
-                        mm.issues.forEach((issue, j) => {
-                            html += '<tr class="border-b border-gray-50 hover:bg-indigo-50/30"><td class="p-1.5 text-center">' + (j===0?'<input type="checkbox" class="mm-check w-4 h-4" data-idx="'+i+'" checked>':'') + '</td><td class="p-1.5 font-bold">' + (j===0?mm.member.name:'') + '</td><td class="p-1.5 text-gray-400">' + (j===0?mm.member.guild:'') + '</td><td class="p-1.5"><span class="bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded text-[9px] font-bold">' + issue.field + '</span></td><td class="p-1.5 text-red-500 line-through">' + issue.db + '</td><td class="p-1.5 text-green-600 font-bold">' + issue.api + '</td></tr>';
+            
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>조회 중...';
+            resultDiv.innerHTML = '';
+            
+            const members = appState.members.filter(m => m.guild === guildName);
+            const results = []; // {member, apiClass, apiLevel, classDiff, levelDiff}
+            
+            for (let i = 0; i < members.length; i++) {
+                const m = members[i];
+                if (prog) prog.textContent = `${i+1}/${members.length} (${m.name})`;
+                try {
+                    const info = await window._getCharInfo(m.name);
+                    if (info) {
+                        results.push({
+                            member: m, 
+                            apiClass: info.class || '', apiLevel: info.level || 0,
+                            classDiff: info.class && m.class !== info.class,
+                            levelDiff: info.level && (m.level || 0) !== info.level
                         });
-                    });
-                    html += '</tbody></table></div>';
-                    html += '<div class="mt-4 flex justify-end"><button onclick="window._applyMismatchFixes()" id="mmApplyBtn" class="px-6 py-3 bg-indigo-500 text-white rounded-xl font-bold text-xs shadow-lg hover:bg-indigo-600 transition-all"><i class="fas fa-wrench mr-2"></i>선택한 불일치 일괄 수정</button></div>';
-                    resultDiv.innerHTML = html;
+                    } else {
+                        results.push({ member: m, apiClass: '', apiLevel: 0, classDiff: false, levelDiff: false });
+                    }
+                } catch(e) {
+                    results.push({ member: m, apiClass: '', apiLevel: 0, classDiff: false, levelDiff: false });
                 }
-            } catch(e) {
-                resultDiv.innerHTML = '<div class="bg-red-50 border border-red-200 rounded-2xl p-6 text-center"><p class="text-sm font-bold text-red-600">검사 실패</p><p class="text-xs text-red-400 mt-1">' + e.message + '</p></div>';
-            } finally {
-                btn.disabled = false; btn.innerHTML = '<i class="fas fa-search-plus mr-2"></i>레벨/직업 불일치 검사 (API 조회)';
+                if (i < members.length - 1) await new Promise(r => setTimeout(r, 80));
             }
+            if (prog) prog.textContent = `완료! ${members.length}명 조회`;
+            
+            window._mmResults = results;
+            const diffCount = results.filter(r => r.classDiff || r.levelDiff).length;
+            
+            let html = `<div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3 mb-3">
+                <p class="text-[10px] font-bold text-indigo-600"><i class="fas fa-info-circle mr-1"></i>${guildName} ${members.length}명 조회 완료 · 불일치 ${diffCount}명 · 변경할 항목을 직접 수정 후 일괄 저장하세요</p>
+            </div>`;
+            html += `<div class="overflow-x-auto max-h-[400px] overflow-y-auto"><table class="w-full text-xs"><thead class="sticky top-0 bg-white z-10">
+                <tr class="text-[8px] font-bold text-gray-400 uppercase border-b border-gray-200">
+                    <th class="p-1.5 w-8 text-center"><input type="checkbox" onchange="document.querySelectorAll('.mm-save').forEach(c=>c.checked=this.checked)" checked></th>
+                    <th class="p-1.5 text-left">닉네임</th>
+                    <th class="p-1.5 text-left">DB 직업</th>
+                    <th class="p-1.5 text-left">API 직업</th>
+                    <th class="p-1.5 text-center">DB Lv</th>
+                    <th class="p-1.5 text-center">API Lv</th>
+                </tr></thead><tbody>`;
+            
+            results.forEach((r, i) => {
+                const cDiff = r.classDiff;
+                const lDiff = r.levelDiff;
+                const rowCls = (cDiff || lDiff) ? 'bg-amber-50/50' : '';
+                html += `<tr class="border-b border-gray-50 ${rowCls}" data-idx="${i}">
+                    <td class="p-1 text-center">${(cDiff||lDiff) ? '<input type="checkbox" class="mm-save w-4 h-4" data-idx="'+i+'" checked>' : '<span class="text-gray-300 text-[9px]">✓</span>'}</td>
+                    <td class="p-1.5 font-bold">${r.member.name}${r.member.level>0?'<span class="text-[8px] text-gray-400 ml-1">Lv.'+r.member.level+'</span>':''}</td>
+                    <td class="p-1.5 ${cDiff?'text-red-500':'text-gray-400'}">${r.member.class||'(미설정)'}</td>
+                    <td class="p-1.5"><select class="mm-class bg-gray-50 border ${cDiff?'border-amber-300 bg-amber-50':'border-gray-100'} rounded px-1 py-0.5 text-[10px] font-bold outline-none" data-idx="${i}">
+                        <option value="">-</option>
+                        ${MAPLE_JOBS.map(j => `<option value="${j}" ${j===(r.apiClass||r.member.class)?'selected':''}>${j}</option>`).join('')}
+                        ${r.apiClass && !MAPLE_JOBS.includes(r.apiClass) ? `<option value="${r.apiClass}" selected>${r.apiClass}</option>` : ''}
+                    </select></td>
+                    <td class="p-1.5 text-center ${lDiff?'text-red-500':'text-gray-400'}">${r.member.level||0}</td>
+                    <td class="p-1.5 text-center"><input type="number" class="mm-level bg-gray-50 border ${lDiff?'border-amber-300 bg-amber-50':'border-gray-100'} rounded px-1 py-0.5 text-[10px] font-bold outline-none w-16 text-center" data-idx="${i}" value="${r.apiLevel||r.member.level||0}" min="0" max="300"></td>
+                </tr>`;
+            });
+            html += '</tbody></table></div>';
+            html += `<div class="mt-3 flex justify-between items-center">
+                <p class="text-[9px] text-gray-400">체크된 불일치 항목 + 수동 수정 모두 저장됩니다</p>
+                <button onclick="window._applyMismatchFixes()" id="mmApplyBtn" class="px-5 py-2.5 bg-indigo-500 text-white rounded-xl font-bold text-xs shadow-lg hover:bg-indigo-600 transition-all">
+                    <i class="fas fa-save mr-1"></i>변경사항 일괄 저장
+                </button>
+            </div>`;
+            resultDiv.innerHTML = html;
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-search-plus mr-1"></i>직업/레벨 조회';
         };
 
-        // 불일치 일괄 수정 적용
+        // 불일치 일괄 저장
         window._applyMismatchFixes = async () => {
-            const checks = document.querySelectorAll('.mm-check:checked');
-            if (checks.length === 0) { window.showMsg('수정할 멤버를 선택해주세요.', 'error'); return; }
             const btn = document.getElementById('mmApplyBtn');
-            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>수정 중...';
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>저장 중...';
             try {
                 let updated = 0;
-                for (const check of checks) {
-                    const mm = window._mismatchData[parseInt(check.dataset.idx)];
-                    if (!mm) continue;
+                const rows = document.querySelectorAll('.mm-save:checked');
+                // 체크된 불일치 항목
+                for (const chk of rows) {
+                    const idx = parseInt(chk.dataset.idx);
+                    const r = window._mmResults[idx];
+                    if (!r) continue;
+                    const clsSel = document.querySelector(`.mm-class[data-idx="${idx}"]`);
+                    const lvlInput = document.querySelector(`.mm-level[data-idx="${idx}"]`);
+                    const newClass = clsSel?.value || r.member.class || '';
+                    const newLevel = parseInt(lvlInput?.value) || 0;
                     const updateObj = {};
-                    mm.issues.forEach(issue => {
-                        if (issue.field === '직업') updateObj.class = issue.api;
-                        if (issue.field === '레벨') updateObj.level = parseInt(issue.api) || 0;
-                        if (issue.field === '소속') updateObj.guild = issue.api;
-                    });
-                    const { error } = await supaDb.from('members').update(updateObj).eq('id', mm.member.id);
-                    if (!error) updated++;
+                    if (newClass !== (r.member.class || '')) updateObj.class = newClass;
+                    if (newLevel !== (r.member.level || 0)) updateObj.level = newLevel;
+                    if (Object.keys(updateObj).length > 0) {
+                        const { error } = await supaDb.from('members').update(updateObj).eq('id', r.member.id);
+                        if (!error) updated++;
+                    }
                 }
-                window.showMsg(updated + '명의 정보가 업데이트되었습니다!', 'success');
+                // 체크 안 됐어도 수동으로 값을 바꾼 행도 저장
+                document.querySelectorAll('.mm-level').forEach(async (inp) => {
+                    const idx = parseInt(inp.dataset.idx);
+                    const r = window._mmResults[idx];
+                    if (!r) return;
+                    const chk = document.querySelector(`.mm-save[data-idx="${idx}"]`);
+                    if (chk && chk.checked) return; // 이미 처리됨
+                    const clsSel = document.querySelector(`.mm-class[data-idx="${idx}"]`);
+                    const newClass = clsSel?.value || '';
+                    const newLevel = parseInt(inp.value) || 0;
+                    const updateObj = {};
+                    if (newClass && newClass !== (r.member.class || '')) updateObj.class = newClass;
+                    if (newLevel !== (r.member.level || 0)) updateObj.level = newLevel;
+                    if (Object.keys(updateObj).length > 0) {
+                        await supaDb.from('members').update(updateObj).eq('id', r.member.id);
+                        updated++;
+                    }
+                });
+                window.showMsg(updated + '명 업데이트 완료!', 'success');
                 await window.fetchMembers();
             } catch(e) {
-                window.showMsg('수정 실패: ' + e.message, 'error');
+                window.showMsg('저장 실패: ' + e.message, 'error');
             } finally {
-                btn.disabled = false; btn.innerHTML = '<i class="fas fa-wrench mr-2"></i>선택한 불일치 일괄 수정';
+                btn.disabled = false; btn.innerHTML = '<i class="fas fa-save mr-1"></i>변경사항 일괄 저장';
             }
         };
 
